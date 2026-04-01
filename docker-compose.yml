@@ -1,18 +1,13 @@
 version: "3.9"
 
-# Todas as credenciais vêm do arquivo .env — nunca hardcode aqui.
-# Copie .env.example para .env e preencha antes de subir.
-
 services:
-
-  # ── Banco de dados ────────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-grants.sql:/docker-entrypoint-initdb.d/01-grants.sql:ro
@@ -21,11 +16,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Não expõe porta 5432 ao host em produção — acesso apenas interno
     expose:
       - "5432"
 
-  # ── API (FastAPI) ─────────────────────────────────────────────────────────────
   api:
     build:
       context: .
@@ -33,7 +26,6 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      # Sobrescreve DATABASE_URL do .env para garantir host correto dentro do compose
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     volumes:
       - uploads_data:/app/uploads
@@ -44,19 +36,28 @@ services:
       - "8000"
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
 
-  # ── Frontend (React + Nginx) ──────────────────────────────────────────────────
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        # Vazio = usa proxy nginx relativo (/api/...) — ideal para produção
         VITE_API_URL: ${VITE_API_URL:-}
     restart: unless-stopped
-    ports:
-      - "80:80"
+    expose:
+      - "80"
     depends_on:
       - api
+
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   postgres_data:
