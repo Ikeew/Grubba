@@ -1,39 +1,63 @@
 version: "3.9"
 
+# Todas as credenciais vêm do arquivo .env — nunca hardcode aqui.
+# Copie .env.example para .env e preencha antes de subir.
+
 services:
+
+  # ── Banco de dados ────────────────────────────────────────────────────────────
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: grubba_user
-      POSTGRES_PASSWORD: grubba_pass
-      POSTGRES_DB: grubba_db
-    ports:
-      - "5432:5432"
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init-grants.sql:/docker-entrypoint-initdb.d/01-grants.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U grubba_user -d grubba_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    # Não expõe porta 5432 ao host em produção — acesso apenas interno
+    expose:
+      - "5432"
 
+  # ── API (FastAPI) ─────────────────────────────────────────────────────────────
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql://grubba_user:grubba_pass@db:5432/grubba_db
+      # Sobrescreve DATABASE_URL do .env para garantir host correto dentro do compose
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     volumes:
-      - ./uploads:/app/uploads
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    expose:
+      - "8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+
+  # ── Frontend (React + Nginx) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        # Vazio = usa proxy nginx relativo (/api/...) — ideal para produção
+        VITE_API_URL: ${VITE_API_URL:-}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:
+  uploads_data:
