@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import type { ImportRecordPayload } from '@/types/import'
 import { STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 
 const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
@@ -42,11 +43,39 @@ export default function ImportForm() {
   useEffect(() => {
     if (record) {
       reset({
-        ...record,
         client_id: record.client.id,
+        reference: record.reference ?? '',
+        date: record.date ?? '',
+        status: record.status,
+        importer: record.importer ?? '',
+        ce_mercante: record.ce_mercante ?? '',
+        awb_bl: record.awb_bl ?? '',
+        di_duimp_dta: record.di_duimp_dta ?? '',
+        numero_li: record.numero_li ?? '',
+        dta: record.dta ?? '',
+        dtc: record.dtc ?? '',
+        shipping_company: record.shipping_company ?? '',
+        vessel: record.vessel ?? '',
+        port: record.port ?? '',
+        eta: record.eta ?? '',
+        etb: record.etb ?? '',
+        containers: record.containers ?? '',
+        carrier: record.carrier ?? '',
+        local_ioa: record.local_ioa ?? '',
+        lpco_packaging: record.lpco_packaging ?? '',
+        lpco_number: record.lpco_number ?? '',
         collaborator_id: record.collaborator?.id ?? '',
         map_type: record.map_type ?? '',
         modality: record.modality ?? '',
+        map_packaging_released: record.map_packaging_released,
+        selected_unit: record.selected_unit ?? '',
+        cargo_presence_date: record.cargo_presence_date ?? '',
+        released_at: record.released_at ?? '',
+        comex_informed_date: record.comex_informed_date ?? '',
+        comex_released: record.comex_released,
+        guide_sent: record.guide_sent,
+        finalized_at: record.finalized_at ?? '',
+        observations: record.observations ?? '',
       })
     }
   }, [record, reset])
@@ -54,12 +83,12 @@ export default function ImportForm() {
   async function onSubmit(values: ImportFormValues) {
     const clean = Object.fromEntries(
       Object.entries(values).filter(([, v]) => v !== '' && v !== undefined),
-    ) as ImportFormValues
+    ) as Partial<ImportRecordPayload>
 
     if (isEditing) {
       await updateImport.mutateAsync(clean)
     } else {
-      await createImport.mutateAsync({ ...clean, client_id: values.client_id })
+      await createImport.mutateAsync({ ...clean, client_id: values.client_id } as ImportRecordPayload)
     }
     navigate('/imports')
   }

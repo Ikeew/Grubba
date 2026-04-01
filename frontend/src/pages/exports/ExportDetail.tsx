@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
 import { formatDate, formatDateTime, formatFieldName } from '@/utils/format'
-import { MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
+import { MAP_TYPE_LABELS } from '@/utils/constants'
 import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
 import { useState } from 'react'
 

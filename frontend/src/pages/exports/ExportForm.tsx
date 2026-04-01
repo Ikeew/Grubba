@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
+import { EXPORT_SERVICE_LABELS, type ExportRecordPayload, type ExportService } from '@/types/export'
 import { STATUS_LABELS, MAP_TYPE_LABELS } from '@/utils/constants'
 
 const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
@@ -46,11 +46,29 @@ export default function ExportForm() {
   useEffect(() => {
     if (record) {
       reset({
-        ...record,
         client_id: record.client.id,
+        reference: record.reference ?? '',
+        date: record.date ?? '',
+        status: record.status,
+        lpco: record.lpco ?? '',
+        vessel: record.vessel ?? '',
+        booking: record.booking ?? '',
+        port: record.port ?? '',
+        due_25br: record.due_25br ?? '',
+        eta: record.eta ?? '',
+        ddl_carga: record.ddl_carga ?? '',
+        shipping_company: record.shipping_company ?? '',
+        etb: record.etb ?? '',
+        et5: record.et5 ?? '',
         collaborator_id: record.collaborator?.id ?? '',
         map_type: record.map_type ?? '',
-        services: record.services,
+        services: record.services as ExportService[],
+        selected_unit: record.selected_unit ?? '',
+        new_seal: record.new_seal ?? '',
+        inspection_date: record.inspection_date ?? '',
+        comex_released_date: record.comex_released_date ?? '',
+        finalized_at: record.finalized_at ?? '',
+        observations: record.observations ?? '',
       })
     }
   }, [record, reset])
@@ -58,12 +76,12 @@ export default function ExportForm() {
   async function onSubmit(values: ExportFormValues) {
     const clean = Object.fromEntries(
       Object.entries(values).filter(([, v]) => v !== '' && v !== undefined),
-    ) as ExportFormValues
+    ) as Partial<ExportRecordPayload>
 
     if (isEditing) {
       await updateExport.mutateAsync(clean)
     } else {
-      await createExport.mutateAsync({ ...clean, client_id: values.client_id })
+      await createExport.mutateAsync({ ...clean, client_id: values.client_id } as ExportRecordPayload)
     }
     navigate('/exports')
   }

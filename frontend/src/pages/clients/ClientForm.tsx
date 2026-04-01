@@ -27,7 +27,16 @@ export default function ClientForm() {
   } = useForm<ClientFormValues>({ resolver: zodResolver(clientSchema) })
 
   useEffect(() => {
-    if (client) reset(client)
+    if (client) {
+      reset({
+        name: client.name,
+        cnpj: client.cnpj ?? undefined,
+        email: client.email ?? undefined,
+        phone: client.phone ?? undefined,
+        address: client.address ?? undefined,
+        notes: client.notes ?? undefined,
+      })
+    }
   }, [client, reset])
 
   async function onSubmit(values: ClientFormValues) {
