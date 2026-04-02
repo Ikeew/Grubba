@@ -18,14 +18,17 @@ if TYPE_CHECKING:
 
 
 class ExportService(str, enum.Enum):
-    scanner = "scanner"
-    pesagem = "pesagem"
-    fotografia = "fotografia"
-    colocacao_de_lacre = "colocacao_de_lacre"
-    desunitizacao = "desunitizacao"
-    unitizacao = "unitizacao"
-    posicionamento_receita_federal = "posicionamento_receita_federal"
-    fornecimento_de_lacre = "fornecimento_de_lacre"
+    vistoria_receita_federal = "vistoria_receita_federal"
+    coleta_e_entrega_de_lacre = "coleta_e_entrega_de_lacre"
+    vistoria_mapa_coleta = "vistoria_mapa_coleta"
+    vistoria_anuentes = "vistoria_anuentes"
+    comex = "comex"
+    liberacao_retirada_de_bl_e_docs = "liberacao_retirada_de_bl_e_docs"
+    fornecimento_de_navio_oleo = "fornecimento_de_navio_oleo"
+    mapa_sistema = "mapa_sistema"
+    lpco_x_vistoria_x_cf_csi = "lpco_x_vistoria_x_cf_csi"
+    registro_despacho = "registro_despacho"
+    outros = "outros"
 
 
 class MapType(str, enum.Enum):

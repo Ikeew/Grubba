@@ -1,24 +1,30 @@
 import type { ClientSummary, RecordStatus, MapType } from './common'
 
 export type ExportService =
-  | 'scanner'
-  | 'pesagem'
-  | 'fotografia'
-  | 'colocacao_de_lacre'
-  | 'desunitizacao'
-  | 'unitizacao'
-  | 'posicionamento_receita_federal'
-  | 'fornecimento_de_lacre'
+  | 'vistoria_receita_federal'
+  | 'coleta_e_entrega_de_lacre'
+  | 'vistoria_mapa_coleta'
+  | 'vistoria_anuentes'
+  | 'comex'
+  | 'liberacao_retirada_de_bl_e_docs'
+  | 'fornecimento_de_navio_oleo'
+  | 'mapa_sistema'
+  | 'lpco_x_vistoria_x_cf_csi'
+  | 'registro_despacho'
+  | 'outros'
 
 export const EXPORT_SERVICE_LABELS: Record<ExportService, string> = {
-  scanner: 'Scanner',
-  pesagem: 'Pesagem',
-  fotografia: 'Fotografia',
-  colocacao_de_lacre: 'Colocação de Lacre',
-  desunitizacao: 'Desunitização',
-  unitizacao: 'Unitização',
-  posicionamento_receita_federal: 'Posicionamento Receita Federal',
-  fornecimento_de_lacre: 'Fornecimento de Lacre',
+  vistoria_receita_federal: 'Vistoria Receita Federal',
+  coleta_e_entrega_de_lacre: 'Coleta e Entrega de Lacre',
+  vistoria_mapa_coleta: 'Vistoria Mapa Coleta',
+  vistoria_anuentes: 'Vistoria Anuentes',
+  comex: 'Comex',
+  liberacao_retirada_de_bl_e_docs: 'Liberação/Retirada de BL e docs',
+  fornecimento_de_navio_oleo: 'Fornecimento de navio/óleo',
+  mapa_sistema: 'Mapa/Sistema',
+  lpco_x_vistoria_x_cf_csi: 'LPCO X Vistoria x CF/CSI',
+  registro_despacho: 'Registro Despacho',
+  outros: 'Outros',
 }
 
 export interface UserSummary {

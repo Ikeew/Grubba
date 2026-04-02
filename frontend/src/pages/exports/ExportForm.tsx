@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ClientCombobox } from '@/components/ui/ClientCombobox'
 import { EXPORT_SERVICE_LABELS, type ExportRecordPayload, type ExportService } from '@/types/export'
 import { STATUS_LABELS, MAP_TYPE_LABELS } from '@/utils/constants'
 
@@ -28,10 +29,7 @@ export default function ExportForm() {
   const createExport = useCreateExport()
   const updateExport = useUpdateExport(id ?? '')
 
-  const clientOptions = [
-    { value: '', label: 'Selecionar cliente...' },
-    ...(clients?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
-  ]
+  const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
 
   const {
     register,
@@ -112,10 +110,22 @@ export default function ExportForm() {
         <div className="form-section">
           <p className="form-section-title">Identificação</p>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Cliente *" options={clientOptions} error={errors.client_id?.message} {...register('client_id')} />
-            <Input label="Referência" {...register('reference')} />
-            <Input label="Data" type="date" {...register('date')} />
-            <Select label="Status" options={STATUS_OPTIONS} {...register('status')} />
+            <Controller
+              control={control}
+              name="client_id"
+              render={({ field }) => (
+                <ClientCombobox
+                  label="Cliente *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  clients={clientOptions}
+                  error={errors.client_id?.message}
+                />
+              )}
+            />
+            <Input label="Referência *" error={errors.reference?.message} {...register('reference')} />
+            <Input label="Data *" type="date" error={errors.date?.message} {...register('date')} />
+            <Select label="Status *" options={STATUS_OPTIONS} error={errors.status?.message} {...register('status')} />
           </div>
         </div>
 
@@ -124,7 +134,7 @@ export default function ExportForm() {
           <p className="form-section-title">Logística marítima</p>
           <div className="grid grid-cols-3 gap-4">
             <Input label="Navio" {...register('vessel')} />
-            <Input label="Porto" {...register('port')} />
+            <Input label="Porto *" error={errors.port?.message} {...register('port')} />
             <Input label="Armador" {...register('shipping_company')} />
             <Input label="Booking" {...register('booking')} />
             <Input label="LPCO" {...register('lpco')} />
@@ -138,7 +148,7 @@ export default function ExportForm() {
 
         {/* Serviços */}
         <div className="form-section">
-          <p className="form-section-title">Serviços solicitados</p>
+          <p className="form-section-title">Serviços solicitados *</p>
           <div className="grid grid-cols-2 gap-3">
             {ALL_SERVICES.map(([value, label]) => (
               <label key={value} className="flex items-center gap-2 cursor-pointer">
@@ -158,13 +168,16 @@ export default function ExportForm() {
               </label>
             ))}
           </div>
+          {errors.services && (
+            <p className="mt-1 text-sm text-red-600">{errors.services.message}</p>
+          )}
         </div>
 
         {/* Vistoria / Mapa */}
         <div className="form-section">
           <p className="form-section-title">Vistoria e liberação</p>
           <div className="grid grid-cols-3 gap-4">
-            <Select label="Tipo de mapa" options={MAP_OPTIONS} {...register('map_type')} />
+            <Select label="Tipo de mapa *" options={MAP_OPTIONS} error={errors.map_type?.message} {...register('map_type')} />
             <Input label="Unidade selecionada" {...register('selected_unit')} />
             <Input label="Novo lacre" {...register('new_seal')} />
             <Input label="Data da vistoria" type="date" {...register('inspection_date')} />

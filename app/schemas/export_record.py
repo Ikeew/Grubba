@@ -1,7 +1,7 @@
 import uuid
 from datetime import date as Date, datetime
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.models.export_record import ExportService, MapType, RecordStatus
 from app.schemas.client import ClientSummary
@@ -10,14 +10,14 @@ from app.schemas.user import UserSummary
 
 class ExportRecordCreate(BaseModel):
     client_id: uuid.UUID
-    reference: str | None = None
-    date: Date | None = None
+    reference: str
+    date: Date
     status: RecordStatus = RecordStatus.draft
 
     lpco: str | None = None
     vessel: str | None = None
     booking: str | None = None
-    port: str | None = None
+    port: str
     due_25br: str | None = None
     eta: Date | None = None
     ddl_carga: Date | None = None
@@ -25,8 +25,8 @@ class ExportRecordCreate(BaseModel):
     etb: Date | None = None
     et5: Date | None = None
 
-    services: list[ExportService] = []
-    map_type: MapType | None = None
+    services: list[ExportService] = Field(min_length=1)
+    map_type: MapType
     selected_unit: str | None = None
     new_seal: str | None = None
     inspection_date: Date | None = None

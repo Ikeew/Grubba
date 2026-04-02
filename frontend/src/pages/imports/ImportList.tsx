@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useImportList, useDeleteImport } from '@/hooks/useImports'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -19,19 +19,73 @@ const STATUS_OPTIONS = [
   ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
 ]
 
+type Period = 'today' | 'week' | 'month' | ''
+
+function getPeriodDates(period: Period): { date_from?: string; date_to?: string } {
+  if (!period) return {}
+  const today = new Date()
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  if (period === 'today') {
+    const s = fmt(today)
+    return { date_from: s, date_to: s }
+  }
+  if (period === 'week') {
+    const day = today.getDay() === 0 ? 6 : today.getDay() - 1
+    const mon = new Date(today)
+    mon.setDate(today.getDate() - day)
+    return { date_from: fmt(mon), date_to: fmt(today) }
+  }
+  // month
+  const start = new Date(today.getFullYear(), today.getMonth(), 1)
+  return { date_from: fmt(start), date_to: fmt(today) }
+}
+
 export default function ImportList() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<RecordStatus | ''>('')
+  const [period, setPeriod] = useState<Period>('')
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [toDelete, setToDelete] = useState<ImportRecord | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const { data, isLoading } = useImportList({ page, page_size: 20, status: status || undefined })
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(1)
+    }, 350)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchInput])
+
+  const { date_from, date_to } = getPeriodDates(period)
+
+  const { data, isLoading } = useImportList({
+    page,
+    page_size: 20,
+    status: status || undefined,
+    search: search || undefined,
+    date_from,
+    date_to,
+  })
   const deleteImport = useDeleteImport()
 
   async function handleDelete() {
     if (!toDelete) return
     await deleteImport.mutateAsync(toDelete.id)
     setToDelete(null)
+  }
+
+  function handlePeriod(p: Period) {
+    setPeriod((prev) => (prev === p ? '' : p))
+    setPage(1)
+  }
+
+  const PERIOD_LABELS: Record<Exclude<Period, ''>, string> = {
+    today: 'Hoje',
+    week: 'Esta semana',
+    month: 'Este mês',
   }
 
   return (
@@ -42,13 +96,35 @@ export default function ImportList() {
       />
 
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 flex gap-3">
+        <div className="px-4 py-3 border-b border-slate-200 flex flex-wrap gap-3 items-center">
+          <input
+            type="text"
+            placeholder="Buscar por cliente ou referência..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
+          />
           <Select
             options={STATUS_OPTIONS}
             value={status}
             onChange={(e) => { setStatus(e.target.value as RecordStatus | ''); setPage(1) }}
             className="w-48"
           />
+          <div className="flex gap-1">
+            {(['today', 'week', 'month'] as Exclude<Period, ''>[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => handlePeriod(p)}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  period === p
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {PERIOD_LABELS[p]}
+              </button>
+            ))}
+          </div>
         </div>
 
         {isLoading ? (

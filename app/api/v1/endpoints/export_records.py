@@ -45,12 +45,21 @@ def list_export_records(
     client_id: UUID | None = Query(default=None),
     status: RecordStatus | None = Query(default=None),
     collaborator_id: UUID | None = Query(default=None),
+    search: str | None = Query(default=None),
+    date_from: str | None = Query(default=None),
+    date_to: str | None = Query(default=None),
 ):
+    from datetime import date as Date
+    df = Date.fromisoformat(date_from) if date_from else None
+    dt = Date.fromisoformat(date_to) if date_to else None
     return _service(db).list_paginated(
         pagination,
         client_id=client_id,
         status=status,
         collaborator_id=collaborator_id,
+        search=search,
+        date_from=df,
+        date_to=dt,
     )
 
 

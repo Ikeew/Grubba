@@ -48,14 +48,21 @@ class ExportRecordService:
         client_id: UUID | None = None,
         status=None,
         collaborator_id: UUID | None = None,
+        search: str | None = None,
+        date_from=None,
+        date_to=None,
     ):
         total = self._records.count_with_filters(
-            client_id=client_id, status=status, collaborator_id=collaborator_id
+            client_id=client_id, status=status, collaborator_id=collaborator_id,
+            search=search, date_from=date_from, date_to=date_to,
         )
         items = self._records.list_with_filters(
             client_id=client_id,
             status=status,
             collaborator_id=collaborator_id,
+            search=search,
+            date_from=date_from,
+            date_to=date_to,
             offset=pagination.offset,
             limit=pagination.limit,
         )
