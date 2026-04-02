@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useImport, useCreateImport, useUpdateImport } from '@/hooks/useImports'
 import { useClientList } from '@/hooks/useClients'
@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { ClientCombobox } from '@/components/ui/ClientCombobox'
 import type { ImportRecordPayload } from '@/types/import'
 import { STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 
@@ -28,15 +29,13 @@ export default function ImportForm() {
   const createImport = useCreateImport()
   const updateImport = useUpdateImport(id ?? '')
 
-  const clientOptions = [
-    { value: '', label: 'Selecionar cliente...' },
-    ...(clients?.items ?? []).map((c) => ({ value: c.id, label: c.name })),
-  ]
+  const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ImportFormValues>({ resolver: zodResolver(importSchema) })
 
@@ -109,7 +108,19 @@ export default function ImportForm() {
         <div className="form-section">
           <p className="form-section-title">Identificação</p>
           <div className="grid grid-cols-2 gap-4">
-            <Select label="Cliente *" options={clientOptions} error={errors.client_id?.message} {...register('client_id')} />
+            <Controller
+              control={control}
+              name="client_id"
+              render={({ field }) => (
+                <ClientCombobox
+                  label="Cliente *"
+                  value={field.value}
+                  onChange={field.onChange}
+                  clients={clientOptions}
+                  error={errors.client_id?.message}
+                />
+              )}
+            />
             <Input label="Referência" {...register('reference')} />
             <Input label="Data" type="date" {...register('date')} />
             <Select label="Status" options={STATUS_OPTIONS} {...register('status')} />

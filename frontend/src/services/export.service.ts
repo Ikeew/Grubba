@@ -8,6 +8,9 @@ interface ListParams {
   client_id?: string
   status?: RecordStatus
   collaborator_id?: string
+  search?: string
+  date_from?: string
+  date_to?: string
 }
 
 export const exportService = {

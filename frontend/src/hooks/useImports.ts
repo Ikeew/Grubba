@@ -14,6 +14,9 @@ export function useImportList(params: {
   page_size?: number
   client_id?: string
   status?: RecordStatus
+  search?: string
+  date_from?: string
+  date_to?: string
 } = {}) {
   return useQuery({
     queryKey: IMPORT_KEYS.list(params),
