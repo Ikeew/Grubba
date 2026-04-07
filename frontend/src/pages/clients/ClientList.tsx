@@ -55,29 +55,24 @@ export default function ClientList() {
             </thead>
             <tbody>
               {data.items.map((client) => (
-                <tr key={client.id} className="table-row">
+                <tr
+                  key={client.id}
+                  className="table-row cursor-pointer"
+                  onDoubleClick={() => navigate(`/clients/${client.id}`)}
+                >
                   <td className="table-cell font-medium">{client.name}</td>
                   <td className="table-cell text-slate-500">{client.cnpj ?? '—'}</td>
                   <td className="table-cell text-slate-500">{client.email ?? '—'}</td>
                   <td className="table-cell text-slate-500">{client.phone ?? '—'}</td>
                   <td className="table-cell">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => navigate(`/clients/${client.id}/edit`)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => setToDelete(client)}
-                      >
-                        Remover
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => setToDelete(client)}
+                    >
+                      Remover
+                    </Button>
                   </td>
                 </tr>
               ))}

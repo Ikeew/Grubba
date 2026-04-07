@@ -50,6 +50,10 @@ export default function ImportDetail() {
     setNewNote('')
   }
 
+  function handlePrint() {
+    window.print()
+  }
+
   if (isLoading) return <div className="flex justify-center py-12"><Spinner /></div>
   if (!record) return <p className="text-slate-500">Ficha não encontrada.</p>
 
@@ -58,6 +62,7 @@ export default function ImportDetail() {
       <PageHeader
         title={`Importação — ${record.reference ?? record.id.slice(0, 8)}`}
         backTo="/imports"
+        secondaryAction={{ label: 'Baixar PDF', onClick: handlePrint }}
         action={{ label: 'Editar', onClick: () => navigate(`/imports/${id}/edit`) }}
       />
 
@@ -145,7 +150,7 @@ export default function ImportDetail() {
       <div className="form-section">
         <div className="flex items-center justify-between mb-3">
           <p className="form-section-title !pb-0 !border-0">Arquivos anexados</p>
-          <div>
+          <div className="no-print">
             <input
               ref={fileInputRef}
               type="file"
@@ -205,7 +210,7 @@ export default function ImportDetail() {
             </div>
           )) : <p className="text-sm text-slate-400">Nenhuma nota registrada.</p>}
         </div>
-        <div className="flex gap-3">
+        <div className="no-print flex gap-3">
           <Textarea value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Nova nota..." rows={2} className="flex-1" />
           <Button onClick={handleAddNote} loading={createNote.isPending} className="self-end">Adicionar</Button>
         </div>

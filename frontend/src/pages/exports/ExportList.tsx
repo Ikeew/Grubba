@@ -146,7 +146,11 @@ export default function ExportList() {
             </thead>
             <tbody>
               {data.items.map((record) => (
-                <tr key={record.id} className="table-row">
+                <tr
+                  key={record.id}
+                  className="table-row cursor-pointer"
+                  onDoubleClick={() => navigate(`/exports/${record.id}`)}
+                >
                   <td className="table-cell font-medium">{record.reference ?? '—'}</td>
                   <td className="table-cell">{record.client.name}</td>
                   <td className="table-cell text-slate-500">{formatDate(record.date)}</td>
@@ -154,21 +158,13 @@ export default function ExportList() {
                   <td className="table-cell text-slate-500">{record.port ?? '—'}</td>
                   <td className="table-cell"><StatusBadge status={record.status} /></td>
                   <td className="table-cell">
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost" onClick={() => navigate(`/exports/${record.id}`)}>
-                        Ver
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => navigate(`/exports/${record.id}/edit`)}>
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm" variant="ghost"
-                        className="text-red-500"
-                        onClick={() => setToDelete(record)}
-                      >
-                        ×
-                      </Button>
-                    </div>
+                    <Button
+                      size="sm" variant="ghost"
+                      className="text-red-500"
+                      onClick={() => setToDelete(record)}
+                    >
+                      ×
+                    </Button>
                   </td>
                 </tr>
               ))}

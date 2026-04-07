@@ -8,6 +8,7 @@ import Dashboard from '@/pages/Dashboard'
 
 import ClientList from '@/pages/clients/ClientList'
 import ClientForm from '@/pages/clients/ClientForm'
+import ClientDetail from '@/pages/clients/ClientDetail'
 
 import ExportList from '@/pages/exports/ExportList'
 import ExportForm from '@/pages/exports/ExportForm'
@@ -32,6 +33,7 @@ export const router = createBrowserRouter([
           { path: '/dashboard', element: <Dashboard /> },
           { path: '/clients', element: <ClientList /> },
           { path: '/clients/new', element: <ClientForm /> },
+          { path: '/clients/:id', element: <ClientDetail /> },
           { path: '/clients/:id/edit', element: <ClientForm /> },
           { path: '/exports', element: <ExportList /> },
           { path: '/exports/new', element: <ExportForm /> },

@@ -9,9 +9,13 @@ interface PageHeaderProps {
     label: string
     onClick: () => void
   }
+  secondaryAction?: {
+    label: string
+    onClick: () => void
+  }
 }
 
-export function PageHeader({ title, description, backTo, action }: PageHeaderProps) {
+export function PageHeader({ title, description, backTo, action, secondaryAction }: PageHeaderProps) {
   const navigate = useNavigate()
 
   return (
@@ -20,7 +24,7 @@ export function PageHeader({ title, description, backTo, action }: PageHeaderPro
         {backTo && (
           <button
             onClick={() => navigate(backTo)}
-            className="mt-0.5 text-slate-400 hover:text-slate-600 transition-colors"
+            className="no-print mt-0.5 text-slate-400 hover:text-slate-600 transition-colors"
             aria-label="Voltar"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -33,8 +37,15 @@ export function PageHeader({ title, description, backTo, action }: PageHeaderPro
           {description && <p className="mt-0.5 text-sm text-slate-500">{description}</p>}
         </div>
       </div>
-      {action && (
-        <Button onClick={action.onClick}>{action.label}</Button>
+      {(action || secondaryAction) && (
+        <div className="no-print flex items-center gap-2">
+          {secondaryAction && (
+            <Button variant="secondary" onClick={secondaryAction.onClick}>{secondaryAction.label}</Button>
+          )}
+          {action && (
+            <Button onClick={action.onClick}>{action.label}</Button>
+          )}
+        </div>
       )}
     </div>
   )

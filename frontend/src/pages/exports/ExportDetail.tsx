@@ -32,6 +32,10 @@ export default function ExportDetail() {
   const createNote = useCreateNote({ exportRecordId: id })
   const deleteNote = useDeleteNote({ exportRecordId: id })
 
+  function handlePrint() {
+    window.print()
+  }
+
   async function handleAddNote() {
     if (!newNote.trim()) return
     await createNote.mutateAsync({ content: newNote, export_record_id: id })
@@ -46,6 +50,7 @@ export default function ExportDetail() {
       <PageHeader
         title={`Exportação — ${record.reference ?? record.id.slice(0, 8)}`}
         backTo="/exports"
+        secondaryAction={{ label: 'Baixar PDF', onClick: handlePrint }}
         action={{ label: 'Editar', onClick: () => navigate(`/exports/${id}/edit`) }}
       />
 
@@ -130,7 +135,7 @@ export default function ExportDetail() {
             </div>
           )) : <p className="text-sm text-slate-400">Nenhuma nota registrada.</p>}
         </div>
-        <div className="flex gap-3">
+        <div className="no-print flex gap-3">
           <Textarea
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
