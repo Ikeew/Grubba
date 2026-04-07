@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useExport, useCreateExport, useUpdateExport } from '@/hooks/useExports'
@@ -23,6 +24,7 @@ export default function ExportForm() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEditing = !!id
+  const { user } = useAuth()
 
   const { data: record, isLoading: loadingRecord } = useExport(id ?? '')
   const { data: clients } = useClientList({ page_size: 100 })
@@ -40,6 +42,13 @@ export default function ExportForm() {
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<ExportFormValues>({ resolver: zodResolver(exportSchema) })
+
+  // Auto-fill collaborator_id with logged-in user when creating
+  useEffect(() => {
+    if (!isEditing && user) {
+      setValue('collaborator_id', user.id)
+    }
+  }, [isEditing, user, setValue])
 
   useEffect(() => {
     if (record) {

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.models.export_record import RecordStatus
+from app.models.user import UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
@@ -52,6 +53,9 @@ def list_export_records(
     from datetime import date as Date
     df = Date.fromisoformat(date_from) if date_from else None
     dt = Date.fromisoformat(date_to) if date_to else None
+    # Collaborators can only see their own records
+    if current_user.role != UserRole.admin:
+        collaborator_id = current_user.id
     return _service(db).list_paginated(
         pagination,
         client_id=client_id,
@@ -65,9 +69,9 @@ def list_export_records(
 
 @router.get("/{record_id}", response_model=ExportRecordResponse, summary="Get export record by ID")
 def get_export_record(
-    record_id: UUID, db: DbSession, _: CurrentUser
+    record_id: UUID, db: DbSession, current_user: CurrentUser
 ) -> ExportRecordResponse:
-    record = _service(db).get_or_404(record_id)
+    record = _service(db).get_or_404(record_id, current_user)
     return ExportRecordResponse.model_validate(record)
 
 
@@ -80,8 +84,8 @@ def update_export_record(
 
 
 @router.delete("/{record_id}", status_code=204, summary="Delete export record")
-def delete_export_record(record_id: UUID, db: DbSession, _: CurrentUser) -> None:
-    _service(db).delete(record_id)
+def delete_export_record(record_id: UUID, db: DbSession, current_user: CurrentUser) -> None:
+    _service(db).delete(record_id, current_user)
 
 
 @router.get(

@@ -11,6 +11,7 @@ import { formatDate, formatDateTime, formatFieldName } from '@/utils/format'
 import { MAP_TYPE_LABELS } from '@/utils/constants'
 import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
 import { useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
 function DetailRow({ label, value }: { label: string; value?: string | null }) {
   return (
@@ -26,6 +27,7 @@ export default function ExportDetail() {
   const navigate = useNavigate()
   const [newNote, setNewNote] = useState('')
 
+  const { user } = useAuth()
   const { data: record, isLoading } = useExport(id!)
   const { data: notes } = useExportNotes(id!)
   const { data: history } = useExportHistory(id!)
@@ -51,7 +53,11 @@ export default function ExportDetail() {
         title={`Exportação — ${record.reference ?? record.id.slice(0, 8)}`}
         backTo="/exports"
         secondaryAction={{ label: 'Baixar PDF', onClick: handlePrint }}
-        action={{ label: 'Editar', onClick: () => navigate(`/exports/${id}/edit`) }}
+        action={
+          user?.role === 'admin' || record.collaborator?.id === user?.id
+            ? { label: 'Editar', onClick: () => navigate(`/exports/${id}/edit`) }
+            : undefined
+        }
       />
 
       {/* Status bar */}

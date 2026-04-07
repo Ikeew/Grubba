@@ -2,9 +2,9 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models.export_record import ExportRecord
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
@@ -24,21 +24,30 @@ class ExportRecordService:
         self._clients = client_repo
         self._history = HistoryService(history_repo)
 
+    def _check_access(self, record: ExportRecord, current_user: User) -> None:
+        if current_user.role != UserRole.admin and record.collaborator_id != current_user.id:
+            raise ForbiddenError("Você não tem permissão para acessar esta ficha")
+
     def create(self, payload: ExportRecordCreate, current_user: User) -> ExportRecord:
         client = self._clients.get_by_id(payload.client_id)
         if not client:
             raise NotFoundError("Client")
 
         data = payload.model_dump()
+        # Collaborators always own their records; admins can assign freely
+        if current_user.role != UserRole.admin or not data.get("collaborator_id"):
+            data["collaborator_id"] = current_user.id
         data["services"] = [s.value for s in (data.get("services") or [])]
         record = ExportRecord(**data)
         created = self._records.create(record)
         return self._records.get_with_relations(created.id)  # type: ignore[return-value]
 
-    def get_or_404(self, record_id: UUID) -> ExportRecord:
+    def get_or_404(self, record_id: UUID, current_user: User | None = None) -> ExportRecord:
         record = self._records.get_with_relations(record_id)
         if not record:
             raise NotFoundError("Export record")
+        if current_user is not None:
+            self._check_access(record, current_user)
         return record
 
     def list_paginated(
@@ -69,7 +78,7 @@ class ExportRecordService:
         return paginate(items, total, pagination)
 
     def update(self, record_id: UUID, payload: ExportRecordUpdate, current_user: User) -> ExportRecord:
-        record = self.get_or_404(record_id)
+        record = self.get_or_404(record_id, current_user)
 
         # Snapshot for history diffing
         old_data = {col: getattr(record, col) for col in payload.model_fields}
@@ -92,6 +101,6 @@ class ExportRecordService:
         )
         return self._records.get_with_relations(record_id)  # type: ignore[return-value]
 
-    def delete(self, record_id: UUID) -> None:
-        record = self.get_or_404(record_id)
+    def delete(self, record_id: UUID, current_user: User) -> None:
+        record = self.get_or_404(record_id, current_user)
         self._records.delete(record)
