@@ -5,6 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useExport, useCreateExport, useUpdateExport } from '@/hooks/useExports'
 import { useClientList } from '@/hooks/useClients'
+import { useUserList } from '@/hooks/useUsers'
 import { exportSchema, type ExportFormValues } from '@/schemas/export.schema'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
@@ -26,12 +27,20 @@ export default function ExportForm() {
   const isEditing = !!id
   const { user } = useAuth()
 
+  const isAdmin = user?.role === 'admin'
+  const today = new Date().toISOString().slice(0, 10)
+
   const { data: record, isLoading: loadingRecord } = useExport(id ?? '')
   const { data: clients } = useClientList({ page_size: 100 })
+  const { data: users } = useUserList(isAdmin)
   const createExport = useCreateExport()
   const updateExport = useUpdateExport(id ?? '')
 
   const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const userOptions = [
+    { value: '', label: 'Selecionar responsável...' },
+    ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
+  ]
 
   const {
     register,
@@ -41,7 +50,10 @@ export default function ExportForm() {
     watch,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<ExportFormValues>({ resolver: zodResolver(exportSchema) })
+  } = useForm<ExportFormValues>({
+    resolver: zodResolver(exportSchema),
+    defaultValues: { date: today },
+  })
 
   // Auto-fill collaborator_id with logged-in user when creating
   useEffect(() => {
@@ -133,8 +145,22 @@ export default function ExportForm() {
               )}
             />
             <Input label="Referência *" error={errors.reference?.message} {...register('reference')} />
-            <Input label="Data *" type="date" error={errors.date?.message} {...register('date')} />
+            <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status *" options={STATUS_OPTIONS} error={errors.status?.message} {...register('status')} />
+            {isAdmin ? (
+              <Select
+                label="Responsável"
+                options={userOptions}
+                {...register('collaborator_id')}
+              />
+            ) : (
+              <Input
+                label="Responsável"
+                value={user?.full_name ?? ''}
+                disabled
+                readOnly
+              />
+            )}
           </div>
         </div>
 

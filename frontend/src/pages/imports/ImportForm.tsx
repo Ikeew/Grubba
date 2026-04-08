@@ -5,6 +5,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useImport, useCreateImport, useUpdateImport } from '@/hooks/useImports'
 import { useClientList } from '@/hooks/useClients'
+import { useUserList } from '@/hooks/useUsers'
 import { importSchema, type ImportFormValues } from '@/schemas/import.schema'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
@@ -26,12 +27,20 @@ export default function ImportForm() {
   const isEditing = !!id
   const { user } = useAuth()
 
+  const isAdmin = user?.role === 'admin'
+  const today = new Date().toISOString().slice(0, 10)
+
   const { data: record, isLoading: loadingRecord } = useImport(id ?? '')
   const { data: clients } = useClientList({ page_size: 100 })
+  const { data: users } = useUserList(isAdmin)
   const createImport = useCreateImport()
   const updateImport = useUpdateImport(id ?? '')
 
   const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const userOptions = [
+    { value: '', label: 'Selecionar responsável...' },
+    ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
+  ]
 
   const {
     register,
@@ -40,7 +49,10 @@ export default function ImportForm() {
     control,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<ImportFormValues>({ resolver: zodResolver(importSchema) })
+  } = useForm<ImportFormValues>({
+    resolver: zodResolver(importSchema),
+    defaultValues: { date: today },
+  })
 
   // Auto-fill collaborator_id with logged-in user when creating
   useEffect(() => {
@@ -132,10 +144,24 @@ export default function ImportForm() {
               )}
             />
             <Input label="Referência" {...register('reference')} />
-            <Input label="Data" type="date" {...register('date')} />
+            <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status" options={STATUS_OPTIONS} {...register('status')} />
             <Select label="Modalidade" options={MODALITY_OPTIONS} {...register('modality')} />
             <Input label="Importador" {...register('importer')} />
+            {isAdmin ? (
+              <Select
+                label="Responsável"
+                options={userOptions}
+                {...register('collaborator_id')}
+              />
+            ) : (
+              <Input
+                label="Responsável"
+                value={user?.full_name ?? ''}
+                disabled
+                readOnly
+              />
+            )}
           </div>
         </div>
 
