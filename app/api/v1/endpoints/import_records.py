@@ -55,7 +55,7 @@ def list_import_records(
     dt = Date.fromisoformat(date_to) if date_to else None
     if current_user.role != UserRole.admin:
         collaborator_id = current_user.id
-    return _service(db).list_paginated(
+    result = _service(db).list_paginated(
         pagination,
         current_user,
         client_id=client_id,
@@ -64,6 +64,14 @@ def list_import_records(
         search=search,
         date_from=df,
         date_to=dt,
+    )
+    from app.schemas.common import PaginatedResponse as PR
+    return PR(
+        items=[ImportRecordResponse.model_validate(item) for item in result.items],
+        total=result.total,
+        page=result.page,
+        page_size=result.page_size,
+        pages=result.pages,
     )
 
 

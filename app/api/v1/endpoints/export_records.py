@@ -56,7 +56,7 @@ def list_export_records(
     # Collaborators can only see their own records
     if current_user.role != UserRole.admin:
         collaborator_id = current_user.id
-    return _service(db).list_paginated(
+    result = _service(db).list_paginated(
         pagination,
         current_user,
         client_id=client_id,
@@ -65,6 +65,14 @@ def list_export_records(
         search=search,
         date_from=df,
         date_to=dt,
+    )
+    from app.schemas.common import PaginatedResponse as PR
+    return PR(
+        items=[ExportRecordResponse.model_validate(item) for item in result.items],
+        total=result.total,
+        page=result.page,
+        page_size=result.page_size,
+        pages=result.pages,
     )
 
 
