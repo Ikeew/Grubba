@@ -30,6 +30,7 @@ export interface ImportRecord {
   map_type: MapType | null
   map_packaging_released: boolean
   selected_unit: string | null
+  inspection_date: string | null
   cargo_presence_date: string | null
   released_at: string | null
   comex_informed_date: string | null
@@ -70,6 +71,7 @@ export interface ImportRecordPayload {
   map_type?: MapType
   map_packaging_released?: boolean
   selected_unit?: string
+  inspection_date?: string
   cargo_presence_date?: string
   released_at?: string
   comex_informed_date?: string

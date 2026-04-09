@@ -84,7 +84,6 @@ export default function ImportForm() {
         eta: record.eta ?? '',
         etb: record.etb ?? '',
         containers: record.containers ?? '',
-        carrier: record.carrier ?? '',
         local_ioa: record.local_ioa ?? '',
         lpco_packaging: record.lpco_packaging ?? '',
         lpco_number: record.lpco_number ?? '',
@@ -93,6 +92,7 @@ export default function ImportForm() {
         modality: record.modality ?? '',
         map_packaging_released: record.map_packaging_released,
         selected_unit: record.selected_unit ?? '',
+        inspection_date: record.inspection_date ?? '',
         cargo_presence_date: record.cargo_presence_date ?? '',
         released_at: record.released_at ?? '',
         comex_informed_date: record.comex_informed_date ?? '',
@@ -202,7 +202,6 @@ export default function ImportForm() {
             <Input label="Armador" {...register('shipping_company')} />
             <Input label="ETA" type="date" {...register('eta')} />
             <Input label="ETB" type="date" {...register('etb')} />
-            <Input label="Transportadora" {...register('carrier')} />
             <div className="col-span-3">
               <Textarea label="Containers" rows={2} {...register('containers')} />
             </div>
@@ -220,6 +219,7 @@ export default function ImportForm() {
             <Input label="Número LPCO" {...register('lpco_number')} />
             <Select label="Tipo de mapa" options={MAP_OPTIONS} {...register('map_type')} />
             <Input label="Unidade selecionada" {...register('selected_unit')} />
+            <Input label="Data de vistoria" type="date" {...register('inspection_date')} />
             <label className="flex items-center gap-2 col-span-2 mt-6">
               <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600" {...register('map_packaging_released')} />
               <span className="text-sm text-slate-700">Mapa embalagem liberado</span>

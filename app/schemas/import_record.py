@@ -40,6 +40,7 @@ class ImportRecordCreate(BaseModel):
     map_packaging_released: bool = False
     selected_unit: str | None = None
 
+    inspection_date: Date | None = None
     cargo_presence_date: Date | None = None
     released_at: Date | None = None
     comex_informed_date: Date | None = None
@@ -81,6 +82,7 @@ class ImportRecordUpdate(BaseModel):
     map_packaging_released: bool | None = None
     selected_unit: str | None = None
 
+    inspection_date: Date | None = None
     cargo_presence_date: Date | None = None
     released_at: Date | None = None
     comex_informed_date: Date | None = None
@@ -125,6 +127,7 @@ class ImportRecordResponse(BaseModel):
     map_packaging_released: bool
     selected_unit: str | None
 
+    inspection_date: Date | None
     cargo_presence_date: Date | None
     released_at: Date | None
     comex_informed_date: Date | None

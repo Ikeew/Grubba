@@ -1,16 +1,17 @@
+import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useExport } from '@/hooks/useExports'
 import { useExportNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes'
 import { useExportHistory } from '@/hooks/useHistory'
+import { useExportFiles, useUploadExportFile, useDeleteExportFile } from '@/hooks/useExportFiles'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
-import { formatDate, formatDateTime, formatFieldName } from '@/utils/format'
+import { formatDate, formatDateTime, formatFileSize, formatFieldName } from '@/utils/format'
 import { MAP_TYPE_LABELS } from '@/utils/constants'
 import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
-import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 
 function DetailRow({ label, value }: { label: string; value?: string | null }) {
@@ -25,14 +26,25 @@ function DetailRow({ label, value }: { label: string; value?: string | null }) {
 export default function ExportDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [newNote, setNewNote] = useState('')
 
   const { user } = useAuth()
   const { data: record, isLoading } = useExport(id!)
   const { data: notes } = useExportNotes(id!)
   const { data: history } = useExportHistory(id!)
+  const { data: files } = useExportFiles(id!)
+  const uploadFile = useUploadExportFile(id!)
+  const deleteFile = useDeleteExportFile(id!)
   const createNote = useCreateNote({ exportRecordId: id })
   const deleteNote = useDeleteNote({ exportRecordId: id })
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await uploadFile.mutateAsync(file)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   function handlePrint() {
     window.print()
@@ -122,6 +134,54 @@ export default function ExportDetail() {
           <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.observations}</p>
         </div>
       )}
+
+      {/* Arquivos */}
+      <div className="form-section">
+        <div className="flex items-center justify-between mb-3">
+          <p className="form-section-title !pb-0 !border-0">Arquivos anexados</p>
+          <div className="no-print">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={uploadFile.isPending}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Anexar arquivo
+            </Button>
+          </div>
+        </div>
+        {files?.length ? (
+          <div className="divide-y divide-slate-100">
+            {files.map((file) => (
+              <div key={file.id} className="flex items-center justify-between py-2.5">
+                <div>
+                  <p className="text-sm font-medium text-slate-700">{file.original_filename}</p>
+                  <p className="text-xs text-slate-400">
+                    {formatFileSize(file.file_size)} · {formatDateTime(file.created_at)}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-400"
+                  onClick={() => deleteFile.mutate(file.id)}
+                  loading={deleteFile.isPending}
+                >
+                  Remover
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400">Nenhum arquivo anexado.</p>
+        )}
+      </div>
 
       {/* Notes */}
       <div className="form-section">

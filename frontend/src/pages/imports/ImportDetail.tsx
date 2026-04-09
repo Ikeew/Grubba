@@ -108,7 +108,6 @@ export default function ImportDetail() {
             <DetailRow label="Armador" value={record.shipping_company} />
             <DetailRow label="ETA" value={formatDate(record.eta)} />
             <DetailRow label="ETB" value={formatDate(record.etb)} />
-            <DetailRow label="Transportadora" value={record.carrier} />
             <div className="col-span-2">
               <DetailRow label="Containers" value={record.containers} />
             </div>
@@ -126,6 +125,7 @@ export default function ImportDetail() {
             <DetailRow label="Número LPCO" value={record.lpco_number} />
             <DetailRow label="Tipo de mapa" value={record.map_type ? MAP_TYPE_LABELS[record.map_type] : null} />
             <DetailRow label="Unidade selecionada" value={record.selected_unit} />
+            <DetailRow label="Data de vistoria" value={formatDate(record.inspection_date)} />
             <DetailRow label="Mapa embalagem liberado" value={record.map_packaging_released} />
           </dl>
         </div>

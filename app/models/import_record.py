@@ -86,6 +86,7 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     local_ioa: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # --- Inspection / LPCO ---
+    inspection_date: Mapped[date | None] = mapped_column(Date, nullable=True)          # data_vistoria
     lpco_packaging: Mapped[str | None] = mapped_column(String(100), nullable=True)     # lpco_embalagem
     lpco_number: Mapped[str | None] = mapped_column(String(100), nullable=True)        # numero_lpco
     map_type: Mapped[MapType | None] = mapped_column(Enum(MapType, name="map_type"), nullable=True)

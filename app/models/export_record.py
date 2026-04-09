@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from app.models.note import Note
     from app.models.update_history import UpdateHistory
     from app.models.port import Port
+    from app.models.export_file import ExportFile
 
 
 class ExportService(str, enum.Enum):
@@ -121,6 +122,9 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     flagged_by: Mapped[list["User"]] = relationship(
         secondary=export_record_flags,
         backref="flagged_exports",
+    )
+    files: Mapped[list["ExportFile"]] = relationship(
+        back_populates="export_record", cascade="all, delete-orphan"
     )
     notes: Mapped[list["Note"]] = relationship(
         back_populates="export_record",

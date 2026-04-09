@@ -155,7 +155,7 @@ export default function ExportList() {
               {data.items.map((record) => (
                 <tr
                   key={record.id}
-                  className="table-row cursor-pointer"
+                  className={`table-row cursor-pointer ${isFlagged(record) ? 'bg-red-50 hover:bg-red-100' : ''}`}
                   onDoubleClick={() => navigate(`/exports/${record.id}`)}
                 >
                   <td className="table-cell">

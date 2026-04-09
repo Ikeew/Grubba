@@ -32,6 +32,7 @@ export const importSchema = z.object({
   map_type: z.union([z.enum(['vegetal', 'animal']), z.literal('')]).optional(),
   map_packaging_released: z.boolean().default(false),
   selected_unit: z.string().optional(),
+  inspection_date: z.string().optional(),
   cargo_presence_date: z.string().optional(),
   released_at: z.string().optional(),
   comex_informed_date: z.string().optional(),
