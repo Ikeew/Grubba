@@ -104,7 +104,7 @@ export default function ImportDetail() {
           <p className="form-section-title">Logística</p>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Navio" value={record.vessel} />
-            <DetailRow label="Porto" value={record.port} />
+            <DetailRow label="Porto" value={record.port?.name ?? null} />
             <DetailRow label="Armador" value={record.shipping_company} />
             <DetailRow label="ETA" value={formatDate(record.eta)} />
             <DetailRow label="ETB" value={formatDate(record.etb)} />
