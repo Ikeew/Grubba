@@ -12,6 +12,31 @@ export interface ClientSummary {
   cnpj: string | null
 }
 
-export type RecordStatus = 'draft' | 'in_progress' | 'completed' | 'cancelled'
+export interface PortSummary {
+  id: string
+  name: string
+}
+
+export type ExportStatus =
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'protocolado'
+  | 'agendado_inspecao'
+  | 'aguardando_certificado'
+  | 'deferido'
+  | 'embarcado_aguardando_documento'
+  | 'aguardando_autorizacao_lacre'
+
+export type ImportStatus =
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'aguardando_chegada_navio'
+  | 'mapa_tfa'
+  | 'comex_solicitado'
+  | 'faturamento_solicitado'
+  | 'agendamento'
+
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'collaborator'

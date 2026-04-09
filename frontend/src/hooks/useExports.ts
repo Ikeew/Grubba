@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { exportService } from '@/services/export.service'
 import type { ExportRecordPayload } from '@/types/export'
-import type { RecordStatus } from '@/types/common'
+import type { ExportStatus } from '@/types/common'
 
 export const EXPORT_KEYS = {
   all: ['exports'] as const,
@@ -13,7 +13,7 @@ export function useExportList(params: {
   page?: number
   page_size?: number
   client_id?: string
-  status?: RecordStatus
+  status?: ExportStatus
   search?: string
   date_from?: string
   date_to?: string
@@ -55,6 +55,14 @@ export function useDeleteExport() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => exportService.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
+  })
+}
+
+export function useToggleExportFlag() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => exportService.toggleFlag(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
   })
 }

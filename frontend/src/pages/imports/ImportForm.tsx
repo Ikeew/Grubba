@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useImport, useCreateImport, useUpdateImport } from '@/hooks/useImports'
 import { useClientList } from '@/hooks/useClients'
 import { useUserList } from '@/hooks/useUsers'
+import { usePortList } from '@/hooks/usePorts'
 import { importSchema, type ImportFormValues } from '@/schemas/import.schema'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
@@ -14,10 +15,11 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ClientCombobox } from '@/components/ui/ClientCombobox'
+import { PortCombobox } from '@/components/ui/PortCombobox'
 import type { ImportRecordPayload } from '@/types/import'
-import { STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
+import { IMPORT_STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 
-const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
+const STATUS_OPTIONS = Object.entries(IMPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 const MAP_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MAP_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))]
 const MODALITY_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MODALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))]
 
@@ -33,10 +35,12 @@ export default function ImportForm() {
   const { data: record, isLoading: loadingRecord } = useImport(id ?? '')
   const { data: clients } = useClientList({ page_size: 100 })
   const { data: users } = useUserList(isAdmin)
+  const { data: ports } = usePortList()
   const createImport = useCreateImport()
   const updateImport = useUpdateImport(id ?? '')
 
   const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const portOptions = (ports ?? []).map((p) => ({ value: p.id, label: p.name }))
   const userOptions = [
     { value: '', label: 'Selecionar responsável...' },
     ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
@@ -54,7 +58,6 @@ export default function ImportForm() {
     defaultValues: { date: today },
   })
 
-  // Auto-fill collaborator_id with logged-in user when creating
   useEffect(() => {
     if (!isEditing && user) {
       setValue('collaborator_id', user.id)
@@ -77,7 +80,7 @@ export default function ImportForm() {
         dtc: record.dtc ?? '',
         shipping_company: record.shipping_company ?? '',
         vessel: record.vessel ?? '',
-        port: record.port ?? '',
+        port_id: record.port_id ?? '',
         eta: record.eta ?? '',
         etb: record.etb ?? '',
         containers: record.containers ?? '',
@@ -183,7 +186,19 @@ export default function ImportForm() {
           <p className="form-section-title">Logística</p>
           <div className="grid grid-cols-3 gap-4">
             <Input label="Navio" {...register('vessel')} />
-            <Input label="Porto" {...register('port')} />
+            <Controller
+              control={control}
+              name="port_id"
+              render={({ field }) => (
+                <PortCombobox
+                  label="Porto de Entrada"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  ports={portOptions}
+                  canCreate={isAdmin}
+                />
+              )}
+            />
             <Input label="Armador" {...register('shipping_company')} />
             <Input label="ETA" type="date" {...register('eta')} />
             <Input label="ETB" type="date" {...register('etb')} />
@@ -192,7 +207,7 @@ export default function ImportForm() {
               <Textarea label="Containers" rows={2} {...register('containers')} />
             </div>
             <div className="col-span-3">
-              <Input label="Local (IOA / CLIF / Portonave / JBS / Itajaí / Outros)" {...register('local_ioa')} />
+              <Input label="Local de armazenamento" {...register('local_ioa')} />
             </div>
           </div>
         </div>

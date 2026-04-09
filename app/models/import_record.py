@@ -3,13 +3,13 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.export_record import MapType, RecordStatus
+from app.models.export_record import MapType
 
 if TYPE_CHECKING:
     from app.models.client import Client
@@ -17,11 +17,32 @@ if TYPE_CHECKING:
     from app.models.import_file import ImportFile
     from app.models.note import Note
     from app.models.update_history import UpdateHistory
+    from app.models.port import Port
 
 
 class Modality(str, enum.Enum):
     maritimo = "maritimo"
     aereo = "aereo"
+
+
+class ImportStatus(str, enum.Enum):
+    in_progress = "in_progress"
+    completed = "completed"
+    cancelled = "cancelled"
+    aguardando_chegada_navio = "aguardando_chegada_navio"
+    mapa_tfa = "mapa_tfa"
+    comex_solicitado = "comex_solicitado"
+    faturamento_solicitado = "faturamento_solicitado"
+    agendamento = "agendamento"
+
+
+# Junction table for import record flags (per-user)
+import_record_flags = Table(
+    "import_record_flags",
+    Base.metadata,
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("import_record_id", UUID(as_uuid=True), ForeignKey("import_records.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -34,12 +55,15 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     collaborator_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+    port_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ports.id"), nullable=True
+    )
 
     # --- Core fields ---
     reference: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    status: Mapped[RecordStatus] = mapped_column(
-        Enum(RecordStatus, name="record_status"), nullable=False, default=RecordStatus.draft
+    status: Mapped[ImportStatus] = mapped_column(
+        Enum(ImportStatus, name="import_status"), nullable=False, default=ImportStatus.in_progress
     )
     modality: Mapped[Modality | None] = mapped_column(Enum(Modality, name="modality"), nullable=True)
 
@@ -55,7 +79,6 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # --- Logistics / shipping ---
     shipping_company: Mapped[str | None] = mapped_column(String(150), nullable=True)   # armador
     vessel: Mapped[str | None] = mapped_column(String(150), nullable=True)             # navio
-    port: Mapped[str | None] = mapped_column(String(150), nullable=True)               # porto
     eta: Mapped[date | None] = mapped_column(Date, nullable=True)
     etb: Mapped[date | None] = mapped_column(Date, nullable=True)
     containers: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -84,6 +107,11 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     client: Mapped["Client"] = relationship(back_populates="import_records")
     collaborator: Mapped["User | None"] = relationship(
         back_populates="import_records", foreign_keys=[collaborator_id]
+    )
+    port: Mapped["Port | None"] = relationship()
+    flagged_by: Mapped[list["User"]] = relationship(
+        secondary=import_record_flags,
+        backref="flagged_imports",
     )
     files: Mapped[list["ImportFile"]] = relationship(
         back_populates="import_record", cascade="all, delete-orphan"

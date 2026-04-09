@@ -1,4 +1,4 @@
-import type { ClientSummary, RecordStatus, MapType } from './common'
+import type { ClientSummary, ExportStatus, MapType, PortSummary } from './common'
 
 export type ExportService =
   | 'vistoria_receita_federal'
@@ -38,11 +38,12 @@ export interface ExportRecord {
   id: string
   reference: string | null
   date: string | null
-  status: RecordStatus
+  status: ExportStatus
   lpco: string | null
   vessel: string | null
   booking: string | null
-  port: string | null
+  port_id: string | null
+  port: PortSummary | null
   due_25br: string | null
   eta: string | null
   ddl_carga: string | null
@@ -50,6 +51,7 @@ export interface ExportRecord {
   etb: string | null
   et5: string | null
   services: ExportService[]
+  flagged_by_ids: string[]
   map_type: MapType | null
   selected_unit: string | null
   new_seal: string | null
@@ -67,11 +69,11 @@ export interface ExportRecordPayload {
   client_id: string
   reference?: string
   date?: string
-  status?: RecordStatus
+  status?: ExportStatus
   lpco?: string
   vessel?: string
   booking?: string
-  port?: string
+  port_id?: string
   due_25br?: string
   eta?: string
   ddl_carga?: string

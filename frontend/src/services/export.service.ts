@@ -1,12 +1,12 @@
 import { api } from '@/lib/axios'
 import type { ExportRecord, ExportRecordPayload } from '@/types/export'
-import type { PaginatedResponse, RecordStatus } from '@/types/common'
+import type { ExportStatus, PaginatedResponse } from '@/types/common'
 
 interface ListParams {
   page?: number
   page_size?: number
   client_id?: string
-  status?: RecordStatus
+  status?: ExportStatus
   collaborator_id?: string
   search?: string
   date_from?: string
@@ -36,5 +36,10 @@ export const exportService = {
 
   async remove(id: string): Promise<void> {
     await api.delete(`/export-records/${id}`)
+  },
+
+  async toggleFlag(id: string): Promise<{ flagged: boolean }> {
+    const { data } = await api.post<{ flagged: boolean }>(`/export-records/${id}/flag`)
+    return data
   },
 }

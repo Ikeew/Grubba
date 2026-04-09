@@ -1,4 +1,4 @@
-import type { ClientSummary, RecordStatus, MapType } from './common'
+import type { ClientSummary, ImportStatus, MapType, PortSummary } from './common'
 import type { UserSummary } from './export'
 
 export type Modality = 'maritimo' | 'aereo'
@@ -7,7 +7,7 @@ export interface ImportRecord {
   id: string
   reference: string | null
   date: string | null
-  status: RecordStatus
+  status: ImportStatus
   modality: Modality | null
   importer: string | null
   ce_mercante: string | null
@@ -18,7 +18,8 @@ export interface ImportRecord {
   dtc: string | null
   shipping_company: string | null
   vessel: string | null
-  port: string | null
+  port_id: string | null
+  port: PortSummary | null
   eta: string | null
   etb: string | null
   containers: string | null
@@ -36,6 +37,7 @@ export interface ImportRecord {
   guide_sent: boolean
   finalized_at: string | null
   observations: string | null
+  flagged_by_ids: string[]
   client: ClientSummary
   collaborator: UserSummary | null
   created_at: string
@@ -46,7 +48,7 @@ export interface ImportRecordPayload {
   client_id: string
   reference?: string
   date?: string
-  status?: RecordStatus
+  status?: ImportStatus
   modality?: Modality
   importer?: string
   ce_mercante?: string
@@ -57,7 +59,7 @@ export interface ImportRecordPayload {
   dtc?: string
   shipping_company?: string
   vessel?: string
-  port?: string
+  port_id?: string
   eta?: string
   etb?: string
   containers?: string

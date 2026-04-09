@@ -2,12 +2,11 @@ import uuid
 from datetime import date
 from typing import Any
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.client import Client
-from app.models.export_record import RecordStatus
-from app.models.import_record import ImportRecord
+from app.models.import_record import ImportRecord, ImportStatus, import_record_flags
 from app.repositories.base import BaseRepository
 
 
@@ -24,6 +23,8 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
             .options(
                 joinedload(ImportRecord.client),
                 joinedload(ImportRecord.collaborator),
+                joinedload(ImportRecord.port),
+                joinedload(ImportRecord.flagged_by),
             )
         )
         return self.db.scalar(stmt)
@@ -31,8 +32,10 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
     def list_with_filters(
         self,
         *,
+        current_user_id: uuid.UUID,
+        is_admin: bool,
         client_id: uuid.UUID | None = None,
-        status: RecordStatus | None = None,
+        status: ImportStatus | None = None,
         collaborator_id: uuid.UUID | None = None,
         search: str | None = None,
         date_from: date | None = None,
@@ -43,16 +46,19 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         stmt = select(ImportRecord).options(
             joinedload(ImportRecord.client),
             joinedload(ImportRecord.collaborator),
+            joinedload(ImportRecord.port),
+            joinedload(ImportRecord.flagged_by),
         )
         stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to)
-        stmt = stmt.order_by(ImportRecord.created_at.desc()).offset(offset).limit(limit)
+        stmt = self._apply_ordering(stmt, current_user_id, is_admin)
+        stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).unique().all())
 
     def count_with_filters(
         self,
         *,
         client_id: uuid.UUID | None = None,
-        status: RecordStatus | None = None,
+        status: ImportStatus | None = None,
         collaborator_id: uuid.UUID | None = None,
         search: str | None = None,
         date_from: date | None = None,
@@ -90,3 +96,56 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         if date_to is not None:
             stmt = stmt.where(ImportRecord.date <= date_to)
         return stmt
+
+    def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:
+        flagged_by_me = (
+            select(import_record_flags.c.import_record_id)
+            .where(import_record_flags.c.user_id == current_user_id)
+            .scalar_subquery()
+        )
+        is_flagged_by_me = ImportRecord.id.in_(flagged_by_me)
+
+        if is_admin:
+            flagged_by_anyone = (
+                select(import_record_flags.c.import_record_id)
+                .scalar_subquery()
+            )
+            is_flagged_by_anyone = ImportRecord.id.in_(flagged_by_anyone)
+
+            sort_key = case(
+                (is_flagged_by_me, 0),
+                (ImportRecord.collaborator_id == current_user_id, 1),
+                (is_flagged_by_anyone, 2),
+                else_=3,
+            )
+        else:
+            sort_key = case(
+                (is_flagged_by_me, 0),
+                else_=1,
+            )
+
+        return stmt.order_by(sort_key, ImportRecord.created_at.desc())
+
+    def toggle_flag(self, record_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+        """Toggle flag for user. Returns True if flagged, False if unflagged."""
+        existing = self.db.execute(
+            select(import_record_flags).where(
+                import_record_flags.c.user_id == user_id,
+                import_record_flags.c.import_record_id == record_id,
+            )
+        ).first()
+        if existing:
+            self.db.execute(
+                import_record_flags.delete().where(
+                    import_record_flags.c.user_id == user_id,
+                    import_record_flags.c.import_record_id == record_id,
+                )
+            )
+            self.db.flush()
+            return False
+        else:
+            self.db.execute(
+                import_record_flags.insert().values(user_id=user_id, import_record_id=record_id)
+            )
+            self.db.flush()
+            return True

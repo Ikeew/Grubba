@@ -32,7 +32,6 @@ class ImportRecordService:
             raise NotFoundError("Client")
 
         data = payload.model_dump()
-        # Collaborators always own their records; admins can assign freely
         if current_user.role != UserRole.admin or not data.get("collaborator_id"):
             data["collaborator_id"] = current_user.id
         record = ImportRecord(**data)
@@ -50,6 +49,7 @@ class ImportRecordService:
     def list_paginated(
         self,
         pagination: PaginationParams,
+        current_user: User,
         *,
         client_id: UUID | None = None,
         status=None,
@@ -58,11 +58,14 @@ class ImportRecordService:
         date_from=None,
         date_to=None,
     ):
+        is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
             search=search, date_from=date_from, date_to=date_to,
         )
         items = self._records.list_with_filters(
+            current_user_id=current_user.id,
+            is_admin=is_admin,
             client_id=client_id,
             status=status,
             collaborator_id=collaborator_id,
@@ -93,6 +96,12 @@ class ImportRecordService:
             changed_by_id=current_user.id,
         )
         return self._records.get_with_relations(record_id)  # type: ignore[return-value]
+
+    def toggle_flag(self, record_id: UUID, current_user: User) -> bool:
+        record = self._records.get_with_relations(record_id)
+        if not record:
+            raise NotFoundError("Import record")
+        return self._records.toggle_flag(record_id, current_user.id)
 
     def delete(self, record_id: UUID, current_user: User) -> None:
         record = self.get_or_404(record_id, current_user)

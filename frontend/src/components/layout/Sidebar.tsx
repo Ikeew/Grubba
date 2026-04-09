@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface NavItem {
   to: string
   label: string
+  adminOnly?: boolean
   icon: React.ReactNode
 }
 
@@ -22,6 +24,16 @@ const NAV_ITEMS: NavItem[] = [
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+      </svg>
+    ),
+  },
+  {
+    to: '/ports',
+    label: 'Portos',
+    adminOnly: true,
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
       </svg>
     ),
   },
@@ -46,6 +58,11 @@ const NAV_ITEMS: NavItem[] = [
 ]
 
 export function Sidebar() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+
+  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin)
+
   return (
     <aside className="w-56 flex-shrink-0 bg-slate-900 text-slate-100 flex flex-col min-h-screen">
       <div className="px-5 py-5 border-b border-slate-700">
@@ -54,7 +71,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

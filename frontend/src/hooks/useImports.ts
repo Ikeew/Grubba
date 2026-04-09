@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { importService } from '@/services/import.service'
 import type { ImportRecordPayload } from '@/types/import'
-import type { RecordStatus } from '@/types/common'
+import type { ImportStatus } from '@/types/common'
 
 export const IMPORT_KEYS = {
   all: ['imports'] as const,
@@ -13,7 +13,7 @@ export function useImportList(params: {
   page?: number
   page_size?: number
   client_id?: string
-  status?: RecordStatus
+  status?: ImportStatus
   search?: string
   date_from?: string
   date_to?: string
@@ -55,6 +55,14 @@ export function useDeleteImport() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => importService.remove(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: IMPORT_KEYS.all }),
+  })
+}
+
+export function useToggleImportFlag() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => importService.toggleFlag(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: IMPORT_KEYS.all }),
   })
 }

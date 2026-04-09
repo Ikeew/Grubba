@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useExportList, useDeleteExport } from '@/hooks/useExports'
+import { useAuth } from '@/contexts/AuthContext'
+import { useExportList, useDeleteExport, useToggleExportFlag } from '@/hooks/useExports'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/shared/Pagination'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -10,13 +11,13 @@ import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/utils/format'
-import { STATUS_LABELS } from '@/utils/constants'
+import { EXPORT_STATUS_LABELS } from '@/utils/constants'
 import type { ExportRecord } from '@/types/export'
-import type { RecordStatus } from '@/types/common'
+import type { ExportStatus } from '@/types/common'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos os status' },
-  ...Object.entries(STATUS_LABELS).map(([value, label]) => ({ value, label })),
+  ...Object.entries(EXPORT_STATUS_LABELS).map(([value, label]) => ({ value, label })),
 ]
 
 type Period = 'today' | 'week' | 'month' | ''
@@ -35,15 +36,15 @@ function getPeriodDates(period: Period): { date_from?: string; date_to?: string 
     mon.setDate(today.getDate() - day)
     return { date_from: fmt(mon), date_to: fmt(today) }
   }
-  // month
   const start = new Date(today.getFullYear(), today.getMonth(), 1)
   return { date_from: fmt(start), date_to: fmt(today) }
 }
 
 export default function ExportList() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [page, setPage] = useState(1)
-  const [status, setStatus] = useState<RecordStatus | ''>('')
+  const [status, setStatus] = useState<ExportStatus | ''>('')
   const [period, setPeriod] = useState<Period>('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -70,6 +71,7 @@ export default function ExportList() {
     date_to,
   })
   const deleteExport = useDeleteExport()
+  const toggleFlag = useToggleExportFlag()
 
   async function handleDelete() {
     if (!toDelete) return
@@ -86,6 +88,10 @@ export default function ExportList() {
     today: 'Hoje',
     week: 'Esta semana',
     month: 'Este mês',
+  }
+
+  function isFlagged(record: ExportRecord) {
+    return user ? record.flagged_by_ids.includes(user.id) : false
   }
 
   return (
@@ -107,8 +113,8 @@ export default function ExportList() {
           <Select
             options={STATUS_OPTIONS}
             value={status}
-            onChange={(e) => { setStatus(e.target.value as RecordStatus | ''); setPage(1) }}
-            className="w-48"
+            onChange={(e) => { setStatus(e.target.value as ExportStatus | ''); setPage(1) }}
+            className="w-56"
           />
           <div className="flex gap-1">
             {(['today', 'week', 'month'] as Exclude<Period, ''>[]).map((p) => (
@@ -135,13 +141,14 @@ export default function ExportList() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                <th className="table-header-cell w-8"></th>
                 <th className="table-header-cell">Referência</th>
                 <th className="table-header-cell">Cliente</th>
                 <th className="table-header-cell">Data</th>
                 <th className="table-header-cell">Navio</th>
                 <th className="table-header-cell">Porto</th>
                 <th className="table-header-cell">Status</th>
-                <th className="table-header-cell w-36">Ações</th>
+                <th className="table-header-cell w-24">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -151,11 +158,21 @@ export default function ExportList() {
                   className="table-row cursor-pointer"
                   onDoubleClick={() => navigate(`/exports/${record.id}`)}
                 >
+                  <td className="table-cell">
+                    <button
+                      type="button"
+                      title={isFlagged(record) ? 'Remover bandeira' : 'Marcar como importante'}
+                      onClick={() => toggleFlag.mutate(record.id)}
+                      className="text-lg leading-none focus:outline-none"
+                    >
+                      {isFlagged(record) ? '🚩' : <span className="text-slate-300 hover:text-red-400">⚑</span>}
+                    </button>
+                  </td>
                   <td className="table-cell font-medium">{record.reference ?? '—'}</td>
                   <td className="table-cell">{record.client.name}</td>
                   <td className="table-cell text-slate-500">{formatDate(record.date)}</td>
                   <td className="table-cell text-slate-500">{record.vessel ?? '—'}</td>
-                  <td className="table-cell text-slate-500">{record.port ?? '—'}</td>
+                  <td className="table-cell text-slate-500">{record.port?.name ?? '—'}</td>
                   <td className="table-cell"><StatusBadge status={record.status} /></td>
                   <td className="table-cell">
                     <Button

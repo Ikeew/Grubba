@@ -1,11 +1,12 @@
 import uuid
 from datetime import date as Date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from app.models.export_record import MapType, RecordStatus
-from app.models.import_record import Modality
+from app.models.export_record import MapType
+from app.models.import_record import ImportStatus, Modality
 from app.schemas.client import ClientSummary
+from app.schemas.export_record import PortSummary
 from app.schemas.user import UserSummary
 
 
@@ -13,7 +14,7 @@ class ImportRecordCreate(BaseModel):
     client_id: uuid.UUID
     reference: str | None = None
     date: Date | None = None
-    status: RecordStatus = RecordStatus.draft
+    status: ImportStatus = ImportStatus.in_progress
     modality: Modality | None = None
 
     importer: str | None = None
@@ -26,7 +27,7 @@ class ImportRecordCreate(BaseModel):
 
     shipping_company: str | None = None
     vessel: str | None = None
-    port: str | None = None
+    port_id: uuid.UUID | None = None
     eta: Date | None = None
     etb: Date | None = None
     containers: str | None = None
@@ -54,7 +55,7 @@ class ImportRecordUpdate(BaseModel):
     client_id: uuid.UUID | None = None
     reference: str | None = None
     date: Date | None = None
-    status: RecordStatus | None = None
+    status: ImportStatus | None = None
     modality: Modality | None = None
 
     importer: str | None = None
@@ -67,7 +68,7 @@ class ImportRecordUpdate(BaseModel):
 
     shipping_company: str | None = None
     vessel: str | None = None
-    port: str | None = None
+    port_id: uuid.UUID | None = None
     eta: Date | None = None
     etb: Date | None = None
     containers: str | None = None
@@ -97,7 +98,7 @@ class ImportRecordResponse(BaseModel):
     id: uuid.UUID
     reference: str | None
     date: Date | None
-    status: RecordStatus
+    status: ImportStatus
     modality: Modality | None
 
     importer: str | None
@@ -110,7 +111,8 @@ class ImportRecordResponse(BaseModel):
 
     shipping_company: str | None
     vessel: str | None
-    port: str | None
+    port_id: uuid.UUID | None
+    port: PortSummary | None
     eta: Date | None
     etb: Date | None
     containers: str | None
@@ -133,6 +135,14 @@ class ImportRecordResponse(BaseModel):
 
     client: ClientSummary
     collaborator: UserSummary | None
+    flagged_by_ids: list[uuid.UUID] = Field(default_factory=list)
 
     created_at: datetime
     updated_at: datetime
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        instance = super().model_validate(obj, **kwargs)
+        if hasattr(obj, "flagged_by"):
+            instance.flagged_by_ids = [u.id for u in obj.flagged_by]
+        return instance

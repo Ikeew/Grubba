@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Table, Text, Column
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.user import User
     from app.models.note import Note
     from app.models.update_history import UpdateHistory
+    from app.models.port import Port
 
 
 class ExportService(str, enum.Enum):
@@ -36,11 +37,33 @@ class MapType(str, enum.Enum):
     animal = "animal"
 
 
+class ExportStatus(str, enum.Enum):
+    in_progress = "in_progress"
+    completed = "completed"
+    cancelled = "cancelled"
+    protocolado = "protocolado"
+    agendado_inspecao = "agendado_inspecao"
+    aguardando_certificado = "aguardando_certificado"
+    deferido = "deferido"
+    embarcado_aguardando_documento = "embarcado_aguardando_documento"
+    aguardando_autorizacao_lacre = "aguardando_autorizacao_lacre"
+
+
+# Keep for backward compatibility (import_record still uses it in the DB enum name)
 class RecordStatus(str, enum.Enum):
     draft = "draft"
     in_progress = "in_progress"
     completed = "completed"
     cancelled = "cancelled"
+
+
+# Junction table for export record flags (per-user)
+export_record_flags = Table(
+    "export_record_flags",
+    Base.metadata,
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+    Column("export_record_id", UUID(as_uuid=True), ForeignKey("export_records.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -53,19 +76,21 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     collaborator_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
+    port_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("ports.id"), nullable=True
+    )
 
     # --- Core fields ---
     reference: Mapped[str | None] = mapped_column(String(100), nullable=True, index=True)
     date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    status: Mapped[RecordStatus] = mapped_column(
-        Enum(RecordStatus, name="record_status"), nullable=False, default=RecordStatus.draft
+    status: Mapped[ExportStatus] = mapped_column(
+        Enum(ExportStatus, name="export_status"), nullable=False, default=ExportStatus.in_progress
     )
 
     # --- Shipping / logistics ---
     lpco: Mapped[str | None] = mapped_column(String(100), nullable=True)
     vessel: Mapped[str | None] = mapped_column(String(150), nullable=True)       # navio
     booking: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    port: Mapped[str | None] = mapped_column(String(150), nullable=True)         # porto
     due_25br: Mapped[str | None] = mapped_column(String(100), nullable=True)
     eta: Mapped[date | None] = mapped_column(Date, nullable=True)
     ddl_carga: Mapped[date | None] = mapped_column(Date, nullable=True)
@@ -74,8 +99,6 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     et5: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # --- Services (multi-select stored as PostgreSQL ARRAY of strings) ---
-    # Decision: Using ARRAY(String) for native PostgreSQL array semantics.
-    # Allows efficient ANY() queries without full JSON deserialization.
     services: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
 
     # --- Inspection / release ---
@@ -93,6 +116,11 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     client: Mapped["Client"] = relationship(back_populates="export_records")
     collaborator: Mapped["User | None"] = relationship(
         back_populates="export_records", foreign_keys=[collaborator_id]
+    )
+    port: Mapped["Port | None"] = relationship()
+    flagged_by: Mapped[list["User"]] = relationship(
+        secondary=export_record_flags,
+        backref="flagged_exports",
     )
     notes: Mapped[list["Note"]] = relationship(
         back_populates="export_record",

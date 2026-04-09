@@ -1,10 +1,16 @@
 import { z } from 'zod'
 
+const IMPORT_STATUSES = [
+  'in_progress', 'completed', 'cancelled',
+  'aguardando_chegada_navio', 'mapa_tfa', 'comex_solicitado',
+  'faturamento_solicitado', 'agendamento',
+] as const
+
 export const importSchema = z.object({
   client_id: z.string().min(1, 'Cliente obrigatório'),
   reference: z.string().optional(),
   date: z.string().optional(),
-  status: z.enum(['draft', 'in_progress', 'completed', 'cancelled']).default('draft'),
+  status: z.enum(IMPORT_STATUSES).default('in_progress'),
   modality: z.union([z.enum(['maritimo', 'aereo']), z.literal('')]).optional(),
   importer: z.string().optional(),
   ce_mercante: z.string().optional(),
@@ -15,7 +21,7 @@ export const importSchema = z.object({
   dtc: z.string().optional(),
   shipping_company: z.string().optional(),
   vessel: z.string().optional(),
-  port: z.string().optional(),
+  port_id: z.string().optional(),
   eta: z.string().optional(),
   etb: z.string().optional(),
   containers: z.string().optional(),

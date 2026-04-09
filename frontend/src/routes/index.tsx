@@ -10,6 +10,9 @@ import ClientList from '@/pages/clients/ClientList'
 import ClientForm from '@/pages/clients/ClientForm'
 import ClientDetail from '@/pages/clients/ClientDetail'
 
+import PortList from '@/pages/ports/PortList'
+import PortForm from '@/pages/ports/PortForm'
+
 import ExportList from '@/pages/exports/ExportList'
 import ExportForm from '@/pages/exports/ExportForm'
 import ExportDetail from '@/pages/exports/ExportDetail'
@@ -35,6 +38,9 @@ export const router = createBrowserRouter([
           { path: '/clients/new', element: <ClientForm /> },
           { path: '/clients/:id', element: <ClientDetail /> },
           { path: '/clients/:id/edit', element: <ClientForm /> },
+          { path: '/ports', element: <PortList /> },
+          { path: '/ports/new', element: <PortForm /> },
+          { path: '/ports/:id/edit', element: <PortForm /> },
           { path: '/exports', element: <ExportList /> },
           { path: '/exports/new', element: <ExportForm /> },
           { path: '/exports/:id', element: <ExportDetail /> },

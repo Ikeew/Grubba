@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
-from app.models.export_record import RecordStatus
+from app.models.export_record import ExportStatus
 from app.models.user import UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
@@ -44,7 +44,7 @@ def list_export_records(
     current_user: CurrentUser,
     pagination: Pagination,
     client_id: UUID | None = Query(default=None),
-    status: RecordStatus | None = Query(default=None),
+    status: ExportStatus | None = Query(default=None),
     collaborator_id: UUID | None = Query(default=None),
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),
@@ -58,6 +58,7 @@ def list_export_records(
         collaborator_id = current_user.id
     return _service(db).list_paginated(
         pagination,
+        current_user,
         client_id=client_id,
         status=status,
         collaborator_id=collaborator_id,
@@ -81,6 +82,12 @@ def update_export_record(
 ) -> ExportRecordResponse:
     record = _service(db).update(record_id, payload, current_user)
     return ExportRecordResponse.model_validate(record)
+
+
+@router.post("/{record_id}/flag", summary="Toggle flag on export record")
+def toggle_export_flag(record_id: UUID, db: DbSession, current_user: CurrentUser) -> dict:
+    flagged = _service(db).toggle_flag(record_id, current_user)
+    return {"flagged": flagged}
 
 
 @router.delete("/{record_id}", status_code=204, summary="Delete export record")

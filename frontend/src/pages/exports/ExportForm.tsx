@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useExport, useCreateExport, useUpdateExport } from '@/hooks/useExports'
 import { useClientList } from '@/hooks/useClients'
 import { useUserList } from '@/hooks/useUsers'
+import { usePortList } from '@/hooks/usePorts'
 import { exportSchema, type ExportFormValues } from '@/schemas/export.schema'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Input } from '@/components/ui/Input'
@@ -14,10 +15,11 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ClientCombobox } from '@/components/ui/ClientCombobox'
+import { PortCombobox } from '@/components/ui/PortCombobox'
 import { EXPORT_SERVICE_LABELS, type ExportRecordPayload, type ExportService } from '@/types/export'
-import { STATUS_LABELS, MAP_TYPE_LABELS } from '@/utils/constants'
+import { EXPORT_STATUS_LABELS, MAP_TYPE_LABELS } from '@/utils/constants'
 
-const STATUS_OPTIONS = Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
+const STATUS_OPTIONS = Object.entries(EXPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 const MAP_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MAP_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))]
 const ALL_SERVICES = Object.entries(EXPORT_SERVICE_LABELS) as [ExportService, string][]
 
@@ -33,10 +35,12 @@ export default function ExportForm() {
   const { data: record, isLoading: loadingRecord } = useExport(id ?? '')
   const { data: clients } = useClientList({ page_size: 100 })
   const { data: users } = useUserList(isAdmin)
+  const { data: ports } = usePortList()
   const createExport = useCreateExport()
   const updateExport = useUpdateExport(id ?? '')
 
   const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
+  const portOptions = (ports ?? []).map((p) => ({ value: p.id, label: p.name }))
   const userOptions = [
     { value: '', label: 'Selecionar responsável...' },
     ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
@@ -55,7 +59,6 @@ export default function ExportForm() {
     defaultValues: { date: today },
   })
 
-  // Auto-fill collaborator_id with logged-in user when creating
   useEffect(() => {
     if (!isEditing && user) {
       setValue('collaborator_id', user.id)
@@ -72,7 +75,7 @@ export default function ExportForm() {
         lpco: record.lpco ?? '',
         vessel: record.vessel ?? '',
         booking: record.booking ?? '',
-        port: record.port ?? '',
+        port_id: record.port_id ?? '',
         due_25br: record.due_25br ?? '',
         eta: record.eta ?? '',
         ddl_carga: record.ddl_carga ?? '',
@@ -169,7 +172,19 @@ export default function ExportForm() {
           <p className="form-section-title">Logística marítima</p>
           <div className="grid grid-cols-3 gap-4">
             <Input label="Navio" {...register('vessel')} />
-            <Input label="Porto *" error={errors.port?.message} {...register('port')} />
+            <Controller
+              control={control}
+              name="port_id"
+              render={({ field }) => (
+                <PortCombobox
+                  label="Porto"
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  ports={portOptions}
+                  canCreate={isAdmin}
+                />
+              )}
+            />
             <Input label="Armador" {...register('shipping_company')} />
             <Input label="Booking" {...register('booking')} />
             <Input label="LPCO" {...register('lpco')} />
