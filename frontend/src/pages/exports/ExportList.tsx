@@ -48,6 +48,8 @@ export default function ExportList() {
   const [period, setPeriod] = useState<Period>('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
+  const [etbFrom, setEtbFrom] = useState('')
+  const [etbTo, setEtbTo] = useState('')
   const [toDelete, setToDelete] = useState<ExportRecord | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -69,6 +71,8 @@ export default function ExportList() {
     search: search || undefined,
     date_from,
     date_to,
+    etb_from: etbFrom || undefined,
+    etb_to: etbTo || undefined,
   })
   const deleteExport = useDeleteExport()
   const toggleFlag = useToggleExportFlag()
@@ -130,6 +134,22 @@ export default function ExportList() {
                 {PERIOD_LABELS[p]}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 whitespace-nowrap">ETB:</span>
+            <input
+              type="date"
+              value={etbFrom}
+              onChange={(e) => { setEtbFrom(e.target.value); setPage(1) }}
+              className="border border-slate-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            />
+            <span className="text-sm text-slate-400">–</span>
+            <input
+              type="date"
+              value={etbTo}
+              onChange={(e) => { setEtbTo(e.target.value); setPage(1) }}
+              className="border border-slate-300 rounded-md px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+            />
           </div>
         </div>
 

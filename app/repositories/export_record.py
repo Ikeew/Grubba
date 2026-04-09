@@ -40,6 +40,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         search: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        etb_from: date | None = None,
+        etb_to: date | None = None,
         offset: int = 0,
         limit: int = 20,
     ) -> list[ExportRecord]:
@@ -49,7 +51,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             joinedload(ExportRecord.port),
             joinedload(ExportRecord.flagged_by),
         )
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to, etb_from, etb_to)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
         stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).unique().all())
@@ -63,9 +65,11 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         search: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
+        etb_from: date | None = None,
+        etb_to: date | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(ExportRecord)
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to, etb_from, etb_to)
         return self.db.scalar(stmt) or 0
 
     def _apply_filters(
@@ -77,6 +81,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         search: str | None,
         date_from: date | None,
         date_to: date | None,
+        etb_from: date | None = None,
+        etb_to: date | None = None,
     ) -> Any:
         if search is not None:
             stmt = stmt.join(Client, ExportRecord.client_id == Client.id).where(
@@ -95,6 +101,10 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             stmt = stmt.where(ExportRecord.date >= date_from)
         if date_to is not None:
             stmt = stmt.where(ExportRecord.date <= date_to)
+        if etb_from is not None:
+            stmt = stmt.where(ExportRecord.etb >= etb_from)
+        if etb_to is not None:
+            stmt = stmt.where(ExportRecord.etb <= etb_to)
         return stmt
 
     def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:

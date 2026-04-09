@@ -49,10 +49,14 @@ def list_export_records(
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
+    etb_from: str | None = Query(default=None),
+    etb_to: str | None = Query(default=None),
 ):
     from datetime import date as Date
     df = Date.fromisoformat(date_from) if date_from else None
     dt = Date.fromisoformat(date_to) if date_to else None
+    ef = Date.fromisoformat(etb_from) if etb_from else None
+    et = Date.fromisoformat(etb_to) if etb_to else None
     # Collaborators can only see their own records
     if current_user.role != UserRole.admin:
         collaborator_id = current_user.id
@@ -65,6 +69,8 @@ def list_export_records(
         search=search,
         date_from=df,
         date_to=dt,
+        etb_from=ef,
+        etb_to=et,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

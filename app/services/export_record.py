@@ -59,11 +59,14 @@ class ExportRecordService:
         search: str | None = None,
         date_from=None,
         date_to=None,
+        etb_from=None,
+        etb_to=None,
     ):
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
             search=search, date_from=date_from, date_to=date_to,
+            etb_from=etb_from, etb_to=etb_to,
         )
         items = self._records.list_with_filters(
             current_user_id=current_user.id,
@@ -74,6 +77,8 @@ class ExportRecordService:
             search=search,
             date_from=date_from,
             date_to=date_to,
+            etb_from=etb_from,
+            etb_to=etb_to,
             offset=pagination.offset,
             limit=pagination.limit,
         )

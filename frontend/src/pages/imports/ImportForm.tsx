@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useForm, Controller } from 'react-hook-form'
@@ -18,6 +18,7 @@ import { ClientCombobox } from '@/components/ui/ClientCombobox'
 import { PortCombobox } from '@/components/ui/PortCombobox'
 import type { ImportRecordPayload } from '@/types/import'
 import { IMPORT_STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
+import { parseApiError } from '@/utils/parseApiError'
 
 const STATUS_OPTIONS = Object.entries(IMPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 const MAP_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MAP_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))]
@@ -28,6 +29,7 @@ export default function ImportForm() {
   const { id } = useParams()
   const isEditing = !!id
   const { user } = useAuth()
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const isAdmin = user?.role === 'admin'
   const today = new Date().toISOString().slice(0, 10)
@@ -105,16 +107,21 @@ export default function ImportForm() {
   }, [record, reset])
 
   async function onSubmit(values: ImportFormValues) {
+    setSubmitError(null)
     const clean = Object.fromEntries(
       Object.entries(values).filter(([, v]) => v !== '' && v !== undefined),
     ) as Partial<ImportRecordPayload>
 
-    if (isEditing) {
-      await updateImport.mutateAsync(clean)
-    } else {
-      await createImport.mutateAsync({ ...clean, client_id: values.client_id } as ImportRecordPayload)
+    try {
+      if (isEditing) {
+        await updateImport.mutateAsync(clean)
+      } else {
+        await createImport.mutateAsync({ ...clean, client_id: values.client_id } as ImportRecordPayload)
+      }
+      navigate('/imports')
+    } catch (err) {
+      setSubmitError(parseApiError(err))
     }
-    navigate('/imports')
   }
 
   if (isEditing && loadingRecord) {
@@ -251,6 +258,12 @@ export default function ImportForm() {
           <p className="form-section-title">Observações</p>
           <Textarea label="Observações" rows={4} {...register('observations')} />
         </div>
+
+        {submitError && (
+          <div className="rounded-md bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        )}
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={() => navigate('/imports')}>

@@ -27,6 +27,7 @@ export type ExportStatus =
   | 'deferido'
   | 'embarcado_aguardando_documento'
   | 'aguardando_autorizacao_lacre'
+  | 'aguardando_chegada_navio'
 
 export type ImportStatus =
   | 'in_progress'
