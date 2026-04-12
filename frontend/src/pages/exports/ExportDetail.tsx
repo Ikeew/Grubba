@@ -77,6 +77,9 @@ export default function ExportDetail() {
         <StatusBadge status={record.status} />
         <span className="text-sm text-slate-500">Cliente: <strong className="text-slate-800">{record.client.name}</strong></span>
         <span className="text-sm text-slate-500">Data: <strong className="text-slate-800">{formatDate(record.date)}</strong></span>
+        {record.cargo_type && (
+          <span className="text-sm text-slate-500">Tipo: <strong className="text-slate-800">{record.cargo_type}</strong></span>
+        )}
         {record.collaborator && (
           <span className="text-sm text-slate-500">Colaborador: <strong className="text-slate-800">{record.collaborator.full_name}</strong></span>
         )}

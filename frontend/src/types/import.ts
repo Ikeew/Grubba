@@ -9,6 +9,7 @@ export interface ImportRecord {
   date: string | null
   status: ImportStatus
   modality: Modality | null
+  cargo_type: string | null
   importer: string | null
   ce_mercante: string | null
   awb_bl: string | null
@@ -79,5 +80,6 @@ export interface ImportRecordPayload {
   guide_sent?: boolean
   finalized_at?: string
   collaborator_id?: string
+  cargo_type?: string
   observations?: string
 }

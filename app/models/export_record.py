@@ -49,6 +49,7 @@ class ExportStatus(str, enum.Enum):
     embarcado_aguardando_documento = "embarcado_aguardando_documento"
     aguardando_autorizacao_lacre = "aguardando_autorizacao_lacre"
     aguardando_chegada_navio = "aguardando_chegada_navio"
+    aguardando_mais_informacoes = "aguardando_mais_informacoes"
 
 
 # Keep for backward compatibility (import_record still uses it in the DB enum name)
@@ -88,6 +89,9 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[ExportStatus] = mapped_column(
         Enum(ExportStatus, name="export_status"), nullable=False, default=ExportStatus.in_progress
     )
+
+    # --- Identification ---
+    cargo_type: Mapped[str | None] = mapped_column(String(10), nullable=True)          # FCL ou LCL
 
     # --- Shipping / logistics ---
     lpco: Mapped[str | None] = mapped_column(String(100), nullable=True)

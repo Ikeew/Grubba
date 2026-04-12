@@ -28,6 +28,7 @@ export type ExportStatus =
   | 'embarcado_aguardando_documento'
   | 'aguardando_autorizacao_lacre'
   | 'aguardando_chegada_navio'
+  | 'aguardando_mais_informacoes'
 
 export type ImportStatus =
   | 'in_progress'
@@ -38,6 +39,8 @@ export type ImportStatus =
   | 'comex_solicitado'
   | 'faturamento_solicitado'
   | 'agendamento'
+  | 'aguardando_data_vistoria'
+  | 'aguardando_mais_informacoes'
 
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'collaborator'

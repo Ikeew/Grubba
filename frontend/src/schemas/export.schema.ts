@@ -4,7 +4,7 @@ const EXPORT_STATUSES = [
   'in_progress', 'completed', 'cancelled',
   'protocolado', 'agendado_inspecao', 'aguardando_certificado',
   'deferido', 'embarcado_aguardando_documento', 'aguardando_autorizacao_lacre',
-  'aguardando_chegada_navio',
+  'aguardando_chegada_navio', 'aguardando_mais_informacoes',
 ] as const
 
 export const exportSchema = z.object({
@@ -12,6 +12,7 @@ export const exportSchema = z.object({
   reference: z.string().min(1, 'Referência obrigatória'),
   date: z.string().min(1, 'Data obrigatória'),
   status: z.enum(EXPORT_STATUSES).default('in_progress'),
+  cargo_type: z.union([z.enum(['FCL', 'LCL']), z.literal('')]).optional(),
   lpco: z.string().optional(),
   vessel: z.string().optional(),
   booking: z.string().optional(),

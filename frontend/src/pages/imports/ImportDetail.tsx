@@ -79,6 +79,9 @@ export default function ImportDetail() {
         {record.modality && (
           <span className="text-sm text-slate-500">Modalidade: <strong className="text-slate-800">{MODALITY_LABELS[record.modality]}</strong></span>
         )}
+        {record.cargo_type && (
+          <span className="text-sm text-slate-500">Tipo: <strong className="text-slate-800">{record.cargo_type}</strong></span>
+        )}
         {record.collaborator && (
           <span className="text-sm text-slate-500">Colaborador: <strong className="text-slate-800">{record.collaborator.full_name}</strong></span>
         )}

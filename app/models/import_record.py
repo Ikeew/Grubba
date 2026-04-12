@@ -34,6 +34,8 @@ class ImportStatus(str, enum.Enum):
     comex_solicitado = "comex_solicitado"
     faturamento_solicitado = "faturamento_solicitado"
     agendamento = "agendamento"
+    aguardando_data_vistoria = "aguardando_data_vistoria"
+    aguardando_mais_informacoes = "aguardando_mais_informacoes"
 
 
 # Junction table for import record flags (per-user)
@@ -68,6 +70,7 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     modality: Mapped[Modality | None] = mapped_column(Enum(Modality, name="modality"), nullable=True)
 
     # --- Identification ---
+    cargo_type: Mapped[str | None] = mapped_column(String(10), nullable=True)          # FCL ou LCL
     importer: Mapped[str | None] = mapped_column(String(255), nullable=True)           # importador
     ce_mercante: Mapped[str | None] = mapped_column(String(100), nullable=True)
     awb_bl: Mapped[str | None] = mapped_column(String(100), nullable=True)

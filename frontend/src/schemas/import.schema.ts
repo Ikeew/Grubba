@@ -4,6 +4,7 @@ const IMPORT_STATUSES = [
   'in_progress', 'completed', 'cancelled',
   'aguardando_chegada_navio', 'mapa_tfa', 'comex_solicitado',
   'faturamento_solicitado', 'agendamento',
+  'aguardando_data_vistoria', 'aguardando_mais_informacoes',
 ] as const
 
 export const importSchema = z.object({
@@ -12,6 +13,7 @@ export const importSchema = z.object({
   date: z.string().optional(),
   status: z.enum(IMPORT_STATUSES).default('in_progress'),
   modality: z.union([z.enum(['maritimo', 'aereo']), z.literal('')]).optional(),
+  cargo_type: z.union([z.enum(['FCL', 'LCL']), z.literal('')]).optional(),
   importer: z.string().optional(),
   ce_mercante: z.string().optional(),
   awb_bl: z.string().optional(),

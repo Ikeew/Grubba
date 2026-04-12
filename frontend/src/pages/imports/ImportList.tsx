@@ -138,17 +138,20 @@ export default function ImportList() {
         ) : !data?.items.length ? (
           <EmptyState />
         ) : (
-          <table className="w-full">
+          <table className="w-full text-xs">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="table-header-cell w-8"></th>
-                <th className="table-header-cell">Referência</th>
-                <th className="table-header-cell">Cliente</th>
-                <th className="table-header-cell">Modalidade</th>
-                <th className="table-header-cell">Data</th>
-                <th className="table-header-cell">Navio</th>
-                <th className="table-header-cell">Status</th>
-                <th className="table-header-cell w-24">Ações</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-8"></th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETB</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-16">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -158,25 +161,28 @@ export default function ImportList() {
                   className={`table-row cursor-pointer ${isFlagged(record) ? 'bg-red-50 hover:bg-red-100' : ''}`}
                   onDoubleClick={() => navigate(`/imports/${record.id}`)}
                 >
-                  <td className="table-cell">
+                  <td className="px-2 py-2 text-xs text-slate-700">
                     <button
                       type="button"
                       title={isFlagged(record) ? 'Remover bandeira' : 'Marcar como importante'}
                       onClick={() => toggleFlag.mutate(record.id)}
-                      className="text-lg leading-none focus:outline-none"
+                      className="text-base leading-none focus:outline-none"
                     >
                       {isFlagged(record) ? '🚩' : <span className="text-slate-300 hover:text-red-400">⚑</span>}
                     </button>
                   </td>
-                  <td className="table-cell font-medium">{record.reference ?? '—'}</td>
-                  <td className="table-cell">{record.client.name}</td>
-                  <td className="table-cell text-slate-500">
+                  <td className="px-2 py-2 text-xs text-slate-700 font-medium">{record.reference ?? '—'}</td>
+                  <td className="px-2 py-2 text-xs text-slate-700">{record.client.name}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">
                     {record.modality ? MODALITY_LABELS[record.modality] : '—'}
                   </td>
-                  <td className="table-cell text-slate-500">{formatDate(record.date)}</td>
-                  <td className="table-cell text-slate-500">{record.vessel ?? '—'}</td>
-                  <td className="table-cell"><StatusBadge status={record.status} /></td>
-                  <td className="table-cell">
+                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.date)}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{record.vessel ?? '—'}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.etb)}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.inspection_date)}</td>
+                  <td className="px-2 py-2 text-xs text-slate-700"><StatusBadge status={record.status} /></td>
+                  <td className="px-2 py-2 text-xs text-slate-700">
                     <Button size="sm" variant="ghost" className="text-red-500" onClick={() => setToDelete(record)}>
                       ×
                     </Button>

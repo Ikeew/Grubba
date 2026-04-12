@@ -17,6 +17,8 @@ class ImportRecordCreate(BaseModel):
     status: ImportStatus = ImportStatus.in_progress
     modality: Modality | None = None
 
+    cargo_type: str | None = None
+
     importer: str | None = None
     ce_mercante: str | None = None
     awb_bl: str | None = None
@@ -58,6 +60,8 @@ class ImportRecordUpdate(BaseModel):
     date: Date | None = None
     status: ImportStatus | None = None
     modality: Modality | None = None
+
+    cargo_type: str | None = None
 
     importer: str | None = None
     ce_mercante: str | None = None
@@ -102,6 +106,8 @@ class ImportRecordResponse(BaseModel):
     date: Date | None
     status: ImportStatus
     modality: Modality | None
+
+    cargo_type: str | None
 
     importer: str | None
     ce_mercante: str | None

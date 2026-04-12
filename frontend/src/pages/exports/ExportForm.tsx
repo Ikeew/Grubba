@@ -74,6 +74,7 @@ export default function ExportForm() {
         reference: record.reference ?? '',
         date: record.date ?? '',
         status: record.status,
+        cargo_type: (record.cargo_type as 'FCL' | 'LCL' | '') ?? '',
         lpco: record.lpco ?? '',
         vessel: record.vessel ?? '',
         booking: record.booking ?? '',
@@ -157,6 +158,31 @@ export default function ExportForm() {
             <Input label="Referência *" error={errors.reference?.message} {...register('reference')} />
             <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status *" options={STATUS_OPTIONS} error={errors.status?.message} {...register('status')} />
+            <div>
+              <p className="text-sm font-medium text-slate-700 mb-2">Tipo de carga</p>
+              <div className="flex gap-4">
+                {(['FCL', 'LCL'] as const).map((opt) => (
+                  <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      value={opt}
+                      {...register('cargo_type')}
+                      className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="text-sm text-slate-700">{opt}</span>
+                  </label>
+                ))}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    value=""
+                    {...register('cargo_type')}
+                    className="h-4 w-4 border-slate-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <span className="text-sm text-slate-500">Nenhum</span>
+                </label>
+              </div>
+            </div>
             {isAdmin ? (
               <Select
                 label="Responsável"
