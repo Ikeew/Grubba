@@ -1,11 +1,24 @@
 import { z } from 'zod'
 
+import type { ImportStatus } from '@/types/common'
+
+/** Mesmos valores que `ImportStatus` / API — manter alinhado ao backend */
 const IMPORT_STATUSES = [
-  'in_progress', 'completed', 'cancelled',
-  'aguardando_chegada_navio', 'mapa_tfa', 'comex_solicitado',
-  'faturamento_solicitado', 'agendamento',
-  'aguardando_data_vistoria', 'aguardando_mais_informacoes',
-] as const
+  'in_progress',
+  'completed',
+  'cancelled',
+  'aguardando_chegada_navio',
+  'mapa_tfa',
+  'comex_solicitado',
+  'faturamento_solicitado',
+  'agendamento',
+  'aguardando_data_vistoria',
+  'aguardando_mais_informacoes',
+  'agendado_inspecao',
+  'aguardando_ati',
+  'aguardando_plmi_tela_verde',
+  'aguardando_programacao',
+] as const satisfies readonly ImportStatus[]
 
 export const importSchema = z.object({
   client_id: z.string().min(1, 'Cliente obrigatório'),
