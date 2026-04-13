@@ -39,6 +39,10 @@ export const IMPORT_STATUS_LABELS: Record<ImportStatus, string> = {
   agendamento: 'Agendamento',
   aguardando_data_vistoria: 'Aguardando Data de Vistoria',
   aguardando_mais_informacoes: 'Aguardando Mais Informações',
+  agendado_inspecao: 'Agendado Inspeção',
+  aguardando_ati: 'Aguardando/ATI',
+  aguardando_plmi_tela_verde: 'Aguardo PLMI/Tela Verde',
+  aguardando_programacao: 'Aguardo Programação',
 }
 
 export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
@@ -52,6 +56,10 @@ export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
   agendamento: 'bg-teal-100 text-teal-700',
   aguardando_data_vistoria: 'bg-indigo-100 text-indigo-700',
   aguardando_mais_informacoes: 'bg-amber-100 text-amber-700',
+  agendado_inspecao: 'bg-yellow-100 text-yellow-700',
+  aguardando_ati: 'bg-cyan-100 text-cyan-700',
+  aguardando_plmi_tela_verde: 'bg-green-100 text-green-700',
+  aguardando_programacao: 'bg-violet-100 text-violet-700',
 }
 
 export const MAP_TYPE_LABELS = {

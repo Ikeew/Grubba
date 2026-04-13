@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.models.import_record import ImportStatus
-from app.models.user import UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.import_record import ImportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
@@ -49,12 +48,14 @@ def list_import_records(
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
+    etb_from: str | None = Query(default=None),
+    etb_to: str | None = Query(default=None),
 ):
     from datetime import date as Date
     df = Date.fromisoformat(date_from) if date_from else None
     dt = Date.fromisoformat(date_to) if date_to else None
-    if current_user.role != UserRole.admin:
-        collaborator_id = current_user.id
+    ef = Date.fromisoformat(etb_from) if etb_from else None
+    et = Date.fromisoformat(etb_to) if etb_to else None
     result = _service(db).list_paginated(
         pagination,
         current_user,
@@ -64,6 +65,8 @@ def list_import_records(
         search=search,
         date_from=df,
         date_to=dt,
+        etb_from=ef,
+        etb_to=et,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

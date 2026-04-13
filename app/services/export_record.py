@@ -1,6 +1,7 @@
+import re
 from uuid import UUID
 
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.models.export_record import ExportRecord
 from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
@@ -9,6 +10,10 @@ from app.repositories.update_history import UpdateHistoryRepository
 from app.schemas.export_record import ExportRecordCreate, ExportRecordUpdate
 from app.services.history import HistoryService
 from app.utils.pagination import PaginationParams, paginate
+
+
+def _normalize_ref(ref: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9]", "", ref).lower()
 
 
 class ExportRecordService:
@@ -22,14 +27,19 @@ class ExportRecordService:
         self._clients = client_repo
         self._history = HistoryService(history_repo)
 
-    def _check_access(self, record: ExportRecord, current_user: User) -> None:
+    def _check_edit_access(self, record: ExportRecord, current_user: User) -> None:
         if current_user.role != UserRole.admin and record.collaborator_id != current_user.id:
-            raise ForbiddenError("Você não tem permissão para acessar esta ficha")
+            raise ForbiddenError("Você não tem permissão para editar esta ficha")
 
     def create(self, payload: ExportRecordCreate, current_user: User) -> ExportRecord:
         client = self._clients.get_by_id(payload.client_id)
         if not client:
             raise NotFoundError("Client")
+
+        if payload.reference:
+            normalized = _normalize_ref(payload.reference)
+            if self._records.find_by_normalized_reference(normalized):
+                raise ConflictError("Já existe uma ficha com esta referência")
 
         data = payload.model_dump()
         # Collaborators always own their records; admins can assign freely
@@ -40,12 +50,12 @@ class ExportRecordService:
         created = self._records.create(record)
         return self._records.get_with_relations(created.id)  # type: ignore[return-value]
 
-    def get_or_404(self, record_id: UUID, current_user: User | None = None) -> ExportRecord:
+    def get_or_404(self, record_id: UUID, current_user: User | None = None, check_edit: bool = False) -> ExportRecord:
         record = self._records.get_with_relations(record_id)
         if not record:
             raise NotFoundError("Export record")
-        if current_user is not None:
-            self._check_access(record, current_user)
+        if check_edit and current_user is not None:
+            self._check_edit_access(record, current_user)
         return record
 
     def list_paginated(
@@ -85,12 +95,16 @@ class ExportRecordService:
         return paginate(items, total, pagination)
 
     def update(self, record_id: UUID, payload: ExportRecordUpdate, current_user: User) -> ExportRecord:
-        record = self.get_or_404(record_id, current_user)
+        record = self.get_or_404(record_id, current_user, check_edit=True)
 
         # Snapshot for history diffing
         old_data = {col: getattr(record, col) for col in payload.model_fields}
 
         update_data = payload.model_dump(exclude_none=True)
+        if "reference" in update_data and update_data["reference"]:
+            normalized = _normalize_ref(update_data["reference"])
+            if self._records.find_by_normalized_reference(normalized, exclude_id=record_id):
+                raise ConflictError("Já existe uma ficha com esta referência")
         if "services" in update_data:
             update_data["services"] = [s.value for s in update_data["services"]]
         if "client_id" in update_data:
@@ -115,5 +129,5 @@ class ExportRecordService:
         return self._records.toggle_flag(record_id, current_user.id)
 
     def delete(self, record_id: UUID, current_user: User) -> None:
-        record = self.get_or_404(record_id, current_user)
+        record = self.get_or_404(record_id, current_user, check_edit=True)
         self._records.delete(record)

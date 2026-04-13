@@ -6,7 +6,6 @@ from fastapi import APIRouter, Depends, Query
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.models.export_record import ExportStatus
-from app.models.user import UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
@@ -57,9 +56,6 @@ def list_export_records(
     dt = Date.fromisoformat(date_to) if date_to else None
     ef = Date.fromisoformat(etb_from) if etb_from else None
     et = Date.fromisoformat(etb_to) if etb_to else None
-    # Collaborators can only see their own records
-    if current_user.role != UserRole.admin:
-        collaborator_id = current_user.id
     result = _service(db).list_paginated(
         pagination,
         current_user,

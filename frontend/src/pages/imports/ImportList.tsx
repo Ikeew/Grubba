@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useImportList, useDeleteImport, useToggleImportFlag } from '@/hooks/useImports'
+import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/shared/Pagination'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -20,10 +21,15 @@ const STATUS_OPTIONS = [
   ...Object.entries(IMPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
 ]
 
-type Period = 'today' | 'week' | 'month' | ''
+type Period = 'today' | 'week' | 'month'
 
-function getPeriodDates(period: Period): { date_from?: string; date_to?: string } {
-  if (!period) return {}
+const PERIOD_LABELS: Record<Period, string> = {
+  today: 'Hoje',
+  week: 'Esta semana',
+  month: 'Este mês',
+}
+
+function getPeriodDates(period: Period): { date_from: string; date_to: string } {
   const today = new Date()
   const fmt = (d: Date) => d.toISOString().slice(0, 10)
   if (period === 'today') {
@@ -43,9 +49,15 @@ function getPeriodDates(period: Period): { date_from?: string; date_to?: string 
 export default function ImportList() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
+
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<ImportStatus | ''>('')
-  const [period, setPeriod] = useState<Period>('')
+  const [collaboratorId, setCollaboratorId] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [etbFrom, setEtbFrom] = useState('')
+  const [etbTo, setEtbTo] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [toDelete, setToDelete] = useState<ImportRecord | null>(null)
@@ -60,34 +72,52 @@ export default function ImportList() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [searchInput])
 
-  const { date_from, date_to } = getPeriodDates(period)
+  const { data: users } = useUserList(isAdmin)
+  const collaboratorOptions = [
+    { value: '', label: 'Todos os colaboradores' },
+    ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
+  ]
 
   const { data, isLoading } = useImportList({
     page,
     page_size: 20,
     status: status || undefined,
+    collaborator_id: collaboratorId || undefined,
     search: search || undefined,
-    date_from,
-    date_to,
+    date_from: dateFrom || undefined,
+    date_to: dateTo || undefined,
+    etb_from: etbFrom || undefined,
+    etb_to: etbTo || undefined,
   })
+
   const deleteImport = useDeleteImport()
   const toggleFlag = useToggleImportFlag()
+
+  const hasFilters = !!(status || collaboratorId || dateFrom || dateTo || etbFrom || etbTo || search)
+
+  function applyPeriod(p: Period) {
+    const { date_from, date_to } = getPeriodDates(p)
+    setDateFrom(date_from)
+    setDateTo(date_to)
+    setPage(1)
+  }
+
+  function clearFilters() {
+    setStatus('')
+    setCollaboratorId('')
+    setDateFrom('')
+    setDateTo('')
+    setEtbFrom('')
+    setEtbTo('')
+    setSearchInput('')
+    setSearch('')
+    setPage(1)
+  }
 
   async function handleDelete() {
     if (!toDelete) return
     await deleteImport.mutateAsync(toDelete.id)
     setToDelete(null)
-  }
-
-  function handlePeriod(p: Period) {
-    setPeriod((prev) => (prev === p ? '' : p))
-    setPage(1)
-  }
-
-  const PERIOD_LABELS: Record<Exclude<Period, ''>, string> = {
-    today: 'Hoje',
-    week: 'Esta semana',
-    month: 'Este mês',
   }
 
   function isFlagged(record: ImportRecord) {
@@ -102,34 +132,88 @@ export default function ImportList() {
       />
 
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-200 flex flex-wrap gap-3 items-center">
-          <input
-            type="text"
-            placeholder="Buscar por cliente ou referência..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="border border-slate-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
-          />
-          <Select
-            options={STATUS_OPTIONS}
-            value={status}
-            onChange={(e) => { setStatus(e.target.value as ImportStatus | ''); setPage(1) }}
-            className="w-56"
-          />
-          <div className="flex gap-1">
-            {(['today', 'week', 'month'] as Exclude<Period, ''>[]).map((p) => (
+        {/* Filter bar */}
+        <div className="px-4 py-3 border-b border-slate-200 space-y-2">
+          {/* Row 1: search + status + collaborator */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <input
+              type="text"
+              placeholder="Buscar por cliente ou referência..."
+              value={searchInput}
+              onChange={(e) => { setSearchInput(e.target.value) }}
+              className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
+            />
+            <Select
+              options={STATUS_OPTIONS}
+              value={status}
+              onChange={(e) => { setStatus(e.target.value as ImportStatus | ''); setPage(1) }}
+              className="w-52"
+            />
+            {isAdmin && (
+              <Select
+                options={collaboratorOptions}
+                value={collaboratorId}
+                onChange={(e) => { setCollaboratorId(e.target.value); setPage(1) }}
+                className="w-52"
+              />
+            )}
+            {hasFilters && (
               <button
-                key={p}
-                onClick={() => handlePeriod(p)}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  period === p
-                    ? 'bg-brand-600 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                onClick={clearFilters}
+                className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
               >
-                {PERIOD_LABELS[p]}
+                Limpar filtros
               </button>
-            ))}
+            )}
+          </div>
+
+          {/* Row 2: date range + period shortcuts + ETB range */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-500 whitespace-nowrap">Data:</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+              <span className="text-slate-400 text-xs">–</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </div>
+
+            <div className="flex gap-1">
+              {(['today', 'week', 'month'] as Period[]).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => applyPeriod(p)}
+                  className="px-2.5 py-1.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 hover:bg-brand-50 hover:text-brand-700 transition-colors"
+                >
+                  {PERIOD_LABELS[p]}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-slate-500 whitespace-nowrap">ETB:</span>
+              <input
+                type="date"
+                value={etbFrom}
+                onChange={(e) => { setEtbFrom(e.target.value); setPage(1) }}
+                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+              <span className="text-slate-400 text-xs">–</span>
+              <input
+                type="date"
+                value={etbTo}
+                onChange={(e) => { setEtbTo(e.target.value); setPage(1) }}
+                className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+              />
+            </div>
           </div>
         </div>
 

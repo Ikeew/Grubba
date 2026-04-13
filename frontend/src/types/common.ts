@@ -41,6 +41,10 @@ export type ImportStatus =
   | 'agendamento'
   | 'aguardando_data_vistoria'
   | 'aguardando_mais_informacoes'
+  | 'agendado_inspecao'
+  | 'aguardando_ati'
+  | 'aguardando_plmi_tela_verde'
+  | 'aguardando_programacao'
 
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'collaborator'

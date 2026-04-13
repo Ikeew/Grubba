@@ -16,6 +16,17 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
     def __init__(self, db: Session) -> None:
         super().__init__(db)
 
+    def find_by_normalized_reference(
+        self, normalized_ref: str, exclude_id: uuid.UUID | None = None
+    ) -> ExportRecord | None:
+        stmt = select(ExportRecord).where(
+            func.lower(func.regexp_replace(ExportRecord.reference, "[^a-zA-Z0-9]", "", "g"))
+            == normalized_ref.lower()
+        )
+        if exclude_id:
+            stmt = stmt.where(ExportRecord.id != exclude_id)
+        return self.db.scalar(stmt)
+
     def get_with_relations(self, record_id: uuid.UUID) -> ExportRecord | None:
         stmt = (
             select(ExportRecord)

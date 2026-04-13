@@ -14,6 +14,7 @@ export function useExportList(params: {
   page_size?: number
   client_id?: string
   status?: ExportStatus
+  collaborator_id?: string
   search?: string
   date_from?: string
   date_to?: string
