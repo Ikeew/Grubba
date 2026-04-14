@@ -48,14 +48,14 @@ def list_export_records(
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
-    etb_from: str | None = Query(default=None),
-    etb_to: str | None = Query(default=None),
+    ets_from: str | None = Query(default=None),
+    ets_to: str | None = Query(default=None),
 ):
     from datetime import date as Date
     df = Date.fromisoformat(date_from) if date_from else None
     dt = Date.fromisoformat(date_to) if date_to else None
-    ef = Date.fromisoformat(etb_from) if etb_from else None
-    et = Date.fromisoformat(etb_to) if etb_to else None
+    ef = Date.fromisoformat(ets_from) if ets_from else None
+    et = Date.fromisoformat(ets_to) if ets_to else None
     result = _service(db).list_paginated(
         pagination,
         current_user,
@@ -65,8 +65,8 @@ def list_export_records(
         search=search,
         date_from=df,
         date_to=dt,
-        etb_from=ef,
-        etb_to=et,
+        ets_from=ef,
+        ets_to=et,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

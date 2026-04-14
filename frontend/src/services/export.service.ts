@@ -11,8 +11,8 @@ interface ListParams {
   search?: string
   date_from?: string
   date_to?: string
-  etb_from?: string
-  etb_to?: string
+  ets_from?: string
+  ets_to?: string
 }
 
 export const exportService = {

@@ -56,8 +56,8 @@ export default function ExportList() {
   const [collaboratorId, setCollaboratorId] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [etbFrom, setEtbFrom] = useState('')
-  const [etbTo, setEtbTo] = useState('')
+  const [etsFrom, setEtsFrom] = useState('')
+  const [etsTo, setEtsTo] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [toDelete, setToDelete] = useState<ExportRecord | null>(null)
@@ -86,14 +86,14 @@ export default function ExportList() {
     search: search || undefined,
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
-    etb_from: etbFrom || undefined,
-    etb_to: etbTo || undefined,
+    ets_from: etsFrom || undefined,
+    ets_to: etsTo || undefined,
   })
 
   const deleteExport = useDeleteExport()
   const toggleFlag = useToggleExportFlag()
 
-  const hasFilters = !!(status || collaboratorId || dateFrom || dateTo || etbFrom || etbTo || search)
+  const hasFilters = !!(status || collaboratorId || dateFrom || dateTo || etsFrom || etsTo || search)
 
   function applyPeriod(p: Period) {
     const { date_from, date_to } = getPeriodDates(p)
@@ -107,8 +107,8 @@ export default function ExportList() {
     setCollaboratorId('')
     setDateFrom('')
     setDateTo('')
-    setEtbFrom('')
-    setEtbTo('')
+    setEtsFrom('')
+    setEtsTo('')
     setSearchInput('')
     setSearch('')
     setPage(1)
@@ -199,18 +199,18 @@ export default function ExportList() {
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-xs text-slate-500 whitespace-nowrap">ETB:</span>
+              <span className="text-xs text-slate-500 whitespace-nowrap">ETS:</span>
               <input
                 type="date"
-                value={etbFrom}
-                onChange={(e) => { setEtbFrom(e.target.value); setPage(1) }}
+                value={etsFrom}
+                onChange={(e) => { setEtsFrom(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
               <span className="text-slate-400 text-xs">–</span>
               <input
                 type="date"
-                value={etbTo}
-                onChange={(e) => { setEtbTo(e.target.value); setPage(1) }}
+                value={etsTo}
+                onChange={(e) => { setEtsTo(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
@@ -231,7 +231,7 @@ export default function ExportList() {
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
-                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETB</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -260,7 +260,7 @@ export default function ExportList() {
                   <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.date)}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.vessel ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.port?.name ?? '—'}</td>
-                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.etb)}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.ets)}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.inspection_date)}</td>
                   <td className="px-2 py-2 text-xs text-slate-700"><StatusBadge status={record.status} /></td>

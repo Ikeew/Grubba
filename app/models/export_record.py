@@ -102,6 +102,7 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     ddl_carga: Mapped[date | None] = mapped_column(Date, nullable=True)
     shipping_company: Mapped[str | None] = mapped_column(String(150), nullable=True)  # armador
     etb: Mapped[date | None] = mapped_column(Date, nullable=True)
+    ets: Mapped[date | None] = mapped_column(Date, nullable=True)
     et5: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # --- Services (multi-select stored as PostgreSQL ARRAY of strings) ---

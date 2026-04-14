@@ -22,6 +22,7 @@ export const exportSchema = z.object({
   ddl_carga: z.string().optional(),
   shipping_company: z.string().optional(),
   etb: z.string().optional(),
+  ets: z.string().optional(),
   et5: z.string().optional(),
   services: z.array(z.string()).default([]),
   map_type: z.union([z.enum(['vegetal', 'animal']), z.literal('')]).optional(),

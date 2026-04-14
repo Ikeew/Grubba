@@ -18,8 +18,8 @@ export function useExportList(params: {
   search?: string
   date_from?: string
   date_to?: string
-  etb_from?: string
-  etb_to?: string
+  ets_from?: string
+  ets_to?: string
 } = {}) {
   return useQuery({
     queryKey: EXPORT_KEYS.list(params),

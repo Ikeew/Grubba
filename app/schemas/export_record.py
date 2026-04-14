@@ -25,6 +25,7 @@ class ExportRecordCreate(BaseModel):
     ddl_carga: Date | None = None
     shipping_company: str | None = None
     etb: Date | None = None
+    ets: Date | None = None
     et5: Date | None = None
 
     services: list[ExportService] = Field(default_factory=list)
@@ -61,6 +62,7 @@ class ExportRecordUpdate(BaseModel):
     ddl_carga: Date | None = None
     shipping_company: str | None = None
     etb: Date | None = None
+    ets: Date | None = None
     et5: Date | None = None
 
     services: list[ExportService] | None = None
@@ -101,6 +103,7 @@ class ExportRecordResponse(BaseModel):
     ddl_carga: Date | None
     shipping_company: str | None
     etb: Date | None
+    ets: Date | None
     et5: Date | None
     services: list[str]
 

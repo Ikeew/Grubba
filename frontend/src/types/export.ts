@@ -50,6 +50,7 @@ export interface ExportRecord {
   ddl_carga: string | null
   shipping_company: string | null
   etb: string | null
+  ets: string | null
   et5: string | null
   services: ExportService[]
   flagged_by_ids: string[]
@@ -81,6 +82,7 @@ export interface ExportRecordPayload {
   ddl_carga?: string
   shipping_company?: string
   etb?: string
+  ets?: string
   et5?: string
   services?: ExportService[]
   map_type?: MapType
