@@ -16,8 +16,8 @@ import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
 function DetailRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm text-slate-900">{value || '—'}</dd>
+      <dt className="text-xs font-medium text-slate-500 print-label">{label}</dt>
+      <dd className="mt-0.5 text-sm text-slate-900 print-value">{value || '—'}</dd>
     </div>
   )
 }
@@ -67,7 +67,7 @@ export default function ExportDetail() {
       />
 
       {/* Status bar */}
-      <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-lg px-5 py-3">
+      <div className="print-status-bar flex items-center gap-4 bg-white border border-slate-200 rounded-lg px-5 py-3">
         <StatusBadge status={record.status} />
         <span className="text-sm text-slate-500">Cliente: <strong className="text-slate-800">{record.client.name}</strong></span>
         <span className="text-sm text-slate-500">Data: <strong className="text-slate-800">{formatDate(record.date)}</strong></span>
@@ -79,11 +79,12 @@ export default function ExportDetail() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Fields — side-by-side in print */}
+      <div className="print-sections-grid grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Logística */}
         <div className="form-section">
           <p className="form-section-title">Logística marítima</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Navio" value={record.vessel} />
             <DetailRow label="Porto" value={record.port?.name ?? null} />
             <DetailRow label="Armador" value={record.shipping_company} />
@@ -93,6 +94,7 @@ export default function ExportDetail() {
             <DetailRow label="ETA" value={formatDate(record.eta)} />
             <DetailRow label="ETB" value={formatDate(record.etb)} />
             <DetailRow label="ET5" value={formatDate(record.et5)} />
+            <DetailRow label="ETS" value={formatDate(record.ets)} />
             <DetailRow label="DDL Carga" value={formatDate(record.ddl_carga)} />
           </dl>
         </div>
@@ -100,7 +102,7 @@ export default function ExportDetail() {
         {/* Vistoria */}
         <div className="form-section">
           <p className="form-section-title">Vistoria e liberação</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Tipo de mapa" value={record.map_type ? MAP_TYPE_LABELS[record.map_type] : null} />
             <DetailRow label="Unidade selecionada" value={record.selected_unit} />
             <DetailRow label="Novo lacre" value={record.new_seal} />
@@ -114,7 +116,7 @@ export default function ExportDetail() {
             {record.services.length ? (
               <div className="flex flex-wrap gap-1.5">
                 {record.services.map((s) => (
-                  <span key={s} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
+                  <span key={s} className="print-service-tag text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
                     {EXPORT_SERVICE_LABELS[s as ExportService] ?? s}
                   </span>
                 ))}
@@ -124,31 +126,21 @@ export default function ExportDetail() {
         </div>
       </div>
 
-      {/* Observações */}
-      {record.observations && (
-        <div className="form-section">
-          <p className="form-section-title">Observações</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.observations}</p>
+      {/* Observações — large box in print */}
+      <div className="print-obs-section form-section">
+        <p className="form-section-title">Observações</p>
+        <div className="print-obs-box min-h-[60px] text-sm text-slate-700 whitespace-pre-wrap">
+          {record.observations || <span className="text-slate-400">—</span>}
         </div>
-      )}
+      </div>
 
-      {/* Arquivos */}
-      <div className="form-section">
+      {/* Arquivos — hide buttons in print */}
+      <div className="form-section print-hide-actions">
         <div className="flex items-center justify-between mb-3">
           <p className="form-section-title !pb-0 !border-0">Arquivos anexados</p>
           <div className="no-print">
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={uploadFile.isPending}
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+            <Button size="sm" variant="secondary" loading={uploadFile.isPending} onClick={() => fileInputRef.current?.click()}>
               Anexar arquivo
             </Button>
           </div>
@@ -159,17 +151,11 @@ export default function ExportDetail() {
               <div key={file.id} className="flex items-center justify-between py-2.5">
                 <div>
                   <p className="text-sm font-medium text-slate-700">{file.original_filename}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 no-print">
                     {formatFileSize(file.file_size)} · {formatDateTime(file.created_at)}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-400"
-                  onClick={() => deleteFile.mutate(file.id)}
-                  loading={deleteFile.isPending}
-                >
+                <Button size="sm" variant="ghost" className="text-red-400 no-print" onClick={() => deleteFile.mutate(file.id)} loading={deleteFile.isPending}>
                   Remover
                 </Button>
               </div>
@@ -180,8 +166,8 @@ export default function ExportDetail() {
         )}
       </div>
 
-      {/* Notes */}
-      <div className="form-section">
+      {/* Notes — hidden in print */}
+      <div className="form-section print-hide">
         <p className="form-section-title">Notas</p>
         <div className="space-y-3 mb-4">
           {notes?.length ? notes.map((note) => (
@@ -199,21 +185,13 @@ export default function ExportDetail() {
           )) : <p className="text-sm text-slate-400">Nenhuma nota registrada.</p>}
         </div>
         <div className="no-print flex gap-3">
-          <Textarea
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            placeholder="Nova nota..."
-            rows={2}
-            className="flex-1"
-          />
-          <Button onClick={handleAddNote} loading={createNote.isPending} className="self-end">
-            Adicionar
-          </Button>
+          <Textarea value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Nova nota..." rows={2} className="flex-1" />
+          <Button onClick={handleAddNote} loading={createNote.isPending} className="self-end">Adicionar</Button>
         </div>
       </div>
 
-      {/* History */}
-      <div className="form-section">
+      {/* History — hidden in print */}
+      <div className="form-section print-hide">
         <p className="form-section-title">Histórico de alterações</p>
         {history?.length ? (
           <div className="divide-y divide-slate-100">

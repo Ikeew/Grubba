@@ -9,11 +9,10 @@ interface Props {
   options: Option[]
   value: string[]
   onChange: (values: string[]) => void
-  placeholder?: string
   className?: string
 }
 
-export function StatusMultiSelect({ options, value, onChange, placeholder = 'Status', className = '' }: Props) {
+export function StatusMultiSelect({ options, value, onChange, className = '' }: Props) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 

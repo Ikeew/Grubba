@@ -36,6 +36,8 @@
 }
 
 @media print {
+  @page { margin: 10mm 12mm; size: A4 portrait; }
+
   body * { visibility: hidden; }
   main, main * { visibility: visible; }
   main {
@@ -43,8 +45,100 @@
     top: 0;
     left: 0;
     width: 100%;
+    padding: 0 !important;
     overflow: visible !important;
-    padding: 24px !important;
+    font-size: 9px !important;
   }
-  .no-print, .no-print * { display: none !important; visibility: hidden !important; }
+
+  .no-print, .no-print * { display: none !important; }
+  .print-hide { display: none !important; }
+
+  /* Compact page title */
+  .print-page-title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Status bar */
+  .print-status-bar {
+    padding: 4px 8px !important;
+    gap: 10px !important;
+    margin-bottom: 4px !important;
+    font-size: 9px !important;
+  }
+  .print-status-bar span { font-size: 9px !important; }
+
+  /* Section boxes */
+  .form-section {
+    padding: 5px 8px !important;
+    margin-bottom: 4px !important;
+    border-radius: 3px !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .form-section-title {
+    font-size: 7px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 3px !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  /* Detail grid spacing */
+  .print-detail-grid {
+    gap: 3px 12px !important;
+  }
+
+  /* Detail row labels + values */
+  .print-detail-grid dt,
+  .print-detail-grid .print-label {
+    font-size: 7px !important;
+    margin-bottom: 0 !important;
+  }
+  .print-detail-grid dd,
+  .print-detail-grid .print-value {
+    font-size: 9px !important;
+    margin-top: 0 !important;
+  }
+
+  /* Two-column layout for sections side-by-side */
+  .print-sections-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+
+  /* Four-column field grid inside sections */
+  .print-field-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 3px 10px !important;
+  }
+
+  /* Observations: large bordered area */
+  .print-obs-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .print-obs-box {
+    min-height: 90px !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 3px !important;
+    padding: 6px 8px !important;
+    font-size: 9px !important;
+    white-space: pre-wrap;
+    margin-top: 2px !important;
+  }
+
+  /* Services tags */
+  .print-service-tag {
+    font-size: 7px !important;
+    padding: 1px 4px !important;
+  }
+
+  /* Hide interactive UI within sections */
+  button:not(.print-visible),
+  input[type="file"],
+  textarea { display: none !important; }
 }

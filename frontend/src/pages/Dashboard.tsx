@@ -20,7 +20,7 @@ export default function Dashboard() {
   const { data: clients } = useClientList({ page_size: 1 })
   const { data: exports } = useExportList({ page_size: 1 })
   const { data: importsData } = useImportList({ page_size: 1 })
-  const { data: inProgress } = useExportList({ status: 'in_progress', page_size: 1 })
+  const { data: inProgress } = useExportList({ status: ['in_progress'], page_size: 1 })
 
   return (
     <div>

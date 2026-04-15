@@ -16,8 +16,8 @@ function DetailRow({ label, value }: { label: string; value?: string | null | bo
   const display = typeof value === 'boolean' ? (value ? 'Sim' : 'Não') : value
   return (
     <div>
-      <dt className="text-xs font-medium text-slate-500">{label}</dt>
-      <dd className="mt-0.5 text-sm text-slate-900">{display || '—'}</dd>
+      <dt className="text-xs font-medium text-slate-500 print-label">{label}</dt>
+      <dd className="mt-0.5 text-sm text-slate-900 print-value">{display || '—'}</dd>
     </div>
   )
 }
@@ -67,7 +67,7 @@ export default function ImportDetail() {
       />
 
       {/* Status bar */}
-      <div className="flex flex-wrap items-center gap-4 bg-white border border-slate-200 rounded-lg px-5 py-3">
+      <div className="print-status-bar flex flex-wrap items-center gap-4 bg-white border border-slate-200 rounded-lg px-5 py-3">
         <StatusBadge status={record.status} />
         <span className="text-sm text-slate-500">Cliente: <strong className="text-slate-800">{record.client.name}</strong></span>
         {record.modality && (
@@ -81,25 +81,28 @@ export default function ImportDetail() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Fields — 2-column in print */}
+      <div className="print-sections-grid grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Documentação */}
         <div className="form-section">
           <p className="form-section-title">Documentação</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="CE Mercante" value={record.ce_mercante} />
             <DetailRow label="AWB / BL" value={record.awb_bl} />
             <DetailRow label="DI / DUIMP / DTA" value={record.di_duimp_dta} />
             <DetailRow label="Número LI" value={record.numero_li} />
             <DetailRow label="DTA" value={record.dta} />
             <DetailRow label="DTC" value={record.dtc} />
-            <DetailRow label="Importador" value={record.importer} />
+            <div className="col-span-2">
+              <DetailRow label="Importador" value={record.importer} />
+            </div>
           </dl>
         </div>
 
         {/* Logística */}
         <div className="form-section">
           <p className="form-section-title">Logística</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Navio" value={record.vessel} />
             <DetailRow label="Porto" value={record.port?.name ?? null} />
             <DetailRow label="Armador" value={record.shipping_company} />
@@ -117,7 +120,7 @@ export default function ImportDetail() {
         {/* LPCO / Mapa */}
         <div className="form-section">
           <p className="form-section-title">LPCO e Mapa</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="LPCO Embalagem" value={record.lpco_packaging} />
             <DetailRow label="Número LPCO" value={record.lpco_number} />
             <DetailRow label="Tipo de mapa" value={record.map_type ? MAP_TYPE_LABELS[record.map_type] : null} />
@@ -130,7 +133,7 @@ export default function ImportDetail() {
         {/* Liberação */}
         <div className="form-section">
           <p className="form-section-title">Liberação</p>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
+          <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Presença da carga" value={formatDate(record.cargo_presence_date)} />
             <DetailRow label="Liberado em" value={formatDate(record.released_at)} />
             <DetailRow label="Comex informado" value={formatDate(record.comex_informed_date)} />
@@ -141,31 +144,21 @@ export default function ImportDetail() {
         </div>
       </div>
 
-      {/* Observações */}
-      {record.observations && (
-        <div className="form-section">
-          <p className="form-section-title">Observações</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{record.observations}</p>
+      {/* Observações — large box in print */}
+      <div className="print-obs-section form-section">
+        <p className="form-section-title">Observações</p>
+        <div className="print-obs-box min-h-[60px] text-sm text-slate-700 whitespace-pre-wrap">
+          {record.observations || <span className="text-slate-400">—</span>}
         </div>
-      )}
+      </div>
 
       {/* Arquivos */}
       <div className="form-section">
         <div className="flex items-center justify-between mb-3">
           <p className="form-section-title !pb-0 !border-0">Arquivos anexados</p>
           <div className="no-print">
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={uploadFile.isPending}
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileChange} />
+            <Button size="sm" variant="secondary" loading={uploadFile.isPending} onClick={() => fileInputRef.current?.click()}>
               Anexar arquivo
             </Button>
           </div>
@@ -176,17 +169,11 @@ export default function ImportDetail() {
               <div key={file.id} className="flex items-center justify-between py-2.5">
                 <div>
                   <p className="text-sm font-medium text-slate-700">{file.original_filename}</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-slate-400 no-print">
                     {formatFileSize(file.file_size)} · {formatDateTime(file.created_at)}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-400"
-                  onClick={() => deleteFile.mutate(file.id)}
-                  loading={deleteFile.isPending}
-                >
+                <Button size="sm" variant="ghost" className="text-red-400 no-print" onClick={() => deleteFile.mutate(file.id)} loading={deleteFile.isPending}>
                   Remover
                 </Button>
               </div>
@@ -197,8 +184,8 @@ export default function ImportDetail() {
         )}
       </div>
 
-      {/* Notas */}
-      <div className="form-section">
+      {/* Notas — hidden in print */}
+      <div className="form-section print-hide">
         <p className="form-section-title">Notas</p>
         <div className="space-y-3 mb-4">
           {notes?.length ? notes.map((note) => (
@@ -219,8 +206,8 @@ export default function ImportDetail() {
         </div>
       </div>
 
-      {/* Histórico */}
-      <div className="form-section">
+      {/* Histórico — hidden in print */}
+      <div className="form-section print-hide">
         <p className="form-section-title">Histórico de alterações</p>
         {history?.length ? (
           <div className="divide-y divide-slate-100">

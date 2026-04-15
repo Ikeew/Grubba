@@ -4,7 +4,7 @@ const EXPORT_STATUSES = [
   'in_progress', 'completed', 'cancelled',
   'protocolado', 'agendado_inspecao', 'aguardando_certificado',
   'deferido', 'embarcado_aguardando_documento', 'aguardando_autorizacao_lacre',
-  'aguardando_chegada_navio', 'aguardando_mais_informacoes',
+  'aguardando_chegada_navio', 'aguardando_mais_informacoes', 'aguardando_data_vistoria',
 ] as const
 
 export const exportSchema = z.object({
