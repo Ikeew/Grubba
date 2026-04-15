@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
 from app.models.export_record import ExportStatus
+from typing import List
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
@@ -43,7 +44,7 @@ def list_export_records(
     current_user: CurrentUser,
     pagination: Pagination,
     client_id: UUID | None = Query(default=None),
-    status: ExportStatus | None = Query(default=None),
+    status: List[ExportStatus] | None = Query(default=None),
     collaborator_id: UUID | None = Query(default=None),
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),

@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
 import { useImport } from '@/hooks/useImports'
 import { useImportNotes, useCreateNote, useDeleteNote } from '@/hooks/useNotes'
 import { useImportHistory } from '@/hooks/useHistory'
@@ -29,7 +28,6 @@ export default function ImportDetail() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [newNote, setNewNote] = useState('')
 
-  const { user } = useAuth()
   const { data: record, isLoading } = useImport(id!)
   const { data: notes } = useImportNotes(id!)
   const { data: history } = useImportHistory(id!)
@@ -65,11 +63,7 @@ export default function ImportDetail() {
         title={`Importação — ${record.reference ?? record.id.slice(0, 8)}`}
         backTo="/imports"
         secondaryAction={{ label: 'Baixar PDF', onClick: handlePrint }}
-        action={
-          user?.role === 'admin' || record.collaborator?.id === user?.id
-            ? { label: 'Editar', onClick: () => navigate(`/imports/${id}/edit`) }
-            : undefined
-        }
+        action={{ label: 'Editar', onClick: () => navigate(`/imports/${id}/edit`) }}
       />
 
       {/* Status bar */}

@@ -5,6 +5,18 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 export const api = axios.create({
   baseURL: `${BASE_URL}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
+  paramsSerializer: (params) => {
+    const sp = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue
+      if (Array.isArray(value)) {
+        value.forEach((v) => sp.append(key, String(v)))
+      } else {
+        sp.append(key, String(value))
+      }
+    }
+    return sp.toString()
+  },
 })
 
 // Attach token on every request

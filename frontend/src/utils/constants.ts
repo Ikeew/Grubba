@@ -12,6 +12,7 @@ export const EXPORT_STATUS_LABELS: Record<ExportStatus, string> = {
   aguardando_autorizacao_lacre: 'Aguardando Autorização/Lacre',
   aguardando_chegada_navio: 'Aguardando Chegada do Navio',
   aguardando_mais_informacoes: 'Aguardando Mais Informações',
+  aguardando_data_vistoria: 'Aguardando Data de Vistoria',
 }
 
 export const EXPORT_STATUS_COLORS: Record<ExportStatus, string> = {
@@ -26,6 +27,7 @@ export const EXPORT_STATUS_COLORS: Record<ExportStatus, string> = {
   aguardando_autorizacao_lacre: 'bg-pink-100 text-pink-700',
   aguardando_chegada_navio: 'bg-slate-100 text-slate-700',
   aguardando_mais_informacoes: 'bg-amber-100 text-amber-700',
+  aguardando_data_vistoria: 'bg-indigo-100 text-indigo-700',
 }
 
 export const IMPORT_STATUS_LABELS: Record<ImportStatus, string> = {

@@ -105,7 +105,11 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         if client_id is not None:
             stmt = stmt.where(ExportRecord.client_id == client_id)
         if status is not None:
-            stmt = stmt.where(ExportRecord.status == status)
+            if isinstance(status, list):
+                if status:
+                    stmt = stmt.where(ExportRecord.status.in_(status))
+            else:
+                stmt = stmt.where(ExportRecord.status == status)
         if collaborator_id is not None:
             stmt = stmt.where(ExportRecord.collaborator_id == collaborator_id)
         if date_from is not None:

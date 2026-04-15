@@ -6,7 +6,7 @@ interface ListParams {
   page?: number
   page_size?: number
   client_id?: string
-  status?: ImportStatus
+  status?: ImportStatus[]
   collaborator_id?: string
   search?: string
   date_from?: string

@@ -105,7 +105,11 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         if client_id is not None:
             stmt = stmt.where(ImportRecord.client_id == client_id)
         if status is not None:
-            stmt = stmt.where(ImportRecord.status == status)
+            if isinstance(status, list):
+                if status:
+                    stmt = stmt.where(ImportRecord.status.in_(status))
+            else:
+                stmt = stmt.where(ImportRecord.status == status)
         if collaborator_id is not None:
             stmt = stmt.where(ImportRecord.collaborator_id == collaborator_id)
         if date_from is not None:

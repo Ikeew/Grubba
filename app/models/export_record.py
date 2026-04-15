@@ -50,6 +50,7 @@ class ExportStatus(str, enum.Enum):
     aguardando_autorizacao_lacre = "aguardando_autorizacao_lacre"
     aguardando_chegada_navio = "aguardando_chegada_navio"
     aguardando_mais_informacoes = "aguardando_mais_informacoes"
+    aguardando_data_vistoria = "aguardando_data_vistoria"
 
 
 # Keep for backward compatibility (import_record still uses it in the DB enum name)

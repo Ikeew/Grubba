@@ -10,16 +10,18 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
+import { StatusMultiSelect } from '@/components/ui/StatusMultiSelect'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/utils/format'
 import { IMPORT_STATUS_LABELS, MODALITY_LABELS } from '@/utils/constants'
 import type { ImportRecord } from '@/types/import'
 import type { ImportStatus } from '@/types/common'
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'Todos os status' },
-  ...Object.entries(IMPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
-]
+const ALL_STATUS_OPTIONS = Object.entries(IMPORT_STATUS_LABELS).map(([value, label]) => ({ value, label }))
+
+const DEFAULT_STATUSES: ImportStatus[] = (Object.keys(IMPORT_STATUS_LABELS) as ImportStatus[]).filter(
+  (s) => s !== 'completed' && s !== 'cancelled',
+)
 
 type Period = 'today' | 'week' | 'month'
 
@@ -49,11 +51,10 @@ function getPeriodDates(period: Period): { date_from: string; date_to: string } 
 export default function ImportList() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
 
   const [page, setPage] = useState(1)
-  const [status, setStatus] = useState<ImportStatus | ''>('')
-  const [collaboratorId, setCollaboratorId] = useState('')
+  const [statuses, setStatuses] = useState<ImportStatus[]>(DEFAULT_STATUSES)
+  const [collaboratorId, setCollaboratorId] = useState(user?.id ?? '')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [etbFrom, setEtbFrom] = useState('')
@@ -72,7 +73,7 @@ export default function ImportList() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [searchInput])
 
-  const { data: users } = useUserList(isAdmin)
+  const { data: users } = useUserList()
   const collaboratorOptions = [
     { value: '', label: 'Todos os colaboradores' },
     ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
@@ -81,7 +82,7 @@ export default function ImportList() {
   const { data, isLoading } = useImportList({
     page,
     page_size: 20,
-    status: status || undefined,
+    status: statuses.length > 0 ? statuses : undefined,
     collaborator_id: collaboratorId || undefined,
     search: search || undefined,
     date_from: dateFrom || undefined,
@@ -93,7 +94,13 @@ export default function ImportList() {
   const deleteImport = useDeleteImport()
   const toggleFlag = useToggleImportFlag()
 
-  const hasFilters = !!(status || collaboratorId || dateFrom || dateTo || etbFrom || etbTo || search)
+  const isDefaultState =
+    statuses.length === DEFAULT_STATUSES.length &&
+    DEFAULT_STATUSES.every((s) => statuses.includes(s)) &&
+    collaboratorId === (user?.id ?? '') &&
+    !dateFrom && !dateTo && !etbFrom && !etbTo && !searchInput
+
+  const hasFilters = !isDefaultState
 
   function applyPeriod(p: Period) {
     const { date_from, date_to } = getPeriodDates(p)
@@ -103,8 +110,8 @@ export default function ImportList() {
   }
 
   function clearFilters() {
-    setStatus('')
-    setCollaboratorId('')
+    setStatuses(DEFAULT_STATUSES)
+    setCollaboratorId(user?.id ?? '')
     setDateFrom('')
     setDateTo('')
     setEtbFrom('')
@@ -134,7 +141,7 @@ export default function ImportList() {
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         {/* Filter bar */}
         <div className="px-4 py-3 border-b border-slate-200 space-y-2">
-          {/* Row 1: search + status + collaborator */}
+          {/* Row 1: search + status multi-select + collaborator */}
           <div className="flex flex-wrap gap-2 items-center">
             <input
               type="text"
@@ -143,20 +150,18 @@ export default function ImportList() {
               onChange={(e) => { setSearchInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
             />
-            <Select
-              options={STATUS_OPTIONS}
-              value={status}
-              onChange={(e) => { setStatus(e.target.value as ImportStatus | ''); setPage(1) }}
+            <StatusMultiSelect
+              options={ALL_STATUS_OPTIONS}
+              value={statuses}
+              onChange={(v) => { setStatuses(v as ImportStatus[]); setPage(1) }}
               className="w-52"
             />
-            {isAdmin && (
-              <Select
-                options={collaboratorOptions}
-                value={collaboratorId}
-                onChange={(e) => { setCollaboratorId(e.target.value); setPage(1) }}
-                className="w-52"
-              />
-            )}
+            <Select
+              options={collaboratorOptions}
+              value={collaboratorId}
+              onChange={(e) => { setCollaboratorId(e.target.value); setPage(1) }}
+              className="w-52"
+            />
             {hasFilters && (
               <button
                 onClick={clearFilters}

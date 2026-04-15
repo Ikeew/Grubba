@@ -29,6 +29,7 @@ export type ExportStatus =
   | 'aguardando_autorizacao_lacre'
   | 'aguardando_chegada_navio'
   | 'aguardando_mais_informacoes'
+  | 'aguardando_data_vistoria'
 
 export type ImportStatus =
   | 'in_progress'

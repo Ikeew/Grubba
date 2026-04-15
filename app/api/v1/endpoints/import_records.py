@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -43,7 +43,7 @@ def list_import_records(
     current_user: CurrentUser,
     pagination: Pagination,
     client_id: UUID | None = Query(default=None),
-    status: ImportStatus | None = Query(default=None),
+    status: List[ImportStatus] | None = Query(default=None),
     collaborator_id: UUID | None = Query(default=None),
     search: str | None = Query(default=None),
     date_from: str | None = Query(default=None),
