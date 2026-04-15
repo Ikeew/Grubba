@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
+import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
+import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/utils/format'
@@ -21,14 +23,35 @@ export default function BillingList() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('exports')
 
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [collaboratorId, setCollaboratorId] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => setSearch(searchInput), 350)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchInput])
+
+  const { data: users } = useUserList()
+  const collaboratorOptions = [
+    { value: '', label: 'Todos os colaboradores' },
+    ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
+  ]
+
   const { data: exportData, isLoading: exportLoading } = useExportList({
     status: ['completed'],
     page_size: 200,
+    search: search || undefined,
+    collaborator_id: collaboratorId || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
     status: ['completed'],
     page_size: 200,
+    search: search || undefined,
+    collaborator_id: collaboratorId || undefined,
   })
 
   const toggleExportBilling = useToggleExportBilling()
@@ -61,6 +84,31 @@ export default function BillingList() {
             </span>
           </button>
         ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 items-center mb-3">
+        <input
+          type="text"
+          placeholder="Buscar por cliente ou referência..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
+        />
+        <Select
+          options={collaboratorOptions}
+          value={collaboratorId}
+          onChange={(e) => setCollaboratorId(e.target.value)}
+          className="w-52"
+        />
+        {(searchInput || collaboratorId) && (
+          <button
+            onClick={() => { setSearchInput(''); setSearch(''); setCollaboratorId('') }}
+            className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+          >
+            Limpar filtros
+          </button>
+        )}
       </div>
 
       {/* Exports tab */}

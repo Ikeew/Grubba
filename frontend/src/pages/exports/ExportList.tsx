@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useExportList, useDeleteExport, useToggleExportFlag } from '@/hooks/useExports'
+import { useExportList, useDeleteExport, useToggleExportFlag, useUpdateExportField } from '@/hooks/useExports'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/shared/Pagination'
@@ -17,6 +17,12 @@ import { EXPORT_STATUS_LABELS } from '@/utils/constants'
 import type { ExportRecord } from '@/types/export'
 import type { ExportStatus } from '@/types/common'
 
+// Options shown in the filter bar (no completed/cancelled — those are billing-only)
+const FILTERABLE_STATUS_OPTIONS = Object.entries(EXPORT_STATUS_LABELS)
+  .filter(([value]) => value !== 'completed' && value !== 'cancelled')
+  .map(([value, label]) => ({ value, label }))
+
+// All options available when changing status inline on a row
 const ALL_STATUS_OPTIONS = Object.entries(EXPORT_STATUS_LABELS).map(([value, label]) => ({ value, label }))
 
 const DEFAULT_STATUSES: ExportStatus[] = (Object.keys(EXPORT_STATUS_LABELS) as ExportStatus[]).filter(
@@ -55,6 +61,8 @@ export default function ExportList() {
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ExportStatus[]>(DEFAULT_STATUSES)
   const [collaboratorId, setCollaboratorId] = useState(user?.id ?? '')
+  const [vesselInput, setVesselInput] = useState('')
+  const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [etsFrom, setEtsFrom] = useState('')
@@ -62,16 +70,37 @@ export default function ExportList() {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
   const [toDelete, setToDelete] = useState<ExportRecord | null>(null)
+
+  // Inline editing state
+  const [editingStatusId, setEditingStatusId] = useState<string | null>(null)
+  const [editingDateId, setEditingDateId] = useState<string | null>(null)
+  const statusDropdownRef = useRef<HTMLDivElement>(null)
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const vesselDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      setSearch(searchInput)
-      setPage(1)
-    }, 350)
+    debounceRef.current = setTimeout(() => { setSearch(searchInput); setPage(1) }, 350)
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [searchInput])
+
+  useEffect(() => {
+    if (vesselDebounceRef.current) clearTimeout(vesselDebounceRef.current)
+    vesselDebounceRef.current = setTimeout(() => { setVessel(vesselInput); setPage(1) }, 350)
+    return () => { if (vesselDebounceRef.current) clearTimeout(vesselDebounceRef.current) }
+  }, [vesselInput])
+
+  // Close status dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
+        setEditingStatusId(null)
+      }
+    }
+    if (editingStatusId) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [editingStatusId])
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -85,6 +114,7 @@ export default function ExportList() {
     status: statuses.length > 0 ? statuses : undefined,
     collaborator_id: collaboratorId || undefined,
     search: search || undefined,
+    vessel: vessel || undefined,
     date_from: dateFrom || undefined,
     date_to: dateTo || undefined,
     ets_from: etsFrom || undefined,
@@ -93,12 +123,13 @@ export default function ExportList() {
 
   const deleteExport = useDeleteExport()
   const toggleFlag = useToggleExportFlag()
+  const updateField = useUpdateExportField()
 
   const isDefaultState =
     statuses.length === DEFAULT_STATUSES.length &&
     DEFAULT_STATUSES.every((s) => statuses.includes(s)) &&
     collaboratorId === (user?.id ?? '') &&
-    !dateFrom && !dateTo && !etsFrom && !etsTo && !searchInput
+    !dateFrom && !dateTo && !etsFrom && !etsTo && !searchInput && !vesselInput
 
   const hasFilters = !isDefaultState
 
@@ -118,6 +149,8 @@ export default function ExportList() {
     setEtsTo('')
     setSearchInput('')
     setSearch('')
+    setVesselInput('')
+    setVessel('')
     setPage(1)
   }
 
@@ -131,6 +164,19 @@ export default function ExportList() {
     return user ? record.flagged_by_ids.includes(user.id) : false
   }
 
+  function handleStatusChange(recordId: string, newStatus: ExportStatus) {
+    updateField.mutate({ id: recordId, payload: { status: newStatus } })
+    setEditingStatusId(null)
+  }
+
+  function handleDateBlur(record: ExportRecord, value: string) {
+    const current = record.inspection_date ?? ''
+    if (value !== current) {
+      updateField.mutate({ id: record.id, payload: { inspection_date: value || undefined } })
+    }
+    setEditingDateId(null)
+  }
+
   return (
     <div>
       <PageHeader
@@ -141,7 +187,7 @@ export default function ExportList() {
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
         {/* Filter bar */}
         <div className="px-4 py-3 border-b border-slate-200 space-y-2">
-          {/* Row 1: search + status multi-select + collaborator */}
+          {/* Row 1: search + vessel + status multi-select + collaborator */}
           <div className="flex flex-wrap gap-2 items-center">
             <input
               type="text"
@@ -150,8 +196,15 @@ export default function ExportList() {
               onChange={(e) => { setSearchInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
             />
+            <input
+              type="text"
+              placeholder="Filtrar por navio..."
+              value={vesselInput}
+              onChange={(e) => { setVesselInput(e.target.value) }}
+              className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-44"
+            />
             <StatusMultiSelect
-              options={ALL_STATUS_OPTIONS}
+              options={FILTERABLE_STATUS_OPTIONS}
               value={statuses}
               onChange={(v) => { setStatuses(v as ExportStatus[]); setPage(1) }}
               className="w-52"
@@ -267,8 +320,66 @@ export default function ExportList() {
                   <td className="px-2 py-2 text-xs text-slate-500">{record.port?.name ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.ets)}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
-                  <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.inspection_date)}</td>
-                  <td className="px-2 py-2 text-xs text-slate-700"><StatusBadge status={record.status} /></td>
+
+                  {/* Inline inspection date editing */}
+                  <td
+                    className="px-2 py-2 text-xs text-slate-500"
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                  >
+                    {editingDateId === record.id ? (
+                      <input
+                        type="date"
+                        defaultValue={record.inspection_date ?? ''}
+                        autoFocus
+                        className="border border-brand-400 rounded px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        onBlur={(e) => handleDateBlur(record, e.target.value)}
+                      />
+                    ) : (
+                      <button
+                        onClick={() => setEditingDateId(record.id)}
+                        className="text-left hover:text-brand-600 hover:underline decoration-dashed underline-offset-2"
+                        title="Clique para alterar a data de vistoria"
+                      >
+                        {formatDate(record.inspection_date) || <span className="text-slate-300">—</span>}
+                      </button>
+                    )}
+                  </td>
+
+                  {/* Inline status editing */}
+                  <td
+                    className="px-2 py-2 text-xs text-slate-700"
+                    onClick={(e) => e.stopPropagation()}
+                    onDoubleClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="relative">
+                      <button
+                        onClick={() => setEditingStatusId(editingStatusId === record.id ? null : record.id)}
+                        title="Clique para alterar o status"
+                      >
+                        <StatusBadge status={record.status} />
+                      </button>
+                      {editingStatusId === record.id && (
+                        <div
+                          ref={statusDropdownRef}
+                          className="absolute top-full left-0 z-50 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-52 max-h-72 overflow-y-auto"
+                        >
+                          {ALL_STATUS_OPTIONS.map((opt) => (
+                            <button
+                              key={opt.value}
+                              className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors ${
+                                record.status === opt.value ? 'font-semibold text-brand-700 bg-brand-50' : 'text-slate-700'
+                              }`}
+                              onClick={() => handleStatusChange(record.id, opt.value as ExportStatus)}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+
                   <td className="px-2 py-2 text-xs text-slate-700">
                     <Button
                       size="sm" variant="ghost"

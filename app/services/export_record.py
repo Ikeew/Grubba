@@ -66,6 +66,7 @@ class ExportRecordService:
         status=None,
         collaborator_id: UUID | None = None,
         search: str | None = None,
+        vessel: str | None = None,
         date_from=None,
         date_to=None,
         ets_from=None,
@@ -74,7 +75,7 @@ class ExportRecordService:
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
-            search=search, date_from=date_from, date_to=date_to,
+            search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             ets_from=ets_from, ets_to=ets_to,
         )
         items = self._records.list_with_filters(
@@ -84,6 +85,7 @@ class ExportRecordService:
             status=status,
             collaborator_id=collaborator_id,
             search=search,
+            vessel=vessel,
             date_from=date_from,
             date_to=date_to,
             ets_from=ets_from,

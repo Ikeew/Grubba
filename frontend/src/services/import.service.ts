@@ -9,6 +9,7 @@ interface ListParams {
   status?: ImportStatus[]
   collaborator_id?: string
   search?: string
+  vessel?: string
   date_from?: string
   date_to?: string
   etb_from?: string

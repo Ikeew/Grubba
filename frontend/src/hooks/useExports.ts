@@ -16,6 +16,7 @@ export function useExportList(params: {
   status?: ExportStatus[]
   collaborator_id?: string
   search?: string
+  vessel?: string
   date_from?: string
   date_to?: string
   ets_from?: string
@@ -74,6 +75,15 @@ export function useToggleExportBilling() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => exportService.toggleBilling(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
+  })
+}
+
+export function useUpdateExportField() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: Partial<ExportRecordPayload> }) =>
+      exportService.update(id, payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
   })
 }

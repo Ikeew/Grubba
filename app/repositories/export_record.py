@@ -49,6 +49,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         status: ExportStatus | None = None,
         collaborator_id: uuid.UUID | None = None,
         search: str | None = None,
+        vessel: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         ets_from: date | None = None,
@@ -62,7 +63,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             joinedload(ExportRecord.port),
             joinedload(ExportRecord.flagged_by),
         )
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to, ets_from, ets_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
         stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).unique().all())
@@ -74,13 +75,14 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         status: ExportStatus | None = None,
         collaborator_id: uuid.UUID | None = None,
         search: str | None = None,
+        vessel: str | None = None,
         date_from: date | None = None,
         date_to: date | None = None,
         ets_from: date | None = None,
         ets_to: date | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(ExportRecord)
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, date_from, date_to, ets_from, ets_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to)
         return self.db.scalar(stmt) or 0
 
     def _apply_filters(
@@ -90,6 +92,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         status: Any,
         collaborator_id: Any,
         search: str | None,
+        vessel: str | None,
         date_from: date | None,
         date_to: date | None,
         ets_from: date | None = None,
@@ -102,6 +105,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
                     ExportRecord.reference.ilike(f"%{search}%"),
                 )
             )
+        if vessel is not None:
+            stmt = stmt.where(ExportRecord.vessel.ilike(f"%{vessel}%"))
         if client_id is not None:
             stmt = stmt.where(ExportRecord.client_id == client_id)
         if status is not None:

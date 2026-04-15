@@ -64,6 +64,7 @@ class ImportRecordService:
         status=None,
         collaborator_id: UUID | None = None,
         search: str | None = None,
+        vessel: str | None = None,
         date_from=None,
         date_to=None,
         etb_from=None,
@@ -72,7 +73,7 @@ class ImportRecordService:
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
-            search=search, date_from=date_from, date_to=date_to,
+            search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             etb_from=etb_from, etb_to=etb_to,
         )
         items = self._records.list_with_filters(
@@ -82,6 +83,7 @@ class ImportRecordService:
             status=status,
             collaborator_id=collaborator_id,
             search=search,
+            vessel=vessel,
             date_from=date_from,
             date_to=date_to,
             etb_from=etb_from,

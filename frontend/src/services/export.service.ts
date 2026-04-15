@@ -9,6 +9,7 @@ interface ListParams {
   status?: ExportStatus[]
   collaborator_id?: string
   search?: string
+  vessel?: string
   date_from?: string
   date_to?: string
   ets_from?: string
