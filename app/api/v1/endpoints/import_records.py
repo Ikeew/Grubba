@@ -94,6 +94,12 @@ def update_import_record(
     return ImportRecordResponse.model_validate(record)
 
 
+@router.post("/{record_id}/billing", summary="Toggle billing_completed on import record")
+def toggle_import_billing(record_id: UUID, db: DbSession, current_user: CurrentUser) -> dict:
+    completed = _service(db).toggle_billing(record_id, current_user)
+    return {"billing_completed": completed}
+
+
 @router.post("/{record_id}/flag", summary="Toggle flag on import record")
 def toggle_import_flag(record_id: UUID, db: DbSession, current_user: CurrentUser) -> dict:
     flagged = _service(db).toggle_flag(record_id, current_user)

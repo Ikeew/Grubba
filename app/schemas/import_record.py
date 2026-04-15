@@ -141,6 +141,7 @@ class ImportRecordResponse(BaseModel):
     guide_sent: bool
     finalized_at: datetime | None
     observations: str | None
+    billing_completed: bool
 
     client: ClientSummary
     collaborator: UserSummary | None

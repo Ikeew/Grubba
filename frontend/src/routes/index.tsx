@@ -21,6 +21,8 @@ import ImportList from '@/pages/imports/ImportList'
 import ImportForm from '@/pages/imports/ImportForm'
 import ImportDetail from '@/pages/imports/ImportDetail'
 
+import BillingList from '@/pages/billing/BillingList'
+
 export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
@@ -49,6 +51,7 @@ export const router = createBrowserRouter([
           { path: '/imports/new', element: <ImportForm /> },
           { path: '/imports/:id', element: <ImportDetail /> },
           { path: '/imports/:id/edit', element: <ImportForm /> },
+          { path: '/billing', element: <BillingList /> },
         ],
       },
     ],

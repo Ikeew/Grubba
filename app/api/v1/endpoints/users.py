@@ -26,8 +26,8 @@ def create_user(payload: UserCreate, db: DbSession, _: AdminUser) -> UserRespons
     return UserResponse.model_validate(user)
 
 
-@router.get("", response_model=PaginatedResponse[UserResponse], summary="List users (admin only)")
-def list_users(db: DbSession, _: AdminUser, pagination: Pagination):
+@router.get("", response_model=PaginatedResponse[UserResponse], summary="List users")
+def list_users(db: DbSession, _: CurrentUser, pagination: Pagination):
     return _user_service(db).list_paginated(pagination)
 
 

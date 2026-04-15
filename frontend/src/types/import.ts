@@ -39,6 +39,7 @@ export interface ImportRecord {
   guide_sent: boolean
   finalized_at: string | null
   observations: string | null
+  billing_completed: boolean
   flagged_by_ids: string[]
   client: ClientSummary
   collaborator: UserSummary | null

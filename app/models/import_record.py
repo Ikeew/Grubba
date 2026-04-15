@@ -111,6 +111,9 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # --- Notes ---
     observations: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # --- Billing ---
+    billing_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
     # --- Relationships ---
     client: Mapped["Client"] = relationship(back_populates="import_records")
     collaborator: Mapped["User | None"] = relationship(

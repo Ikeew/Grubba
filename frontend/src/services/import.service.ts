@@ -44,4 +44,9 @@ export const importService = {
     const { data } = await api.post<{ flagged: boolean }>(`/import-records/${id}/flag`)
     return data
   },
+
+  async toggleBilling(id: string): Promise<{ billing_completed: boolean }> {
+    const { data } = await api.post<{ billing_completed: boolean }>(`/import-records/${id}/billing`)
+    return data
+  },
 }

@@ -69,3 +69,11 @@ export function useToggleExportFlag() {
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
   })
 }
+
+export function useToggleExportBilling() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => exportService.toggleBilling(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
+  })
+}

@@ -115,6 +115,14 @@ class ImportRecordService:
         )
         return self._records.get_with_relations(record_id)  # type: ignore[return-value]
 
+    def toggle_billing(self, record_id: UUID, _current_user: User) -> bool:
+        record = self._records.get_with_relations(record_id)
+        if not record:
+            raise NotFoundError("Import record")
+        new_value = not record.billing_completed
+        self._records.update(record, {"billing_completed": new_value})
+        return new_value
+
     def toggle_flag(self, record_id: UUID, current_user: User) -> bool:
         record = self._records.get_with_relations(record_id)
         if not record:

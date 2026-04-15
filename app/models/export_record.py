@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, String, Table, Text, Column
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Table, Text, Column
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -119,6 +119,9 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # --- Completion ---
     finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     observations: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # --- Billing ---
+    billing_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # --- Relationships ---
     client: Mapped["Client"] = relationship(back_populates="export_records")

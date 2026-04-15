@@ -69,3 +69,11 @@ export function useToggleImportFlag() {
     onSuccess: () => qc.invalidateQueries({ queryKey: IMPORT_KEYS.all }),
   })
 }
+
+export function useToggleImportBilling() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => importService.toggleBilling(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: IMPORT_KEYS.all }),
+  })
+}
