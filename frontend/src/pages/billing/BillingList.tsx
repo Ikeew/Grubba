@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
@@ -23,16 +23,12 @@ export default function BillingList() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('exports')
 
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  // Filters (client-side for client/reference, server-side for collaborator)
+  const [clientSearch, setClientSearch] = useState('')
+  const [referenceSearch, setReferenceSearch] = useState('')
   const [collaboratorId, setCollaboratorId] = useState('')
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => setSearch(searchInput), 350)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
-  }, [searchInput])
+  const hasFilters = clientSearch || referenceSearch || collaboratorId
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -42,23 +38,37 @@ export default function BillingList() {
 
   const { data: exportData, isLoading: exportLoading } = useExportList({
     status: ['completed'],
-    page_size: 200,
-    search: search || undefined,
+    page_size: 500,
     collaborator_id: collaboratorId || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
     status: ['completed'],
-    page_size: 200,
-    search: search || undefined,
+    page_size: 500,
     collaborator_id: collaboratorId || undefined,
   })
 
   const toggleExportBilling = useToggleExportBilling()
   const toggleImportBilling = useToggleImportBilling()
 
-  const exports = sortByBilling(exportData?.items ?? [])
-  const imports = sortByBilling(importData?.items ?? [])
+  function filterExports(items: ExportRecord[]) {
+    return items.filter((r) => {
+      if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
+      if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
+      return true
+    })
+  }
+
+  function filterImports(items: ImportRecord[]) {
+    return items.filter((r) => {
+      if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
+      if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
+      return true
+    })
+  }
+
+  const exports = sortByBilling(filterExports(exportData?.items ?? []))
+  const imports = sortByBilling(filterImports(importData?.items ?? []))
 
   return (
     <div>
@@ -80,7 +90,7 @@ export default function BillingList() {
             <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
               tab === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'
             }`}>
-              {t === 'exports' ? (exportData?.total ?? '…') : (importData?.total ?? '…')}
+              {t === 'exports' ? exports.length : imports.length}
             </span>
           </button>
         ))}
@@ -90,10 +100,17 @@ export default function BillingList() {
       <div className="flex flex-wrap gap-2 items-center mb-3">
         <input
           type="text"
-          placeholder="Buscar por cliente ou referência..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
+          placeholder="Filtrar por cliente..."
+          value={clientSearch}
+          onChange={(e) => setClientSearch(e.target.value)}
+          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-52"
+        />
+        <input
+          type="text"
+          placeholder="Filtrar por referência..."
+          value={referenceSearch}
+          onChange={(e) => setReferenceSearch(e.target.value)}
+          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-48"
         />
         <Select
           options={collaboratorOptions}
@@ -101,9 +118,9 @@ export default function BillingList() {
           onChange={(e) => setCollaboratorId(e.target.value)}
           className="w-52"
         />
-        {(searchInput || collaboratorId) && (
+        {hasFilters && (
           <button
-            onClick={() => { setSearchInput(''); setSearch(''); setCollaboratorId('') }}
+            onClick={() => { setClientSearch(''); setReferenceSearch(''); setCollaboratorId('') }}
             className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             Limpar filtros
