@@ -176,6 +176,7 @@ export default function BillingList() {
                     <td className="px-3 py-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleExportBilling.mutate(record.id) }}
+                        onDoubleClick={(e) => e.stopPropagation()}
                         className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                           record.billing_completed
                             ? 'bg-green-600 text-white hover:bg-green-700'
@@ -243,6 +244,7 @@ export default function BillingList() {
                     <td className="px-3 py-2">
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleImportBilling.mutate(record.id) }}
+                        onDoubleClick={(e) => e.stopPropagation()}
                         className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
                           record.billing_completed
                             ? 'bg-green-600 text-white hover:bg-green-700'

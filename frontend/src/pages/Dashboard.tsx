@@ -4,12 +4,12 @@ import { useExportList } from '@/hooks/useExports'
 import { useImportList } from '@/hooks/useImports'
 import { Spinner } from '@/components/ui/Spinner'
 
-function StatCard({ label, value, color }: { label: string; value: number | undefined; color: string }) {
+function StatCard({ label, value, color, masked }: { label: string; value: number | undefined; color: string; masked?: boolean }) {
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-5">
       <p className="text-sm text-slate-500">{label}</p>
-      <p className={`text-3xl font-bold mt-1 ${color}`}>
-        {value ?? <Spinner size="sm" />}
+      <p className={`text-3xl font-bold mt-1 ${masked ? 'text-slate-300' : color}`}>
+        {masked ? '***' : (value ?? <Spinner size="sm" />)}
       </p>
     </div>
   )
@@ -17,6 +17,7 @@ function StatCard({ label, value, color }: { label: string; value: number | unde
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const isAdmin = user?.role === 'admin'
   const { data: clients } = useClientList({ page_size: 1 })
   const { data: exports } = useExportList({ page_size: 1 })
   const { data: importsData } = useImportList({ page_size: 1 })
@@ -32,10 +33,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Clientes ativos" value={clients?.total} color="text-slate-900" />
-        <StatCard label="Fichas de exportação" value={exports?.total} color="text-blue-700" />
-        <StatCard label="Fichas de importação" value={importsData?.total} color="text-indigo-700" />
-        <StatCard label="Exportações em andamento" value={inProgress?.total} color="text-amber-600" />
+        <StatCard label="Clientes ativos" value={clients?.total} color="text-slate-900" masked={!isAdmin} />
+        <StatCard label="Fichas de exportação" value={exports?.total} color="text-blue-700" masked={!isAdmin} />
+        <StatCard label="Fichas de importação" value={importsData?.total} color="text-indigo-700" masked={!isAdmin} />
+        <StatCard label="Exportações em andamento" value={inProgress?.total} color="text-amber-600" masked={!isAdmin} />
       </div>
 
       <div className="bg-white border border-slate-200 rounded-lg p-6">
