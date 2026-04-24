@@ -46,6 +46,7 @@ export type ImportStatus =
   | 'aguardando_ati'
   | 'aguardando_plmi_tela_verde'
   | 'aguardando_programacao'
+  | 'dsa_registrada'
 
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'collaborator'

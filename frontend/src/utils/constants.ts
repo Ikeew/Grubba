@@ -45,6 +45,7 @@ export const IMPORT_STATUS_LABELS: Record<ImportStatus, string> = {
   aguardando_ati: 'Aguardando/ATI',
   aguardando_plmi_tela_verde: 'Aguardo PLMI/Tela Verde',
   aguardando_programacao: 'Aguardo Programação',
+  dsa_registrada: 'DSA Registrada',
 }
 
 export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
@@ -62,6 +63,7 @@ export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
   aguardando_ati: 'bg-cyan-100 text-cyan-700',
   aguardando_plmi_tela_verde: 'bg-green-100 text-green-700',
   aguardando_programacao: 'bg-violet-100 text-violet-700',
+  dsa_registrada: 'bg-rose-100 text-rose-700',
 }
 
 export const MAP_TYPE_LABELS = {

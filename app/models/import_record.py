@@ -40,6 +40,7 @@ class ImportStatus(str, enum.Enum):
     aguardando_ati = "aguardando_ati"
     aguardando_plmi_tela_verde = "aguardando_plmi_tela_verde"
     aguardando_programacao = "aguardando_programacao"
+    dsa_registrada = "dsa_registrada"
 
 
 # Junction table for import record flags (per-user)
