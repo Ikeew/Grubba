@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
+import { useAuth } from '@/contexts/AuthContext'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Select } from '@/components/ui/Select'
@@ -15,12 +16,21 @@ import type { ImportRecord } from '@/types/import'
 
 type Tab = 'exports' | 'imports'
 
-function sortByBilling<T extends { billing_completed: boolean }>(items: T[]): T[] {
-  return [...items].sort((a, b) => Number(a.billing_completed) - Number(b.billing_completed))
+function sortItems<T extends { billing_completed: boolean; collaborator?: { id: string } | null }>(
+  items: T[],
+  currentUserId?: string,
+): T[] {
+  return [...items].sort((a, b) => {
+    const aIsMine = currentUserId && a.collaborator?.id === currentUserId ? 0 : 1
+    const bIsMine = currentUserId && b.collaborator?.id === currentUserId ? 0 : 1
+    if (aIsMine !== bIsMine) return aIsMine - bIsMine
+    return Number(a.billing_completed) - Number(b.billing_completed)
+  })
 }
 
 export default function BillingList() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('exports')
 
   // Filters (client-side for client/reference, server-side for collaborator)
@@ -67,8 +77,8 @@ export default function BillingList() {
     })
   }
 
-  const exports = sortByBilling(filterExports(exportData?.items ?? []))
-  const imports = sortByBilling(filterImports(importData?.items ?? []))
+  const exports = sortItems(filterExports(exportData?.items ?? []), user?.id)
+  const imports = sortItems(filterImports(importData?.items ?? []), user?.id)
 
   return (
     <div>
