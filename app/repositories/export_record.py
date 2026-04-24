@@ -160,7 +160,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         else:
             sort_key = case(
                 (is_flagged_by_me, 0),
-                else_=1,
+                (ExportRecord.collaborator_id == current_user_id, 1),
+                else_=2,
             )
 
         return stmt.order_by(sort_key, ExportRecord.created_at.desc())

@@ -60,7 +60,7 @@ export default function ImportList() {
 
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ImportStatus[]>(DEFAULT_STATUSES)
-  const [collaboratorId, setCollaboratorId] = useState(user?.id ?? '')
+  const [collaboratorId, setCollaboratorId] = useState('')
   const [vesselInput, setVesselInput] = useState('')
   const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -128,7 +128,7 @@ export default function ImportList() {
   const isDefaultState =
     statuses.length === DEFAULT_STATUSES.length &&
     DEFAULT_STATUSES.every((s) => statuses.includes(s)) &&
-    collaboratorId === (user?.id ?? '') &&
+    !collaboratorId &&
     !dateFrom && !dateTo && !etbFrom && !etbTo && !searchInput && !vesselInput
 
   const hasFilters = !isDefaultState

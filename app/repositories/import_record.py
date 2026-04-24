@@ -151,7 +151,8 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         else:
             sort_key = case(
                 (is_flagged_by_me, 0),
-                else_=1,
+                (ImportRecord.collaborator_id == current_user_id, 1),
+                else_=2,
             )
 
         return stmt.order_by(sort_key, ImportRecord.created_at.desc())
