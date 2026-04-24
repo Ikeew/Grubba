@@ -18,6 +18,7 @@ const IMPORT_STATUSES = [
   'aguardando_ati',
   'aguardando_plmi_tela_verde',
   'aguardando_programacao',
+  'dsa_registrada',
 ] as const satisfies readonly ImportStatus[]
 
 export const importSchema = z.object({
