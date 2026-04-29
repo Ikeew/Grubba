@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+
+// Module-level: persists collaborator filter across route changes for the session
+let _importCollaboratorFilter = ''
 import { useImportList, useDeleteImport, useToggleImportFlag, useUpdateImportField } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -61,9 +64,7 @@ export default function ImportList() {
 
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ImportStatus[]>(DEFAULT_STATUSES)
-  const [collaboratorId, setCollaboratorId] = useState(
-    () => sessionStorage.getItem('grubba_collaborator_import') ?? ''
-  )
+  const [collaboratorId, setCollaboratorId] = useState(_importCollaboratorFilter)
   const [vesselInput, setVesselInput] = useState('')
   const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -95,11 +96,6 @@ export default function ImportList() {
     vesselDebounceRef.current = setTimeout(() => { setVessel(vesselInput); setPage(1) }, 350)
     return () => { if (vesselDebounceRef.current) clearTimeout(vesselDebounceRef.current) }
   }, [vesselInput])
-
-  // Persist collaborator filter across navigation
-  useEffect(() => {
-    sessionStorage.setItem('grubba_collaborator_import', collaboratorId)
-  }, [collaboratorId])
 
   // Close status dropdown when clicking outside
   useEffect(() => {
@@ -153,7 +149,8 @@ export default function ImportList() {
 
   function clearFilters() {
     setStatuses(DEFAULT_STATUSES)
-    setCollaboratorId(user?.id ?? '')
+    _importCollaboratorFilter = user?.id ?? ''
+    setCollaboratorId(_importCollaboratorFilter)
     setDateFrom('')
     setDateTo('')
     setEtbFrom('')
@@ -245,7 +242,7 @@ export default function ImportList() {
             <Select
               options={collaboratorOptions}
               value={collaboratorId}
-              onChange={(e) => { setCollaboratorId(e.target.value); setPage(1) }}
+              onChange={(e) => { _importCollaboratorFilter = e.target.value; setCollaboratorId(e.target.value); setPage(1) }}
               className="w-52"
             />
             {hasFilters && (

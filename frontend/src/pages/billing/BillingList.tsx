@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+
+// Module-level: persists collaborator filter across route changes for the session
+let _billingCollaboratorFilter = ''
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
@@ -36,13 +39,7 @@ export default function BillingList() {
   // Filters (client-side for client/reference, server-side for collaborator)
   const [clientSearch, setClientSearch] = useState('')
   const [referenceSearch, setReferenceSearch] = useState('')
-  const [collaboratorId, setCollaboratorId] = useState(
-    () => sessionStorage.getItem('grubba_collaborator_billing') ?? ''
-  )
-
-  useEffect(() => {
-    sessionStorage.setItem('grubba_collaborator_billing', collaboratorId)
-  }, [collaboratorId])
+  const [collaboratorId, setCollaboratorId] = useState(_billingCollaboratorFilter)
 
   const hasFilters = clientSearch || referenceSearch || collaboratorId
 
@@ -131,12 +128,12 @@ export default function BillingList() {
         <Select
           options={collaboratorOptions}
           value={collaboratorId}
-          onChange={(e) => setCollaboratorId(e.target.value)}
+          onChange={(e) => { _billingCollaboratorFilter = e.target.value; setCollaboratorId(e.target.value) }}
           className="w-52"
         />
         {hasFilters && (
           <button
-            onClick={() => { setClientSearch(''); setReferenceSearch(''); setCollaboratorId('') }}
+            onClick={() => { setClientSearch(''); setReferenceSearch(''); _billingCollaboratorFilter = ''; setCollaboratorId('') }}
             className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             Limpar filtros
