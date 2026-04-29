@@ -2,9 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-
-// Module-level: persists collaborator filter across route changes for the session
-let _exportCollaboratorFilter = ''
 import { useExportList, useDeleteExport, useToggleExportFlag, useUpdateExportField } from '@/hooks/useExports'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -18,6 +15,7 @@ import { StatusMultiSelect } from '@/components/ui/StatusMultiSelect'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/utils/format'
 import { EXPORT_STATUS_LABELS } from '@/utils/constants'
+import { filterStore } from '@/lib/filterStore'
 import type { ExportRecord } from '@/types/export'
 import type { ExportStatus } from '@/types/common'
 
@@ -64,7 +62,7 @@ export default function ExportList() {
 
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ExportStatus[]>(DEFAULT_STATUSES)
-  const [collaboratorId, setCollaboratorId] = useState(_exportCollaboratorFilter)
+  const [collaboratorId, setCollaboratorId] = useState(filterStore.exportCollaboratorId)
   const [vesselInput, setVesselInput] = useState('')
   const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -146,10 +144,14 @@ export default function ExportList() {
     setPage(1)
   }
 
+  function setCollaborator(value: string) {
+    filterStore.exportCollaboratorId = value
+    setCollaboratorId(value)
+  }
+
   function clearFilters() {
     setStatuses(DEFAULT_STATUSES)
-    _exportCollaboratorFilter = user?.id ?? ''
-    setCollaboratorId(_exportCollaboratorFilter)
+    setCollaborator(user?.id ?? '')
     setDateFrom('')
     setDateTo('')
     setEtsFrom('')
@@ -233,7 +235,7 @@ export default function ExportList() {
             <Select
               options={collaboratorOptions}
               value={collaboratorId}
-              onChange={(e) => { _exportCollaboratorFilter = e.target.value; setCollaboratorId(e.target.value); setPage(1) }}
+              onChange={(e) => { setCollaborator(e.target.value); setPage(1) }}
               className="w-52"
             />
             {hasFilters && (

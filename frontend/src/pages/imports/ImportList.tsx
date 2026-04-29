@@ -2,9 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-
-// Module-level: persists collaborator filter across route changes for the session
-let _importCollaboratorFilter = ''
 import { useImportList, useDeleteImport, useToggleImportFlag, useUpdateImportField } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -18,6 +15,7 @@ import { StatusMultiSelect } from '@/components/ui/StatusMultiSelect'
 import { Spinner } from '@/components/ui/Spinner'
 import { formatDate } from '@/utils/format'
 import { IMPORT_STATUS_LABELS, MODALITY_LABELS } from '@/utils/constants'
+import { filterStore } from '@/lib/filterStore'
 import type { ImportRecord } from '@/types/import'
 import type { ImportStatus } from '@/types/common'
 
@@ -64,7 +62,7 @@ export default function ImportList() {
 
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ImportStatus[]>(DEFAULT_STATUSES)
-  const [collaboratorId, setCollaboratorId] = useState(_importCollaboratorFilter)
+  const [collaboratorId, setCollaboratorId] = useState(filterStore.importCollaboratorId)
   const [vesselInput, setVesselInput] = useState('')
   const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -147,10 +145,14 @@ export default function ImportList() {
     setPage(1)
   }
 
+  function setCollaborator(value: string) {
+    filterStore.importCollaboratorId = value
+    setCollaboratorId(value)
+  }
+
   function clearFilters() {
     setStatuses(DEFAULT_STATUSES)
-    _importCollaboratorFilter = user?.id ?? ''
-    setCollaboratorId(_importCollaboratorFilter)
+    setCollaborator(user?.id ?? '')
     setDateFrom('')
     setDateTo('')
     setEtbFrom('')
@@ -242,7 +244,7 @@ export default function ImportList() {
             <Select
               options={collaboratorOptions}
               value={collaboratorId}
-              onChange={(e) => { _importCollaboratorFilter = e.target.value; setCollaboratorId(e.target.value); setPage(1) }}
+              onChange={(e) => { setCollaborator(e.target.value); setPage(1) }}
               className="w-52"
             />
             {hasFilters && (

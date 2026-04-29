@@ -1,8 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-// Module-level: persists collaborator filter across route changes for the session
-let _billingCollaboratorFilter = ''
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
@@ -14,6 +11,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { formatDate } from '@/utils/format'
 import { MODALITY_LABELS } from '@/utils/constants'
+import { filterStore } from '@/lib/filterStore'
 import type { ExportRecord } from '@/types/export'
 import type { ImportRecord } from '@/types/import'
 
@@ -39,7 +37,7 @@ export default function BillingList() {
   // Filters (client-side for client/reference, server-side for collaborator)
   const [clientSearch, setClientSearch] = useState('')
   const [referenceSearch, setReferenceSearch] = useState('')
-  const [collaboratorId, setCollaboratorId] = useState(_billingCollaboratorFilter)
+  const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
 
   const hasFilters = clientSearch || referenceSearch || collaboratorId
 
@@ -63,6 +61,11 @@ export default function BillingList() {
 
   const toggleExportBilling = useToggleExportBilling()
   const toggleImportBilling = useToggleImportBilling()
+
+  function setCollaborator(value: string) {
+    filterStore.billingCollaboratorId = value
+    setCollaboratorId(value)
+  }
 
   function filterExports(items: ExportRecord[]) {
     return items.filter((r) => {
@@ -128,12 +131,12 @@ export default function BillingList() {
         <Select
           options={collaboratorOptions}
           value={collaboratorId}
-          onChange={(e) => { _billingCollaboratorFilter = e.target.value; setCollaboratorId(e.target.value) }}
+          onChange={(e) => setCollaborator(e.target.value)}
           className="w-52"
         />
         {hasFilters && (
           <button
-            onClick={() => { setClientSearch(''); setReferenceSearch(''); _billingCollaboratorFilter = ''; setCollaboratorId('') }}
+            onClick={() => { setClientSearch(''); setReferenceSearch(''); setCollaborator('') }}
             className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             Limpar filtros
