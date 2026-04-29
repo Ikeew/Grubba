@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
 import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
@@ -36,7 +36,13 @@ export default function BillingList() {
   // Filters (client-side for client/reference, server-side for collaborator)
   const [clientSearch, setClientSearch] = useState('')
   const [referenceSearch, setReferenceSearch] = useState('')
-  const [collaboratorId, setCollaboratorId] = useState('')
+  const [collaboratorId, setCollaboratorId] = useState(
+    () => sessionStorage.getItem('grubba_collaborator_billing') ?? ''
+  )
+
+  useEffect(() => {
+    sessionStorage.setItem('grubba_collaborator_billing', collaboratorId)
+  }, [collaboratorId])
 
   const hasFilters = clientSearch || referenceSearch || collaboratorId
 

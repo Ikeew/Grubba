@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useExportList, useDeleteExport, useToggleExportFlag, useUpdateExportField } from '@/hooks/useExports'
@@ -60,7 +61,9 @@ export default function ExportList() {
 
   const [page, setPage] = useState(1)
   const [statuses, setStatuses] = useState<ExportStatus[]>(DEFAULT_STATUSES)
-  const [collaboratorId, setCollaboratorId] = useState('')
+  const [collaboratorId, setCollaboratorId] = useState(
+    () => sessionStorage.getItem('grubba_collaborator_export') ?? ''
+  )
   const [vesselInput, setVesselInput] = useState('')
   const [vessel, setVessel] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -73,6 +76,7 @@ export default function ExportList() {
 
   // Inline editing state
   const [editingStatusId, setEditingStatusId] = useState<string | null>(null)
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; right: number } | null>(null)
   const [editingDateId, setEditingDateId] = useState<string | null>(null)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -91,11 +95,17 @@ export default function ExportList() {
     return () => { if (vesselDebounceRef.current) clearTimeout(vesselDebounceRef.current) }
   }, [vesselInput])
 
+  // Persist collaborator filter across navigation
+  useEffect(() => {
+    sessionStorage.setItem('grubba_collaborator_export', collaboratorId)
+  }, [collaboratorId])
+
   // Close status dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target as Node)) {
         setEditingStatusId(null)
+        setDropdownPos(null)
       }
     }
     if (editingStatusId) document.addEventListener('mousedown', handleClickOutside)
@@ -164,9 +174,21 @@ export default function ExportList() {
     return user ? record.flagged_by_ids.includes(user.id) : false
   }
 
+  function handleStatusButtonClick(recordId: string, e: React.MouseEvent<HTMLButtonElement>) {
+    if (editingStatusId === recordId) {
+      setEditingStatusId(null)
+      setDropdownPos(null)
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect()
+      setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+      setEditingStatusId(recordId)
+    }
+  }
+
   function handleStatusChange(recordId: string, newStatus: ExportStatus) {
     updateField.mutate({ id: recordId, payload: { status: newStatus } })
     setEditingStatusId(null)
+    setDropdownPos(null)
   }
 
   function handleDateBlur(record: ExportRecord, value: string) {
@@ -176,6 +198,8 @@ export default function ExportList() {
     }
     setEditingDateId(null)
   }
+
+  const editingRecord = data?.items.find((r) => r.id === editingStatusId) ?? null
 
   return (
     <div>
@@ -352,32 +376,12 @@ export default function ExportList() {
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => e.stopPropagation()}
                   >
-                    <div className="relative">
-                      <button
-                        onClick={() => setEditingStatusId(editingStatusId === record.id ? null : record.id)}
-                        title="Clique para alterar o status"
-                      >
-                        <StatusBadge status={record.status} />
-                      </button>
-                      {editingStatusId === record.id && (
-                        <div
-                          ref={statusDropdownRef}
-                          className="absolute top-full left-0 z-50 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-52 max-h-72 overflow-y-auto"
-                        >
-                          {ALL_STATUS_OPTIONS.map((opt) => (
-                            <button
-                              key={opt.value}
-                              className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors ${
-                                record.status === opt.value ? 'font-semibold text-brand-700 bg-brand-50' : 'text-slate-700'
-                              }`}
-                              onClick={() => handleStatusChange(record.id, opt.value as ExportStatus)}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      onClick={(e) => handleStatusButtonClick(record.id, e)}
+                      title="Clique para alterar o status"
+                    >
+                      <StatusBadge status={record.status} />
+                    </button>
                   </td>
 
                   <td className="px-2 py-2 text-xs text-slate-700">
@@ -399,6 +403,28 @@ export default function ExportList() {
           <Pagination page={data.page} pages={data.pages} total={data.total} onPageChange={setPage} />
         )}
       </div>
+
+      {/* Status dropdown rendered via portal so it's never clipped by table overflow */}
+      {editingStatusId && dropdownPos && ReactDOM.createPortal(
+        <div
+          ref={statusDropdownRef}
+          style={{ position: 'fixed', top: dropdownPos.top, right: dropdownPos.right, zIndex: 9999 }}
+          className="bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-52 max-h-72 overflow-y-auto"
+        >
+          {ALL_STATUS_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors ${
+                editingRecord?.status === opt.value ? 'font-semibold text-brand-700 bg-brand-50' : 'text-slate-700'
+              }`}
+              onClick={() => handleStatusChange(editingStatusId, opt.value as ExportStatus)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>,
+        document.body
+      )}
 
       {toDelete && (
         <ConfirmModal
