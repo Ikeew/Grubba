@@ -60,6 +60,7 @@ export interface ExportRecord {
   inspection_date: string | null
   comex_released_date: string | null
   finalized_at: string | null
+  completed_at: string | null
   observations: string | null
   billing_completed: boolean
   client: ClientSummary

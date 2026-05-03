@@ -114,6 +114,7 @@ class ExportRecordResponse(BaseModel):
     comex_released_date: Date | None
 
     finalized_at: datetime | None
+    completed_at: datetime | None
     observations: str | None
     billing_completed: bool
 

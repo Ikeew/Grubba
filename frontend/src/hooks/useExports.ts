@@ -21,6 +21,8 @@ export function useExportList(params: {
   date_to?: string
   ets_from?: string
   ets_to?: string
+  completed_from?: string
+  completed_to?: string
 } = {}) {
   return useQuery({
     queryKey: EXPORT_KEYS.list(params),

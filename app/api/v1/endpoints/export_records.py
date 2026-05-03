@@ -52,12 +52,16 @@ def list_export_records(
     date_to: str | None = Query(default=None),
     ets_from: str | None = Query(default=None),
     ets_to: str | None = Query(default=None),
+    completed_from: str | None = Query(default=None),
+    completed_to: str | None = Query(default=None),
 ):
-    from datetime import date as Date
+    from datetime import date as Date, datetime, timezone, timedelta
     df = Date.fromisoformat(date_from) if date_from else None
     dt = Date.fromisoformat(date_to) if date_to else None
     ef = Date.fromisoformat(ets_from) if ets_from else None
     et = Date.fromisoformat(ets_to) if ets_to else None
+    cf = datetime(*(int(x) for x in completed_from.split('-')), tzinfo=timezone.utc) if completed_from else None
+    ct = datetime(*(int(x) for x in completed_to.split('-')), 23, 59, 59, tzinfo=timezone.utc) if completed_to else None
     result = _service(db).list_paginated(
         pagination,
         current_user,
@@ -70,6 +74,8 @@ def list_export_records(
         date_to=dt,
         ets_from=ef,
         ets_to=et,
+        completed_from=cf,
+        completed_to=ct,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

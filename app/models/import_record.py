@@ -108,6 +108,7 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     comex_released: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     guide_sent: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)   # guia_enviada
     finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # --- Notes ---
     observations: Mapped[str | None] = mapped_column(Text, nullable=True)

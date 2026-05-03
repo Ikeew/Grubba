@@ -118,6 +118,7 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     # --- Completion ---
     finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     observations: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # --- Billing ---

@@ -1,8 +1,9 @@
 import re
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.export_record import ExportRecord
+from app.models.export_record import ExportRecord, ExportStatus
 from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
@@ -71,12 +72,15 @@ class ExportRecordService:
         date_to=None,
         ets_from=None,
         ets_to=None,
+        completed_from=None,
+        completed_to=None,
     ):
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
             search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             ets_from=ets_from, ets_to=ets_to,
+            completed_from=completed_from, completed_to=completed_to,
         )
         items = self._records.list_with_filters(
             current_user_id=current_user.id,
@@ -90,6 +94,8 @@ class ExportRecordService:
             date_to=date_to,
             ets_from=ets_from,
             ets_to=ets_to,
+            completed_from=completed_from,
+            completed_to=completed_to,
             offset=pagination.offset,
             limit=pagination.limit,
         )
@@ -111,6 +117,8 @@ class ExportRecordService:
         if "client_id" in update_data:
             if not self._clients.get_by_id(update_data["client_id"]):
                 raise NotFoundError("Client")
+        if update_data.get("status") == ExportStatus.completed and record.completed_at is None:
+            update_data["completed_at"] = datetime.now(timezone.utc)
 
         updated = self._records.update(record, update_data)
         new_data = {col: getattr(updated, col) for col in payload.model_fields}

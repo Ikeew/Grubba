@@ -34,12 +34,14 @@ export default function BillingList() {
   const { user } = useAuth()
   const [tab, setTab] = useState<Tab>('exports')
 
-  // Filters (client-side for client/reference, server-side for collaborator)
+  // Filters (client-side for client/reference, server-side for collaborator/dates)
   const [clientSearch, setClientSearch] = useState('')
   const [referenceSearch, setReferenceSearch] = useState('')
   const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
+  const [completedFrom, setCompletedFrom] = useState('')
+  const [completedTo, setCompletedTo] = useState('')
 
-  const hasFilters = clientSearch || referenceSearch || collaboratorId
+  const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -51,12 +53,16 @@ export default function BillingList() {
     status: ['completed'],
     page_size: 500,
     collaborator_id: collaboratorId || undefined,
+    completed_from: completedFrom || undefined,
+    completed_to: completedTo || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
     status: ['completed'],
     page_size: 500,
     collaborator_id: collaboratorId || undefined,
+    completed_from: completedFrom || undefined,
+    completed_to: completedTo || undefined,
   })
 
   const toggleExportBilling = useToggleExportBilling()
@@ -65,6 +71,14 @@ export default function BillingList() {
   function setCollaborator(value: string) {
     filterStore.billingCollaboratorId = value
     setCollaboratorId(value)
+  }
+
+  function clearFilters() {
+    setClientSearch('')
+    setReferenceSearch('')
+    setCollaborator('')
+    setCompletedFrom('')
+    setCompletedTo('')
   }
 
   function filterExports(items: ExportRecord[]) {
@@ -134,9 +148,25 @@ export default function BillingList() {
           onChange={(e) => setCollaborator(e.target.value)}
           className="w-52"
         />
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-500 whitespace-nowrap">Concluído de</span>
+          <input
+            type="date"
+            value={completedFrom}
+            onChange={(e) => setCompletedFrom(e.target.value)}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+          <span className="text-xs text-slate-500">até</span>
+          <input
+            type="date"
+            value={completedTo}
+            onChange={(e) => setCompletedTo(e.target.value)}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
         {hasFilters && (
           <button
-            onClick={() => { setClientSearch(''); setReferenceSearch(''); setCollaborator('') }}
+            onClick={clearFilters}
             className="px-3 py-1.5 rounded-md text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             Limpar filtros

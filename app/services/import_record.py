@@ -1,8 +1,9 @@
 import re
+from datetime import datetime, timezone
 from uuid import UUID
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.import_record import ImportRecord
+from app.models.import_record import ImportRecord, ImportStatus
 from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
 from app.repositories.import_record import ImportRecordRepository
@@ -69,12 +70,15 @@ class ImportRecordService:
         date_to=None,
         etb_from=None,
         etb_to=None,
+        completed_from=None,
+        completed_to=None,
     ):
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
             client_id=client_id, status=status, collaborator_id=collaborator_id,
             search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             etb_from=etb_from, etb_to=etb_to,
+            completed_from=completed_from, completed_to=completed_to,
         )
         items = self._records.list_with_filters(
             current_user_id=current_user.id,
@@ -88,6 +92,8 @@ class ImportRecordService:
             date_to=date_to,
             etb_from=etb_from,
             etb_to=etb_to,
+            completed_from=completed_from,
+            completed_to=completed_to,
             offset=pagination.offset,
             limit=pagination.limit,
         )
@@ -105,6 +111,8 @@ class ImportRecordService:
         if "client_id" in update_data:
             if not self._clients.get_by_id(update_data["client_id"]):
                 raise NotFoundError("Client")
+        if update_data.get("status") == ImportStatus.completed and record.completed_at is None:
+            update_data["completed_at"] = datetime.now(timezone.utc)
 
         updated = self._records.update(record, update_data)
         new_data = {col: getattr(updated, col) for col in payload.model_fields}

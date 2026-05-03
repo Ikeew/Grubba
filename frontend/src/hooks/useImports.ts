@@ -21,6 +21,8 @@ export function useImportList(params: {
   date_to?: string
   etb_from?: string
   etb_to?: string
+  completed_from?: string
+  completed_to?: string
 } = {}) {
   return useQuery({
     queryKey: IMPORT_KEYS.list(params),

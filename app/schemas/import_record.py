@@ -140,6 +140,7 @@ class ImportRecordResponse(BaseModel):
     comex_released: bool
     guide_sent: bool
     finalized_at: datetime | None
+    completed_at: datetime | None
     observations: str | None
     billing_completed: bool
 

@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, datetime
 from typing import Any
 
 from sqlalchemy import case, func, or_, select
@@ -54,6 +54,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         date_to: date | None = None,
         ets_from: date | None = None,
         ets_to: date | None = None,
+        completed_from: datetime | None = None,
+        completed_to: datetime | None = None,
         offset: int = 0,
         limit: int = 20,
     ) -> list[ExportRecord]:
@@ -63,7 +65,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             joinedload(ExportRecord.port),
             joinedload(ExportRecord.flagged_by),
         )
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to, completed_from, completed_to)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
         stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).unique().all())
@@ -80,9 +82,11 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         date_to: date | None = None,
         ets_from: date | None = None,
         ets_to: date | None = None,
+        completed_from: datetime | None = None,
+        completed_to: datetime | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(ExportRecord)
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to, completed_from, completed_to)
         return self.db.scalar(stmt) or 0
 
     def _apply_filters(
@@ -97,6 +101,8 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
         date_to: date | None,
         ets_from: date | None = None,
         ets_to: date | None = None,
+        completed_from: datetime | None = None,
+        completed_to: datetime | None = None,
     ) -> Any:
         if search is not None:
             stmt = stmt.join(Client, ExportRecord.client_id == Client.id).where(
@@ -125,6 +131,10 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             stmt = stmt.where(ExportRecord.ets >= ets_from)
         if ets_to is not None:
             stmt = stmt.where(ExportRecord.ets <= ets_to)
+        if completed_from is not None:
+            stmt = stmt.where(ExportRecord.completed_at >= completed_from)
+        if completed_to is not None:
+            stmt = stmt.where(ExportRecord.completed_at <= completed_to)
         return stmt
 
     def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:
