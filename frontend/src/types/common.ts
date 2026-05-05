@@ -35,6 +35,7 @@ export type ImportStatus =
   | 'in_progress'
   | 'completed'
   | 'cancelled'
+  | 'protocolado'
   | 'aguardando_chegada_navio'
   | 'mapa_tfa'
   | 'comex_solicitado'
