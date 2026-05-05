@@ -29,6 +29,7 @@ class ImportStatus(str, enum.Enum):
     in_progress = "in_progress"
     completed = "completed"
     cancelled = "cancelled"
+    protocolado = "protocolado"
     aguardando_chegada_navio = "aguardando_chegada_navio"
     mapa_tfa = "mapa_tfa"
     comex_solicitado = "comex_solicitado"
