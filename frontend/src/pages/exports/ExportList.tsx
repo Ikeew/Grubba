@@ -61,16 +61,18 @@ export default function ExportList() {
   const { user } = useAuth()
 
   const [page, setPage] = useState(1)
-  const [statuses, setStatuses] = useState<ExportStatus[]>(DEFAULT_STATUSES)
+  const [statuses, setStatuses] = useState<ExportStatus[]>(
+    (filterStore.exportStatuses as ExportStatus[] | null) ?? DEFAULT_STATUSES,
+  )
   const [collaboratorId, setCollaboratorId] = useState(filterStore.exportCollaboratorId)
-  const [vesselInput, setVesselInput] = useState('')
-  const [vessel, setVessel] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [etsFrom, setEtsFrom] = useState('')
-  const [etsTo, setEtsTo] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [vesselInput, setVesselInput] = useState(filterStore.exportVessel)
+  const [vessel, setVessel] = useState(filterStore.exportVessel)
+  const [dateFrom, setDateFrom] = useState(filterStore.exportDateFrom)
+  const [dateTo, setDateTo] = useState(filterStore.exportDateTo)
+  const [etsFrom, setEtsFrom] = useState(filterStore.exportEtsFrom)
+  const [etsTo, setEtsTo] = useState(filterStore.exportEtsTo)
+  const [searchInput, setSearchInput] = useState(filterStore.exportSearch)
+  const [search, setSearch] = useState(filterStore.exportSearch)
   const [toDelete, setToDelete] = useState<ExportRecord | null>(null)
 
   // Inline editing state
@@ -150,6 +152,13 @@ export default function ExportList() {
   }
 
   function clearFilters() {
+    filterStore.exportStatuses = [...DEFAULT_STATUSES]
+    filterStore.exportSearch = ''
+    filterStore.exportVessel = ''
+    filterStore.exportDateFrom = ''
+    filterStore.exportDateTo = ''
+    filterStore.exportEtsFrom = ''
+    filterStore.exportEtsTo = ''
     setStatuses(DEFAULT_STATUSES)
     setCollaborator(user?.id ?? '')
     setDateFrom('')
@@ -216,20 +225,20 @@ export default function ExportList() {
               type="text"
               placeholder="Buscar por cliente ou referência..."
               value={searchInput}
-              onChange={(e) => { setSearchInput(e.target.value) }}
+              onChange={(e) => { filterStore.exportSearch = e.target.value; setSearchInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
             />
             <input
               type="text"
               placeholder="Filtrar por navio..."
               value={vesselInput}
-              onChange={(e) => { setVesselInput(e.target.value) }}
+              onChange={(e) => { filterStore.exportVessel = e.target.value; setVesselInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-44"
             />
             <StatusMultiSelect
               options={FILTERABLE_STATUS_OPTIONS}
               value={statuses}
-              onChange={(v) => { setStatuses(v as ExportStatus[]); setPage(1) }}
+              onChange={(v) => { const s = v as ExportStatus[]; filterStore.exportStatuses = s; setStatuses(s); setPage(1) }}
               className="w-52"
             />
             <Select
@@ -255,14 +264,14 @@ export default function ExportList() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.exportDateFrom = e.target.value; setDateFrom(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
               <span className="text-slate-400 text-xs">–</span>
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.exportDateTo = e.target.value; setDateTo(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
@@ -284,14 +293,14 @@ export default function ExportList() {
               <input
                 type="date"
                 value={etsFrom}
-                onChange={(e) => { setEtsFrom(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.exportEtsFrom = e.target.value; setEtsFrom(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
               <span className="text-slate-400 text-xs">–</span>
               <input
                 type="date"
                 value={etsTo}
-                onChange={(e) => { setEtsTo(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.exportEtsTo = e.target.value; setEtsTo(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>

@@ -32,14 +32,14 @@ function sortItems<T extends { billing_completed: boolean; collaborator?: { id: 
 export default function BillingList() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const [tab, setTab] = useState<Tab>('exports')
+  const [tab, setTab] = useState<Tab>((filterStore.billingTab as Tab) || 'exports')
 
   // Filters (client-side for client/reference, server-side for collaborator/dates)
-  const [clientSearch, setClientSearch] = useState('')
-  const [referenceSearch, setReferenceSearch] = useState('')
+  const [clientSearch, setClientSearch] = useState(filterStore.billingClientSearch)
+  const [referenceSearch, setReferenceSearch] = useState(filterStore.billingReferenceSearch)
   const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
-  const [completedFrom, setCompletedFrom] = useState('')
-  const [completedTo, setCompletedTo] = useState('')
+  const [completedFrom, setCompletedFrom] = useState(filterStore.billingCompletedFrom)
+  const [completedTo, setCompletedTo] = useState(filterStore.billingCompletedTo)
 
   const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo
 
@@ -74,6 +74,10 @@ export default function BillingList() {
   }
 
   function clearFilters() {
+    filterStore.billingClientSearch = ''
+    filterStore.billingReferenceSearch = ''
+    filterStore.billingCompletedFrom = ''
+    filterStore.billingCompletedTo = ''
     setClientSearch('')
     setReferenceSearch('')
     setCollaborator('')
@@ -109,7 +113,7 @@ export default function BillingList() {
         {(['exports', 'imports'] as Tab[]).map((t) => (
           <button
             key={t}
-            onClick={() => setTab(t)}
+            onClick={() => { filterStore.billingTab = t; setTab(t) }}
             className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
               tab === t
                 ? 'border-brand-600 text-brand-700'
@@ -132,14 +136,14 @@ export default function BillingList() {
           type="text"
           placeholder="Filtrar por cliente..."
           value={clientSearch}
-          onChange={(e) => setClientSearch(e.target.value)}
+          onChange={(e) => { filterStore.billingClientSearch = e.target.value; setClientSearch(e.target.value) }}
           className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-52"
         />
         <input
           type="text"
           placeholder="Filtrar por referência..."
           value={referenceSearch}
-          onChange={(e) => setReferenceSearch(e.target.value)}
+          onChange={(e) => { filterStore.billingReferenceSearch = e.target.value; setReferenceSearch(e.target.value) }}
           className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-48"
         />
         <Select
@@ -153,14 +157,14 @@ export default function BillingList() {
           <input
             type="date"
             value={completedFrom}
-            onChange={(e) => setCompletedFrom(e.target.value)}
+            onChange={(e) => { filterStore.billingCompletedFrom = e.target.value; setCompletedFrom(e.target.value) }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
           <span className="text-xs text-slate-500">até</span>
           <input
             type="date"
             value={completedTo}
-            onChange={(e) => setCompletedTo(e.target.value)}
+            onChange={(e) => { filterStore.billingCompletedTo = e.target.value; setCompletedTo(e.target.value) }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
         </div>

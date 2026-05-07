@@ -61,16 +61,18 @@ export default function ImportList() {
   const { user } = useAuth()
 
   const [page, setPage] = useState(1)
-  const [statuses, setStatuses] = useState<ImportStatus[]>(DEFAULT_STATUSES)
+  const [statuses, setStatuses] = useState<ImportStatus[]>(
+    (filterStore.importStatuses as ImportStatus[] | null) ?? DEFAULT_STATUSES,
+  )
   const [collaboratorId, setCollaboratorId] = useState(filterStore.importCollaboratorId)
-  const [vesselInput, setVesselInput] = useState('')
-  const [vessel, setVessel] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [etbFrom, setEtbFrom] = useState('')
-  const [etbTo, setEtbTo] = useState('')
-  const [searchInput, setSearchInput] = useState('')
-  const [search, setSearch] = useState('')
+  const [vesselInput, setVesselInput] = useState(filterStore.importVessel)
+  const [vessel, setVessel] = useState(filterStore.importVessel)
+  const [dateFrom, setDateFrom] = useState(filterStore.importDateFrom)
+  const [dateTo, setDateTo] = useState(filterStore.importDateTo)
+  const [etbFrom, setEtbFrom] = useState(filterStore.importEtbFrom)
+  const [etbTo, setEtbTo] = useState(filterStore.importEtbTo)
+  const [searchInput, setSearchInput] = useState(filterStore.importSearch)
+  const [search, setSearch] = useState(filterStore.importSearch)
   const [toDelete, setToDelete] = useState<ImportRecord | null>(null)
 
   // Inline editing state
@@ -151,6 +153,13 @@ export default function ImportList() {
   }
 
   function clearFilters() {
+    filterStore.importStatuses = [...DEFAULT_STATUSES]
+    filterStore.importSearch = ''
+    filterStore.importVessel = ''
+    filterStore.importDateFrom = ''
+    filterStore.importDateTo = ''
+    filterStore.importEtbFrom = ''
+    filterStore.importEtbTo = ''
     setStatuses(DEFAULT_STATUSES)
     setCollaborator(user?.id ?? '')
     setDateFrom('')
@@ -225,20 +234,20 @@ export default function ImportList() {
               type="text"
               placeholder="Buscar por cliente ou referência..."
               value={searchInput}
-              onChange={(e) => { setSearchInput(e.target.value) }}
+              onChange={(e) => { filterStore.importSearch = e.target.value; setSearchInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
             />
             <input
               type="text"
               placeholder="Filtrar por navio..."
               value={vesselInput}
-              onChange={(e) => { setVesselInput(e.target.value) }}
+              onChange={(e) => { filterStore.importVessel = e.target.value; setVesselInput(e.target.value) }}
               className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-44"
             />
             <StatusMultiSelect
               options={FILTERABLE_STATUS_OPTIONS}
               value={statuses}
-              onChange={(v) => { setStatuses(v as ImportStatus[]); setPage(1) }}
+              onChange={(v) => { const s = v as ImportStatus[]; filterStore.importStatuses = s; setStatuses(s); setPage(1) }}
               className="w-52"
             />
             <Select
@@ -264,14 +273,14 @@ export default function ImportList() {
               <input
                 type="date"
                 value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.importDateFrom = e.target.value; setDateFrom(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
               <span className="text-slate-400 text-xs">–</span>
               <input
                 type="date"
                 value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.importDateTo = e.target.value; setDateTo(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
@@ -293,14 +302,14 @@ export default function ImportList() {
               <input
                 type="date"
                 value={etbFrom}
-                onChange={(e) => { setEtbFrom(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.importEtbFrom = e.target.value; setEtbFrom(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
               <span className="text-slate-400 text-xs">–</span>
               <input
                 type="date"
                 value={etbTo}
-                onChange={(e) => { setEtbTo(e.target.value); setPage(1) }}
+                onChange={(e) => { filterStore.importEtbTo = e.target.value; setEtbTo(e.target.value); setPage(1) }}
                 className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
               />
             </div>
