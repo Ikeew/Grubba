@@ -40,8 +40,10 @@ export default function BillingList() {
   const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
   const [completedFrom, setCompletedFrom] = useState(filterStore.billingCompletedFrom)
   const [completedTo, setCompletedTo] = useState(filterStore.billingCompletedTo)
+  const [createdFrom, setCreatedFrom] = useState(filterStore.billingCreatedFrom)
+  const [createdTo, setCreatedTo] = useState(filterStore.billingCreatedTo)
 
-  const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo
+  const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo || createdFrom || createdTo
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -78,17 +80,24 @@ export default function BillingList() {
     filterStore.billingReferenceSearch = ''
     filterStore.billingCompletedFrom = ''
     filterStore.billingCompletedTo = ''
+    filterStore.billingCreatedFrom = ''
+    filterStore.billingCreatedTo = ''
     setClientSearch('')
     setReferenceSearch('')
     setCollaborator('')
     setCompletedFrom('')
     setCompletedTo('')
+    setCreatedFrom('')
+    setCreatedTo('')
   }
 
   function filterExports(items: ExportRecord[]) {
     return items.filter((r) => {
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
+      const createdDate = r.created_at.slice(0, 10)
+      if (createdFrom && createdDate < createdFrom) return false
+      if (createdTo && createdDate > createdTo) return false
       return true
     })
   }
@@ -97,6 +106,9 @@ export default function BillingList() {
     return items.filter((r) => {
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
+      const createdDate = r.created_at.slice(0, 10)
+      if (createdFrom && createdDate < createdFrom) return false
+      if (createdTo && createdDate > createdTo) return false
       return true
     })
   }
@@ -165,6 +177,22 @@ export default function BillingList() {
             type="date"
             value={completedTo}
             onChange={(e) => { filterStore.billingCompletedTo = e.target.value; setCompletedTo(e.target.value) }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-500 whitespace-nowrap">Criado de</span>
+          <input
+            type="date"
+            value={createdFrom}
+            onChange={(e) => { filterStore.billingCreatedFrom = e.target.value; setCreatedFrom(e.target.value) }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+          <span className="text-xs text-slate-500">até</span>
+          <input
+            type="date"
+            value={createdTo}
+            onChange={(e) => { filterStore.billingCreatedTo = e.target.value; setCreatedTo(e.target.value) }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
         </div>
@@ -261,7 +289,8 @@ export default function BillingList() {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETB</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DI/DUIMP</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
@@ -287,7 +316,8 @@ export default function BillingList() {
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
                     <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.etb)}</td>
+                    <td className="px-3 py-2 text-slate-500">{formatDate(record.di_duimp_dta)}</td>
+                    <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
                     <td className="px-3 py-2"><StatusBadge status={record.status} /></td>

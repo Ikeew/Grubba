@@ -27,4 +27,6 @@ export const filterStore = {
   billingReferenceSearch: '',
   billingCompletedFrom: '',
   billingCompletedTo: '',
+  billingCreatedFrom: '',
+  billingCreatedTo: '',
 }
