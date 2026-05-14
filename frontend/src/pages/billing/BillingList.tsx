@@ -311,7 +311,7 @@ export default function BillingList() {
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
                     <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.di_duimp_dta)}</td>
+                    <td className="px-3 py-2 text-slate-500">{record.di_duimp_dta ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
