@@ -22,6 +22,7 @@ import ImportForm from '@/pages/imports/ImportForm'
 import ImportDetail from '@/pages/imports/ImportDetail'
 
 import BillingList from '@/pages/billing/BillingList'
+import CompletedList from '@/pages/completed/CompletedList'
 
 export const router = createBrowserRouter([
   {
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
           { path: '/imports/:id', element: <ImportDetail /> },
           { path: '/imports/:id/edit', element: <ImportForm /> },
           { path: '/billing', element: <BillingList /> },
+          { path: '/completed', element: <CompletedList /> },
         ],
       },
     ],

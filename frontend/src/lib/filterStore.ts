@@ -20,6 +20,12 @@ export const filterStore = {
   importEtbFrom: '',
   importEtbTo: '',
 
+  // Completed filters
+  completedTab: 'exports' as string,
+  completedClientSearch: '',
+  completedReferenceSearch: '',
+  completedCollaboratorId: '',
+
   // Billing filters
   billingCollaboratorId: '',
   billingTab: 'exports' as string,

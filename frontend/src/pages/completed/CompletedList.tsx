@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
-import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
+import { useExportList } from '@/hooks/useExports'
+import { useImportList } from '@/hooks/useImports'
 import { useUserList } from '@/hooks/useUsers'
-import { useAuth } from '@/contexts/AuthContext'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
@@ -16,32 +15,15 @@ import type { ImportRecord } from '@/types/import'
 
 type Tab = 'exports' | 'imports'
 
-function sortItems<T extends { billing_completed: boolean; collaborator?: { id: string } | null }>(
-  items: T[],
-  currentUserId?: string,
-): T[] {
-  return [...items].sort((a, b) => {
-    const aIsMine = currentUserId && a.collaborator?.id === currentUserId ? 0 : 1
-    const bIsMine = currentUserId && b.collaborator?.id === currentUserId ? 0 : 1
-    if (aIsMine !== bIsMine) return aIsMine - bIsMine
-    return Number(a.billing_completed) - Number(b.billing_completed)
-  })
-}
-
-export default function BillingList() {
+export default function CompletedList() {
   const navigate = useNavigate()
-  const { user } = useAuth()
-  const [tab, setTab] = useState<Tab>((filterStore.billingTab as Tab) || 'exports')
+  const [tab, setTab] = useState<Tab>((filterStore.completedTab as Tab) || 'exports')
 
-  const [clientSearch, setClientSearch] = useState(filterStore.billingClientSearch)
-  const [referenceSearch, setReferenceSearch] = useState(filterStore.billingReferenceSearch)
-  const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
-  const [completedFrom, setCompletedFrom] = useState(filterStore.billingCompletedFrom)
-  const [completedTo, setCompletedTo] = useState(filterStore.billingCompletedTo)
-  const [createdFrom, setCreatedFrom] = useState(filterStore.billingCreatedFrom)
-  const [createdTo, setCreatedTo] = useState(filterStore.billingCreatedTo)
+  const [clientSearch, setClientSearch] = useState(filterStore.completedClientSearch ?? '')
+  const [referenceSearch, setReferenceSearch] = useState(filterStore.completedReferenceSearch ?? '')
+  const [collaboratorId, setCollaboratorId] = useState(filterStore.completedCollaboratorId ?? '')
 
-  const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo || createdFrom || createdTo
+  const hasFilters = clientSearch || referenceSearch || collaboratorId
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -53,77 +35,59 @@ export default function BillingList() {
     status: ['completed'],
     page_size: 500,
     collaborator_id: collaboratorId || undefined,
-    completed_from: completedFrom || undefined,
-    completed_to: completedTo || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
     status: ['completed'],
     page_size: 500,
     collaborator_id: collaboratorId || undefined,
-    completed_from: completedFrom || undefined,
-    completed_to: completedTo || undefined,
   })
 
-  const toggleExportBilling = useToggleExportBilling()
-  const toggleImportBilling = useToggleImportBilling()
-
   function setCollaborator(value: string) {
-    filterStore.billingCollaboratorId = value
+    filterStore.completedCollaboratorId = value
     setCollaboratorId(value)
   }
 
   function clearFilters() {
-    filterStore.billingClientSearch = ''
-    filterStore.billingReferenceSearch = ''
-    filterStore.billingCompletedFrom = ''
-    filterStore.billingCompletedTo = ''
-    filterStore.billingCreatedFrom = ''
-    filterStore.billingCreatedTo = ''
+    filterStore.completedClientSearch = ''
+    filterStore.completedReferenceSearch = ''
+    filterStore.completedCollaboratorId = ''
     setClientSearch('')
     setReferenceSearch('')
     setCollaborator('')
-    setCompletedFrom('')
-    setCompletedTo('')
-    setCreatedFrom('')
-    setCreatedTo('')
   }
 
   function filterExports(items: ExportRecord[]) {
     return items.filter((r) => {
+      if (!r.billing_completed) return false
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
-      const createdDate = r.created_at.slice(0, 10)
-      if (createdFrom && createdDate < createdFrom) return false
-      if (createdTo && createdDate > createdTo) return false
       return true
     })
   }
 
   function filterImports(items: ImportRecord[]) {
     return items.filter((r) => {
+      if (!r.billing_completed) return false
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
-      const createdDate = r.created_at.slice(0, 10)
-      if (createdFrom && createdDate < createdFrom) return false
-      if (createdTo && createdDate > createdTo) return false
       return true
     })
   }
 
-  const exports = sortItems(filterExports(exportData?.items ?? []), user?.id)
-  const imports = sortItems(filterImports(importData?.items ?? []), user?.id)
+  const exports = filterExports(exportData?.items ?? [])
+  const imports = filterImports(importData?.items ?? [])
 
   return (
     <div>
-      <PageHeader title="Faturamento" />
+      <PageHeader title="Fichas Concluídas" />
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200">
         {(['exports', 'imports'] as Tab[]).map((t) => (
           <button
             key={t}
-            onClick={() => { filterStore.billingTab = t; setTab(t) }}
+            onClick={() => { filterStore.completedTab = t; setTab(t) }}
             className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
               tab === t
                 ? 'border-brand-600 text-brand-700'
@@ -146,14 +110,14 @@ export default function BillingList() {
           type="text"
           placeholder="Filtrar por cliente..."
           value={clientSearch}
-          onChange={(e) => { filterStore.billingClientSearch = e.target.value; setClientSearch(e.target.value) }}
+          onChange={(e) => { filterStore.completedClientSearch = e.target.value; setClientSearch(e.target.value) }}
           className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-52"
         />
         <input
           type="text"
           placeholder="Filtrar por referência..."
           value={referenceSearch}
-          onChange={(e) => { filterStore.billingReferenceSearch = e.target.value; setReferenceSearch(e.target.value) }}
+          onChange={(e) => { filterStore.completedReferenceSearch = e.target.value; setReferenceSearch(e.target.value) }}
           className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-48"
         />
         <Select
@@ -162,38 +126,6 @@ export default function BillingList() {
           onChange={(e) => setCollaborator(e.target.value)}
           className="w-52"
         />
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Concluído de</span>
-          <input
-            type="date"
-            value={completedFrom}
-            onChange={(e) => { filterStore.billingCompletedFrom = e.target.value; setCompletedFrom(e.target.value) }}
-            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-          <span className="text-xs text-slate-500">até</span>
-          <input
-            type="date"
-            value={completedTo}
-            onChange={(e) => { filterStore.billingCompletedTo = e.target.value; setCompletedTo(e.target.value) }}
-            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-slate-500 whitespace-nowrap">Criado de</span>
-          <input
-            type="date"
-            value={createdFrom}
-            onChange={(e) => { filterStore.billingCreatedFrom = e.target.value; setCreatedFrom(e.target.value) }}
-            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-          <span className="text-xs text-slate-500">até</span>
-          <input
-            type="date"
-            value={createdTo}
-            onChange={(e) => { filterStore.billingCreatedTo = e.target.value; setCreatedTo(e.target.value) }}
-            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          />
-        </div>
         {hasFilters && (
           <button
             onClick={clearFilters}
@@ -210,7 +142,7 @@ export default function BillingList() {
           {exportLoading ? (
             <div className="flex justify-center py-12"><Spinner /></div>
           ) : !exports.length ? (
-            <EmptyState title="Nenhuma exportação concluída." />
+            <EmptyState title="Nenhuma exportação faturada." />
           ) : (
             <table className="w-full text-xs">
               <thead className="bg-slate-50 border-b border-slate-200">
@@ -224,7 +156,6 @@ export default function BillingList() {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,11 +163,7 @@ export default function BillingList() {
                   <tr
                     key={record.id}
                     onDoubleClick={() => navigate(`/exports/${record.id}`)}
-                    className={`border-b border-slate-100 cursor-pointer transition-colors ${
-                      record.billing_completed
-                        ? 'bg-green-50 hover:bg-green-100'
-                        : 'hover:bg-slate-50'
-                    }`}
+                    className="border-b border-slate-100 cursor-pointer bg-green-50 hover:bg-green-100 transition-colors"
                   >
                     <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
@@ -247,19 +174,6 @@ export default function BillingList() {
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
                     <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleExportBilling.mutate(record.id) }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                          record.billing_completed
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700'
-                        }`}
-                      >
-                        {record.billing_completed ? '✓ Faturado' : 'Marcar faturado'}
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -274,7 +188,7 @@ export default function BillingList() {
           {importLoading ? (
             <div className="flex justify-center py-12"><Spinner /></div>
           ) : !imports.length ? (
-            <EmptyState title="Nenhuma importação concluída." />
+            <EmptyState title="Nenhuma importação faturada." />
           ) : (
             <table className="w-full text-xs">
               <thead className="bg-slate-50 border-b border-slate-200">
@@ -289,7 +203,6 @@ export default function BillingList() {
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                   <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,11 +210,7 @@ export default function BillingList() {
                   <tr
                     key={record.id}
                     onDoubleClick={() => navigate(`/imports/${record.id}`)}
-                    className={`border-b border-slate-100 cursor-pointer transition-colors ${
-                      record.billing_completed
-                        ? 'bg-green-50 hover:bg-green-100'
-                        : 'hover:bg-slate-50'
-                    }`}
+                    className="border-b border-slate-100 cursor-pointer bg-green-50 hover:bg-green-100 transition-colors"
                   >
                     <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
@@ -315,19 +224,6 @@ export default function BillingList() {
                     <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                     <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleImportBilling.mutate(record.id) }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                          record.billing_completed
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700'
-                        }`}
-                      >
-                        {record.billing_completed ? '✓ Faturado' : 'Marcar faturado'}
-                      </button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
