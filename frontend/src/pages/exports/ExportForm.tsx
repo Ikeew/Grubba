@@ -116,6 +116,8 @@ export default function ExportForm() {
     }
   }
 
+  const isCompletedLocked = isEditing && record?.status === 'completed' && !isAdmin
+
   const selectedServices = watch('services') ?? []
 
   function toggleService(service: ExportService) {
@@ -275,6 +277,12 @@ export default function ExportForm() {
           <Textarea label="Observações" rows={4} {...register('observations')} />
         </div>
 
+        {isCompletedLocked && (
+          <div className="rounded-md bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
+            Esta ficha está concluída e não pode ser editada. Apenas administradores podem fazer alterações.
+          </div>
+        )}
+
         {submitError && (
           <div className="rounded-md bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700">
             {submitError}
@@ -285,7 +293,7 @@ export default function ExportForm() {
           <Button type="button" variant="secondary" onClick={() => navigate('/exports')}>
             Cancelar
           </Button>
-          <Button type="submit" loading={isSubmitting}>
+          <Button type="submit" loading={isSubmitting} disabled={isCompletedLocked}>
             {isEditing ? 'Salvar alterações' : 'Criar ficha'}
           </Button>
         </div>

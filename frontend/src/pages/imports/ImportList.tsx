@@ -19,9 +19,9 @@ import { filterStore } from '@/lib/filterStore'
 import type { ImportRecord } from '@/types/import'
 import type { ImportStatus } from '@/types/common'
 
-// Options shown in the filter bar (no completed/cancelled — those are billing-only)
+// All statuses shown in filter; completed comes unchecked by default
 const FILTERABLE_STATUS_OPTIONS = Object.entries(IMPORT_STATUS_LABELS)
-  .filter(([value]) => value !== 'completed' && value !== 'cancelled')
+  .filter(([value]) => value !== 'cancelled')
   .map(([value, label]) => ({ value, label }))
 
 // All options available when changing status inline on a row
@@ -181,6 +181,10 @@ export default function ImportList() {
 
   function isFlagged(record: ImportRecord) {
     return user ? record.flagged_by_ids.includes(user.id) : false
+  }
+
+  function canEdit(record: ImportRecord) {
+    return user?.role === 'admin' || record.status !== 'completed'
   }
 
   function handleStatusButtonClick(recordId: string, e: React.MouseEvent<HTMLButtonElement>) {
@@ -368,7 +372,7 @@ export default function ImportList() {
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => e.stopPropagation()}
                   >
-                    {editingEtbId === record.id ? (
+                    {canEdit(record) && editingEtbId === record.id ? (
                       <input
                         type="date"
                         defaultValue={record.etb ?? ''}
@@ -378,9 +382,9 @@ export default function ImportList() {
                       />
                     ) : (
                       <button
-                        onClick={() => setEditingEtbId(record.id)}
-                        className="text-left hover:text-brand-600 hover:underline decoration-dashed underline-offset-2"
-                        title="Clique para alterar o ETB"
+                        onClick={() => canEdit(record) && setEditingEtbId(record.id)}
+                        className={canEdit(record) ? 'text-left hover:text-brand-600 hover:underline decoration-dashed underline-offset-2' : 'text-left cursor-default'}
+                        title={canEdit(record) ? 'Clique para alterar o ETB' : undefined}
                       >
                         {formatDate(record.etb) || <span className="text-slate-300">—</span>}
                       </button>
@@ -395,7 +399,7 @@ export default function ImportList() {
                     onClick={(e) => e.stopPropagation()}
                     onDoubleClick={(e) => e.stopPropagation()}
                   >
-                    {editingDateId === record.id ? (
+                    {canEdit(record) && editingDateId === record.id ? (
                       <input
                         type="date"
                         defaultValue={record.inspection_date ?? ''}
@@ -405,9 +409,9 @@ export default function ImportList() {
                       />
                     ) : (
                       <button
-                        onClick={() => setEditingDateId(record.id)}
-                        className="text-left hover:text-brand-600 hover:underline decoration-dashed underline-offset-2"
-                        title="Clique para alterar a data de vistoria"
+                        onClick={() => canEdit(record) && setEditingDateId(record.id)}
+                        className={canEdit(record) ? 'text-left hover:text-brand-600 hover:underline decoration-dashed underline-offset-2' : 'text-left cursor-default'}
+                        title={canEdit(record) ? 'Clique para alterar a data de vistoria' : undefined}
                       >
                         {formatDate(record.inspection_date) || <span className="text-slate-300">—</span>}
                       </button>
@@ -421,17 +425,20 @@ export default function ImportList() {
                     onDoubleClick={(e) => e.stopPropagation()}
                   >
                     <button
-                      onClick={(e) => handleStatusButtonClick(record.id, e)}
-                      title="Clique para alterar o status"
+                      onClick={(e) => canEdit(record) && handleStatusButtonClick(record.id, e)}
+                      title={canEdit(record) ? 'Clique para alterar o status' : undefined}
+                      className={!canEdit(record) ? 'cursor-default' : undefined}
                     >
                       <StatusBadge status={record.status} />
                     </button>
                   </td>
 
                   <td className="px-2 py-2 text-xs text-slate-700">
-                    <Button size="sm" variant="ghost" className="text-red-500" onClick={() => setToDelete(record)}>
-                      ×
-                    </Button>
+                    {canEdit(record) && (
+                      <Button size="sm" variant="ghost" className="text-red-500" onClick={() => setToDelete(record)}>
+                        ×
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}

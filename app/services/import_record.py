@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from uuid import UUID
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.models.import_record import ImportRecord, ImportStatus
 from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
@@ -28,8 +28,9 @@ class ImportRecordService:
         self._clients = client_repo
         self._history = HistoryService(history_repo)
 
-    def _check_edit_access(self, _record: ImportRecord, _current_user: User) -> None:
-        pass  # All authenticated users can edit any record
+    def _check_edit_access(self, record: ImportRecord, current_user: User) -> None:
+        if record.status == ImportStatus.completed and current_user.role != UserRole.admin:
+            raise ForbiddenError("Fichas concluídas só podem ser editadas por administradores")
 
     def create(self, payload: ImportRecordCreate, current_user: User) -> ImportRecord:
         client = self._clients.get_by_id(payload.client_id)

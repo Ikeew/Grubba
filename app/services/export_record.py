@@ -2,7 +2,7 @@ import re
 from datetime import datetime, timezone
 from uuid import UUID
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.models.export_record import ExportRecord, ExportStatus
 from app.models.user import User, UserRole
 from app.repositories.client import ClientRepository
@@ -28,8 +28,9 @@ class ExportRecordService:
         self._clients = client_repo
         self._history = HistoryService(history_repo)
 
-    def _check_edit_access(self, _record: ExportRecord, _current_user: User) -> None:
-        pass  # All authenticated users can edit any record
+    def _check_edit_access(self, record: ExportRecord, current_user: User) -> None:
+        if record.status == ExportStatus.completed and current_user.role != UserRole.admin:
+            raise ForbiddenError("Fichas concluídas só podem ser editadas por administradores")
 
     def create(self, payload: ExportRecordCreate, current_user: User) -> ExportRecord:
         client = self._clients.get_by_id(payload.client_id)

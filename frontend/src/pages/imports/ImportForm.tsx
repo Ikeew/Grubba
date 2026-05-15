@@ -107,6 +107,8 @@ export default function ImportForm() {
     }
   }, [record, reset])
 
+  const isCompletedLocked = isEditing && record?.status === 'completed' && !isAdmin
+
   async function onSubmit(values: ImportFormValues) {
     setSubmitError(null)
     const clean = Object.fromEntries(
@@ -285,6 +287,12 @@ export default function ImportForm() {
           <Textarea label="Observações" rows={4} {...register('observations')} />
         </div>
 
+        {isCompletedLocked && (
+          <div className="rounded-md bg-amber-50 border border-amber-300 px-4 py-3 text-sm text-amber-800">
+            Esta ficha está concluída e não pode ser editada. Apenas administradores podem fazer alterações.
+          </div>
+        )}
+
         {submitError && (
           <div className="rounded-md bg-red-50 border border-red-300 px-4 py-3 text-sm text-red-700">
             {submitError}
@@ -295,7 +303,7 @@ export default function ImportForm() {
           <Button type="button" variant="secondary" onClick={() => navigate('/imports')}>
             Cancelar
           </Button>
-          <Button type="submit" loading={isSubmitting}>
+          <Button type="submit" loading={isSubmitting} disabled={isCompletedLocked}>
             {isEditing ? 'Salvar alterações' : 'Criar ficha'}
           </Button>
         </div>
