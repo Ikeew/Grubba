@@ -91,6 +91,7 @@ export default function BillingList() {
 
   function filterExports(items: ExportRecord[]) {
     return items.filter((r) => {
+      if (r.billing_completed) return false
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
       const createdDate = r.created_at.slice(0, 10)
@@ -102,6 +103,7 @@ export default function BillingList() {
 
   function filterImports(items: ImportRecord[]) {
     return items.filter((r) => {
+      if (r.billing_completed) return false
       if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
       if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
       const createdDate = r.created_at.slice(0, 10)
