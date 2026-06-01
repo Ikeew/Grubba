@@ -25,6 +25,10 @@ export const filterStore = {
   completedClientSearch: '',
   completedReferenceSearch: '',
   completedCollaboratorId: '',
+  completedCompletedFrom: '',
+  completedCompletedTo: '',
+  completedCreatedFrom: '',
+  completedCreatedTo: '',
 
   // Billing filters
   billingCollaboratorId: '',

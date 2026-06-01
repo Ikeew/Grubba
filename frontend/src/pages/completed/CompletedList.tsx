@@ -24,11 +24,15 @@ export default function CompletedList() {
 
   const [search, setSearch] = useState(filterStore.completedClientSearch ?? '')
   const [collaboratorId, setCollaboratorId] = useState(filterStore.completedCollaboratorId ?? '')
+  const [completedFrom, setCompletedFrom] = useState(filterStore.completedCompletedFrom ?? '')
+  const [completedTo, setCompletedTo] = useState(filterStore.completedCompletedTo ?? '')
+  const [createdFrom, setCreatedFrom] = useState(filterStore.completedCreatedFrom ?? '')
+  const [createdTo, setCreatedTo] = useState(filterStore.completedCreatedTo ?? '')
 
   const [exportPage, setExportPage] = useState(1)
   const [importPage, setImportPage] = useState(1)
 
-  const hasFilters = search || collaboratorId
+  const hasFilters = search || collaboratorId || completedFrom || completedTo || createdFrom || createdTo
 
   const { data: users } = useUserList()
   const collaboratorOptions = [
@@ -43,6 +47,8 @@ export default function CompletedList() {
     page_size: PAGE_SIZE,
     collaborator_id: collaboratorId || undefined,
     search: search || undefined,
+    completed_from: completedFrom || undefined,
+    completed_to: completedTo || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
@@ -52,6 +58,8 @@ export default function CompletedList() {
     page_size: PAGE_SIZE,
     collaborator_id: collaboratorId || undefined,
     search: search || undefined,
+    completed_from: completedFrom || undefined,
+    completed_to: completedTo || undefined,
   })
 
   function setCollaborator(value: string) {
@@ -71,8 +79,16 @@ export default function CompletedList() {
   function clearFilters() {
     filterStore.completedClientSearch = ''
     filterStore.completedCollaboratorId = ''
+    filterStore.completedCompletedFrom = ''
+    filterStore.completedCompletedTo = ''
+    filterStore.completedCreatedFrom = ''
+    filterStore.completedCreatedTo = ''
     handleSearch('')
     setCollaborator('')
+    setCompletedFrom('')
+    setCompletedTo('')
+    setCreatedFrom('')
+    setCreatedTo('')
   }
 
   const exports = exportData?.items ?? []
@@ -119,6 +135,46 @@ export default function CompletedList() {
           onChange={(e) => setCollaborator(e.target.value)}
           className="w-52"
         />
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-500 whitespace-nowrap">Concluído de</span>
+          <input
+            type="date"
+            value={completedFrom}
+            onChange={(e) => {
+              filterStore.completedCompletedFrom = e.target.value
+              setCompletedFrom(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+          <span className="text-xs text-slate-500">até</span>
+          <input
+            type="date"
+            value={completedTo}
+            onChange={(e) => {
+              filterStore.completedCompletedTo = e.target.value
+              setCompletedTo(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-slate-500 whitespace-nowrap">Criado de</span>
+          <input
+            type="date"
+            value={createdFrom}
+            onChange={(e) => { filterStore.completedCreatedFrom = e.target.value; setCreatedFrom(e.target.value) }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+          <span className="text-xs text-slate-500">até</span>
+          <input
+            type="date"
+            value={createdTo}
+            onChange={(e) => { filterStore.completedCreatedTo = e.target.value; setCreatedTo(e.target.value) }}
+            className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+          />
+        </div>
         {hasFilters && (
           <button
             onClick={clearFilters}
