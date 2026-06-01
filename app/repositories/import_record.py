@@ -56,6 +56,7 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         etb_to: date | None = None,
         completed_from: datetime | None = None,
         completed_to: datetime | None = None,
+        billing_completed: bool | None = None,
         offset: int = 0,
         limit: int = 20,
     ) -> list[ImportRecord]:
@@ -65,7 +66,7 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
             joinedload(ImportRecord.port),
             joinedload(ImportRecord.flagged_by),
         )
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, etb_from, etb_to, completed_from, completed_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, etb_from, etb_to, completed_from, completed_to, billing_completed)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
         stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).unique().all())
@@ -84,9 +85,10 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         etb_to: date | None = None,
         completed_from: datetime | None = None,
         completed_to: datetime | None = None,
+        billing_completed: bool | None = None,
     ) -> int:
         stmt = select(func.count()).select_from(ImportRecord)
-        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, etb_from, etb_to, completed_from, completed_to)
+        stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, etb_from, etb_to, completed_from, completed_to, billing_completed)
         return self.db.scalar(stmt) or 0
 
     def _apply_filters(
@@ -103,6 +105,7 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         etb_to: date | None = None,
         completed_from: datetime | None = None,
         completed_to: datetime | None = None,
+        billing_completed: bool | None = None,
     ) -> Any:
         if search is not None:
             stmt = stmt.join(Client, ImportRecord.client_id == Client.id).where(
@@ -135,6 +138,8 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
             stmt = stmt.where(ImportRecord.completed_at >= completed_from)
         if completed_to is not None:
             stmt = stmt.where(ImportRecord.completed_at <= completed_to)
+        if billing_completed is not None:
+            stmt = stmt.where(ImportRecord.billing_completed == billing_completed)
         return stmt
 
     def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:

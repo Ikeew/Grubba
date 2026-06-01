@@ -23,6 +23,7 @@ export function useImportList(params: {
   etb_to?: string
   completed_from?: string
   completed_to?: string
+  billing_completed?: boolean
 } = {}) {
   return useQuery({
     queryKey: IMPORT_KEYS.list(params),

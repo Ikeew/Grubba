@@ -53,6 +53,7 @@ def list_import_records(
     etb_to: str | None = Query(default=None),
     completed_from: str | None = Query(default=None),
     completed_to: str | None = Query(default=None),
+    billing_completed: bool | None = Query(default=None),
 ):
     from datetime import date as Date, datetime, timezone
     df = Date.fromisoformat(date_from) if date_from else None
@@ -75,6 +76,7 @@ def list_import_records(
         etb_to=et,
         completed_from=cf,
         completed_to=ct,
+        billing_completed=billing_completed,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

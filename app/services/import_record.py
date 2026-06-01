@@ -73,6 +73,7 @@ class ImportRecordService:
         etb_to=None,
         completed_from=None,
         completed_to=None,
+        billing_completed=None,
     ):
         is_admin = current_user.role == UserRole.admin
         total = self._records.count_with_filters(
@@ -80,6 +81,7 @@ class ImportRecordService:
             search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             etb_from=etb_from, etb_to=etb_to,
             completed_from=completed_from, completed_to=completed_to,
+            billing_completed=billing_completed,
         )
         items = self._records.list_with_filters(
             current_user_id=current_user.id,
@@ -95,6 +97,7 @@ class ImportRecordService:
             etb_to=etb_to,
             completed_from=completed_from,
             completed_to=completed_to,
+            billing_completed=billing_completed,
             offset=pagination.offset,
             limit=pagination.limit,
         )

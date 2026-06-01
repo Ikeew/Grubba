@@ -23,6 +23,7 @@ export function useExportList(params: {
   ets_to?: string
   completed_from?: string
   completed_to?: string
+  billing_completed?: boolean
 } = {}) {
   return useQuery({
     queryKey: EXPORT_KEYS.list(params),

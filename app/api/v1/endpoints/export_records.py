@@ -54,6 +54,7 @@ def list_export_records(
     ets_to: str | None = Query(default=None),
     completed_from: str | None = Query(default=None),
     completed_to: str | None = Query(default=None),
+    billing_completed: bool | None = Query(default=None),
 ):
     from datetime import date as Date, datetime, timezone, timedelta
     df = Date.fromisoformat(date_from) if date_from else None
@@ -76,6 +77,7 @@ def list_export_records(
         ets_to=et,
         completed_from=cf,
         completed_to=ct,
+        billing_completed=billing_completed,
     )
     from app.schemas.common import PaginatedResponse as PR
     return PR(

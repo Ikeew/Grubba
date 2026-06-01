@@ -14,6 +14,9 @@ interface ListParams {
   date_to?: string
   etb_from?: string
   etb_to?: string
+  completed_from?: string
+  completed_to?: string
+  billing_completed?: boolean
 }
 
 export const importService = {

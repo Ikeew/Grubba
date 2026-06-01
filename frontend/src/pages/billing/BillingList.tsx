@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/shared/EmptyState'
+import { Pagination } from '@/components/ui/Pagination'
 import { formatDate } from '@/utils/format'
 import { MODALITY_LABELS } from '@/utils/constants'
 import { filterStore } from '@/lib/filterStore'
@@ -16,30 +17,23 @@ import type { ImportRecord } from '@/types/import'
 
 type Tab = 'exports' | 'imports'
 
-function sortItems<T extends { billing_completed: boolean; collaborator?: { id: string } | null }>(
-  items: T[],
-  currentUserId?: string,
-): T[] {
-  return [...items].sort((a, b) => {
-    const aIsMine = currentUserId && a.collaborator?.id === currentUserId ? 0 : 1
-    const bIsMine = currentUserId && b.collaborator?.id === currentUserId ? 0 : 1
-    if (aIsMine !== bIsMine) return aIsMine - bIsMine
-    return Number(a.billing_completed) - Number(b.billing_completed)
-  })
-}
+const PAGE_SIZE = 50
 
 export default function BillingList() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [tab, setTab] = useState<Tab>((filterStore.billingTab as Tab) || 'exports')
 
-  const [clientSearch, setClientSearch] = useState(filterStore.billingClientSearch)
-  const [referenceSearch, setReferenceSearch] = useState(filterStore.billingReferenceSearch)
-  const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId)
-  const [completedFrom, setCompletedFrom] = useState(filterStore.billingCompletedFrom)
-  const [completedTo, setCompletedTo] = useState(filterStore.billingCompletedTo)
-  const [createdFrom, setCreatedFrom] = useState(filterStore.billingCreatedFrom)
-  const [createdTo, setCreatedTo] = useState(filterStore.billingCreatedTo)
+  const [clientSearch, setClientSearch] = useState(filterStore.billingClientSearch ?? '')
+  const [referenceSearch, setReferenceSearch] = useState(filterStore.billingReferenceSearch ?? '')
+  const [collaboratorId, setCollaboratorId] = useState(filterStore.billingCollaboratorId ?? '')
+  const [completedFrom, setCompletedFrom] = useState(filterStore.billingCompletedFrom ?? '')
+  const [completedTo, setCompletedTo] = useState(filterStore.billingCompletedTo ?? '')
+  const [createdFrom, setCreatedFrom] = useState(filterStore.billingCreatedFrom ?? '')
+  const [createdTo, setCreatedTo] = useState(filterStore.billingCreatedTo ?? '')
+
+  const [exportPage, setExportPage] = useState(1)
+  const [importPage, setImportPage] = useState(1)
 
   const hasFilters = clientSearch || referenceSearch || collaboratorId || completedFrom || completedTo || createdFrom || createdTo
 
@@ -49,20 +43,30 @@ export default function BillingList() {
     ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
   ]
 
+  const exportSearch = clientSearch || referenceSearch || undefined
+
   const { data: exportData, isLoading: exportLoading } = useExportList({
     status: ['completed'],
-    page_size: 500,
+    billing_completed: false,
+    page: exportPage,
+    page_size: PAGE_SIZE,
     collaborator_id: collaboratorId || undefined,
     completed_from: completedFrom || undefined,
     completed_to: completedTo || undefined,
+    search: exportSearch,
   })
+
+  const importSearch = clientSearch || referenceSearch || undefined
 
   const { data: importData, isLoading: importLoading } = useImportList({
     status: ['completed'],
-    page_size: 500,
+    billing_completed: false,
+    page: importPage,
+    page_size: PAGE_SIZE,
     collaborator_id: collaboratorId || undefined,
     completed_from: completedFrom || undefined,
     completed_to: completedTo || undefined,
+    search: importSearch,
   })
 
   const toggleExportBilling = useToggleExportBilling()
@@ -71,11 +75,23 @@ export default function BillingList() {
   function setCollaborator(value: string) {
     filterStore.billingCollaboratorId = value
     setCollaboratorId(value)
+    setExportPage(1)
+    setImportPage(1)
+  }
+
+  function handleSearch(client: string, reference: string) {
+    filterStore.billingClientSearch = client
+    filterStore.billingReferenceSearch = reference
+    setClientSearch(client)
+    setReferenceSearch(reference)
+    setExportPage(1)
+    setImportPage(1)
   }
 
   function clearFilters() {
     filterStore.billingClientSearch = ''
     filterStore.billingReferenceSearch = ''
+    filterStore.billingCollaboratorId = ''
     filterStore.billingCompletedFrom = ''
     filterStore.billingCompletedTo = ''
     filterStore.billingCreatedFrom = ''
@@ -87,34 +103,24 @@ export default function BillingList() {
     setCompletedTo('')
     setCreatedFrom('')
     setCreatedTo('')
+    setExportPage(1)
+    setImportPage(1)
   }
 
-  function filterExports(items: ExportRecord[]) {
-    return items.filter((r) => {
-      if (r.billing_completed) return false
-      if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
-      if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
-      const createdDate = r.created_at.slice(0, 10)
-      if (createdFrom && createdDate < createdFrom) return false
-      if (createdTo && createdDate > createdTo) return false
-      return true
-    })
-  }
+  const exports = exportData?.items ?? []
+  const imports = importData?.items ?? []
 
-  function filterImports(items: ImportRecord[]) {
-    return items.filter((r) => {
-      if (r.billing_completed) return false
-      if (clientSearch && !r.client.name.toLowerCase().includes(clientSearch.toLowerCase())) return false
-      if (referenceSearch && !(r.reference ?? '').toLowerCase().includes(referenceSearch.toLowerCase())) return false
-      const createdDate = r.created_at.slice(0, 10)
-      if (createdFrom && createdDate < createdFrom) return false
-      if (createdTo && createdDate > createdTo) return false
-      return true
-    })
-  }
-
-  const exports = sortItems(filterExports(exportData?.items ?? []), user?.id)
-  const imports = sortItems(filterImports(importData?.items ?? []), user?.id)
+  // Sort: mine first (server already handles ordering but we keep client-side sort for billing indicator)
+  const sortedExports = [...exports].sort((a, b) => {
+    const aIsMine = user?.id && a.collaborator?.id === user.id ? 0 : 1
+    const bIsMine = user?.id && b.collaborator?.id === user.id ? 0 : 1
+    return aIsMine - bIsMine
+  })
+  const sortedImports = [...imports].sort((a, b) => {
+    const aIsMine = user?.id && a.collaborator?.id === user.id ? 0 : 1
+    const bIsMine = user?.id && b.collaborator?.id === user.id ? 0 : 1
+    return aIsMine - bIsMine
+  })
 
   return (
     <div>
@@ -136,7 +142,7 @@ export default function BillingList() {
             <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
               tab === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'
             }`}>
-              {t === 'exports' ? exports.length : imports.length}
+              {t === 'exports' ? (exportData?.total ?? 0) : (importData?.total ?? 0)}
             </span>
           </button>
         ))}
@@ -146,17 +152,10 @@ export default function BillingList() {
       <div className="flex flex-wrap gap-2 items-center mb-3">
         <input
           type="text"
-          placeholder="Filtrar por cliente..."
-          value={clientSearch}
-          onChange={(e) => { filterStore.billingClientSearch = e.target.value; setClientSearch(e.target.value) }}
-          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-52"
-        />
-        <input
-          type="text"
-          placeholder="Filtrar por referência..."
-          value={referenceSearch}
-          onChange={(e) => { filterStore.billingReferenceSearch = e.target.value; setReferenceSearch(e.target.value) }}
-          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-48"
+          placeholder="Filtrar por cliente ou referência..."
+          value={clientSearch || referenceSearch}
+          onChange={(e) => handleSearch(e.target.value, e.target.value)}
+          className="border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-60"
         />
         <Select
           options={collaboratorOptions}
@@ -169,14 +168,22 @@ export default function BillingList() {
           <input
             type="date"
             value={completedFrom}
-            onChange={(e) => { filterStore.billingCompletedFrom = e.target.value; setCompletedFrom(e.target.value) }}
+            onChange={(e) => {
+              filterStore.billingCompletedFrom = e.target.value
+              setCompletedFrom(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
           <span className="text-xs text-slate-500">até</span>
           <input
             type="date"
             value={completedTo}
-            onChange={(e) => { filterStore.billingCompletedTo = e.target.value; setCompletedTo(e.target.value) }}
+            onChange={(e) => {
+              filterStore.billingCompletedTo = e.target.value
+              setCompletedTo(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
         </div>
@@ -211,61 +218,62 @@ export default function BillingList() {
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
           {exportLoading ? (
             <div className="flex justify-center py-12"><Spinner /></div>
-          ) : !exports.length ? (
-            <EmptyState title="Nenhuma exportação concluída." />
+          ) : !sortedExports.length ? (
+            <EmptyState title="Nenhuma exportação pendente de faturamento." />
           ) : (
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exports.map((record: ExportRecord) => (
-                  <tr
-                    key={record.id}
-                    onDoubleClick={() => navigate(`/exports/${record.id}`)}
-                    className={`border-b border-slate-100 cursor-pointer transition-colors ${
-                      record.billing_completed
-                        ? 'bg-green-50 hover:bg-green-100'
-                        : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleExportBilling.mutate(record.id) }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                          record.billing_completed
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700'
-                        }`}
-                      >
-                        {record.billing_completed ? '✓ Faturado' : 'Marcar faturado'}
-                      </button>
-                    </td>
+            <>
+              <table className="w-full text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedExports.map((record: ExportRecord) => (
+                    <tr
+                      key={record.id}
+                      onDoubleClick={() => navigate(`/exports/${record.id}`)}
+                      className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleExportBilling.mutate(record.id) }}
+                          onDoubleClick={(e) => e.stopPropagation()}
+                          className="px-2.5 py-1 rounded text-xs font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700"
+                        >
+                          Marcar faturado
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination
+                page={exportPage}
+                pages={exportData?.pages ?? 1}
+                total={exportData?.total ?? 0}
+                pageSize={PAGE_SIZE}
+                onPage={setExportPage}
+              />
+            </>
           )}
         </div>
       )}
@@ -275,65 +283,66 @@ export default function BillingList() {
         <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
           {importLoading ? (
             <div className="flex justify-center py-12"><Spinner /></div>
-          ) : !imports.length ? (
-            <EmptyState title="Nenhuma importação concluída." />
+          ) : !sortedImports.length ? (
+            <EmptyState title="Nenhuma importação pendente de faturamento." />
           ) : (
-            <table className="w-full text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DI/DUIMP</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imports.map((record: ImportRecord) => (
-                  <tr
-                    key={record.id}
-                    onDoubleClick={() => navigate(`/imports/${record.id}`)}
-                    className={`border-b border-slate-100 cursor-pointer transition-colors ${
-                      record.billing_completed
-                        ? 'bg-green-50 hover:bg-green-100'
-                        : 'hover:bg-slate-50'
-                    }`}
-                  >
-                    <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
-                    <td className="px-3 py-2 text-slate-500">
-                      {record.modality ? MODALITY_LABELS[record.modality] : '—'}
-                    </td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.di_duimp_dta ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
-                    <td className="px-3 py-2">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleImportBilling.mutate(record.id) }}
-                        onDoubleClick={(e) => e.stopPropagation()}
-                        className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                          record.billing_completed
-                            ? 'bg-green-600 text-white hover:bg-green-700'
-                            : 'bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700'
-                        }`}
-                      >
-                        {record.billing_completed ? '✓ Faturado' : 'Marcar faturado'}
-                      </button>
-                    </td>
+            <>
+              <table className="w-full text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DI/DUIMP</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {sortedImports.map((record: ImportRecord) => (
+                    <tr
+                      key={record.id}
+                      onDoubleClick={() => navigate(`/imports/${record.id}`)}
+                      className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {record.modality ? MODALITY_LABELS[record.modality] : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.di_duimp_dta ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
+                      <td className="px-3 py-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleImportBilling.mutate(record.id) }}
+                          onDoubleClick={(e) => e.stopPropagation()}
+                          className="px-2.5 py-1 rounded text-xs font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-700"
+                        >
+                          Marcar faturado
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination
+                page={importPage}
+                pages={importData?.pages ?? 1}
+                total={importData?.total ?? 0}
+                pageSize={PAGE_SIZE}
+                onPage={setImportPage}
+              />
+            </>
           )}
         </div>
       )}
