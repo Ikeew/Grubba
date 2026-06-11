@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
-import { formatDate, formatDateTime, formatFileSize, formatFieldName } from '@/utils/format'
+import { formatDate, formatDateTime, formatFileSize, formatFieldName, formatFieldValue } from '@/utils/format'
 import { MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 
 function DetailRow({ label, value }: { label: string; value?: string | null | boolean }) {
@@ -212,12 +212,23 @@ export default function ImportDetail() {
         {history?.length ? (
           <div className="divide-y divide-slate-100">
             {history.map((entry) => (
-              <div key={entry.id} className="py-2.5 flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-slate-700">{formatFieldName(entry.field_name)}</span>
-                  <span className="text-sm text-slate-400 mx-2">→</span>
-                  <span className="text-sm text-slate-900">{entry.new_value ?? '—'}</span>
-                  {entry.old_value && <span className="text-xs text-slate-400 ml-2">(era: {entry.old_value})</span>}
+              <div key={entry.id} className="py-3 flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-700 mb-0.5">{formatFieldName(entry.field_name)}</p>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                    {entry.old_value ? (
+                      <>
+                        <span className="text-sm text-slate-400 line-through">{formatFieldValue(entry.field_name, entry.old_value)}</span>
+                        <span className="text-slate-300">→</span>
+                        <span className="text-sm text-slate-900 font-medium">{formatFieldValue(entry.field_name, entry.new_value)}</span>
+                      </>
+                    ) : (
+                      <span className="text-sm text-slate-900 font-medium">{formatFieldValue(entry.field_name, entry.new_value)}</span>
+                    )}
+                  </div>
+                  {entry.description && (
+                    <p className="text-xs text-slate-500 mt-1 italic">{entry.description}</p>
+                  )}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <p className="text-xs text-slate-500">{entry.changed_by?.full_name ?? '—'}</p>
