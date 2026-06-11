@@ -23,6 +23,7 @@ export function formatFieldName(field: string): string {
     status: 'Status',
     vessel: 'Navio',
     port: 'Porto',
+    port_id: 'Porto',
     eta: 'ETA',
     etb: 'ETB',
     shipping_company: 'Armador',

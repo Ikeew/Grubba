@@ -5,7 +5,7 @@ from app.repositories.update_history import UpdateHistoryRepository
 
 
 FIELDS_TO_TRACK_EXPORT = {
-    "reference", "date", "status", "lpco", "vessel", "booking", "port",
+    "reference", "date", "status", "lpco", "vessel", "booking", "port_id",
     "due_25br", "eta", "ddl_carga", "shipping_company", "etb", "et5",
     "services", "map_type", "selected_unit", "new_seal", "inspection_date",
     "comex_released_date", "collaborator_id", "finalized_at", "observations",
@@ -14,7 +14,7 @@ FIELDS_TO_TRACK_EXPORT = {
 FIELDS_TO_TRACK_IMPORT = {
     "reference", "date", "status", "modality", "importer", "ce_mercante",
     "awb_bl", "di_duimp_dta", "numero_li", "dta", "dtc", "shipping_company",
-    "vessel", "port", "eta", "etb", "containers", "carrier", "local_ioa",
+    "vessel", "port_id", "eta", "etb", "containers", "carrier", "local_ioa",
     "lpco_packaging", "lpco_number", "map_type", "map_packaging_released",
     "selected_unit", "cargo_presence_date", "released_at", "comex_informed_date",
     "comex_released", "guide_sent", "finalized_at", "collaborator_id", "observations",
@@ -24,6 +24,30 @@ FIELDS_TO_TRACK_IMPORT = {
 class HistoryService:
     def __init__(self, history_repo: UpdateHistoryRepository) -> None:
         self._history = history_repo
+
+    def record_export_creation(self, record_id: UUID, record: object, created_by_id: UUID | None) -> None:
+        new_data = {f: getattr(record, f, None) for f in FIELDS_TO_TRACK_EXPORT}
+        self._record_changes(
+            record_type=RecordType.export,
+            record_id=record_id,
+            old_data={},
+            new_data=new_data,
+            changed_by_id=created_by_id,
+            tracked_fields=FIELDS_TO_TRACK_EXPORT,
+            id_kwarg="export_record_id",
+        )
+
+    def record_import_creation(self, record_id: UUID, record: object, created_by_id: UUID | None) -> None:
+        new_data = {f: getattr(record, f, None) for f in FIELDS_TO_TRACK_IMPORT}
+        self._record_changes(
+            record_type=RecordType.import_,
+            record_id=record_id,
+            old_data={},
+            new_data=new_data,
+            changed_by_id=created_by_id,
+            tracked_fields=FIELDS_TO_TRACK_IMPORT,
+            id_kwarg="import_record_id",
+        )
 
     def record_export_changes(
         self, record_id: UUID, old_data: dict, new_data: dict, changed_by_id: UUID | None

@@ -47,7 +47,13 @@ class ImportRecordService:
             data["collaborator_id"] = current_user.id
         record = ImportRecord(**data)
         created = self._records.create(record)
-        return self._records.get_with_relations(created.id)  # type: ignore[return-value]
+        full_record = self._records.get_with_relations(created.id)
+        self._history.record_import_creation(
+            record_id=created.id,
+            record=created,
+            created_by_id=current_user.id,
+        )
+        return full_record  # type: ignore[return-value]
 
     def get_or_404(self, record_id: UUID, current_user: User | None = None, check_edit: bool = False) -> ImportRecord:
         record = self._records.get_with_relations(record_id)
