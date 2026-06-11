@@ -6,7 +6,7 @@ export function formatDate(value: string | null | undefined): string {
 
 export function formatDateTime(value: string | null | undefined): string {
   if (!value) return '—'
-  return new Date(value).toLocaleString('pt-BR')
+  return new Date(value).toLocaleString('pt-BR', { hour12: false })
 }
 
 export function formatFileSize(bytes: number): string {
