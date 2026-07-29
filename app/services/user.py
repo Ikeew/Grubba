@@ -30,9 +30,11 @@ class UserService:
             raise NotFoundError("User")
         return user
 
-    def list_paginated(self, pagination: PaginationParams):
-        total = self._users.count()
-        items = self._users.list(offset=pagination.offset, limit=pagination.limit)
+    def list_paginated(self, pagination: PaginationParams, is_active: bool | None = None):
+        total = self._users.count_users(is_active=is_active)
+        items = self._users.list_users(
+            is_active=is_active, offset=pagination.offset, limit=pagination.limit
+        )
         return paginate(items, total, pagination)
 
     def update(self, user_id: UUID, payload: UserUpdate) -> User:

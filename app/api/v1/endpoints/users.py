@@ -27,8 +27,13 @@ def create_user(payload: UserCreate, db: DbSession, _: AdminUser) -> UserRespons
 
 
 @router.get("", response_model=PaginatedResponse[UserResponse], summary="List users")
-def list_users(db: DbSession, _: CurrentUser, pagination: Pagination):
-    return _user_service(db).list_paginated(pagination)
+def list_users(
+    db: DbSession,
+    _: CurrentUser,
+    pagination: Pagination,
+    is_active: bool | None = None,
+):
+    return _user_service(db).list_paginated(pagination, is_active=is_active)
 
 
 @router.get("/{user_id}", response_model=UserResponse, summary="Get user by ID")
