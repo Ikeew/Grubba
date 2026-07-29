@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -18,6 +18,17 @@ class UserRepository(BaseRepository[User]):
     def email_exists(self, email: str) -> bool:
         return self.get_by_email(email) is not None
 
-    def list_active(self, *, offset: int = 0, limit: int = 20) -> list[User]:
-        stmt = select(User).where(User.is_active.is_(True)).offset(offset).limit(limit)
+    def list_users(
+        self, *, is_active: bool | None = None, offset: int = 0, limit: int = 20
+    ) -> list[User]:
+        stmt = select(User)
+        if is_active is not None:
+            stmt = stmt.where(User.is_active.is_(is_active))
+        stmt = stmt.offset(offset).limit(limit)
         return list(self.db.scalars(stmt).all())
+
+    def count_users(self, *, is_active: bool | None = None) -> int:
+        stmt = select(func.count()).select_from(User)
+        if is_active is not None:
+            stmt = stmt.where(User.is_active.is_(is_active))
+        return self.db.scalar(stmt) or 0

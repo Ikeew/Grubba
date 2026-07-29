@@ -3,7 +3,9 @@ import type { User } from '@/types/auth'
 import type { PaginatedResponse } from '@/types/common'
 
 export const userService = {
-  async list(params: { page?: number; page_size?: number } = {}): Promise<PaginatedResponse<User>> {
+  async list(
+    params: { page?: number; page_size?: number; is_active?: boolean } = {},
+  ): Promise<PaginatedResponse<User>> {
     const { data } = await api.get<PaginatedResponse<User>>('/users', { params })
     return data
   },
