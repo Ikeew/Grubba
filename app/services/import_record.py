@@ -79,6 +79,8 @@ class ImportRecordService:
         etb_to=None,
         completed_from=None,
         completed_to=None,
+        created_from=None,
+        created_to=None,
         billing_completed=None,
     ):
         is_admin = current_user.role == UserRole.admin
@@ -87,6 +89,7 @@ class ImportRecordService:
             search=search, vessel=vessel, date_from=date_from, date_to=date_to,
             etb_from=etb_from, etb_to=etb_to,
             completed_from=completed_from, completed_to=completed_to,
+            created_from=created_from, created_to=created_to,
             billing_completed=billing_completed,
         )
         items = self._records.list_with_filters(
@@ -103,6 +106,8 @@ class ImportRecordService:
             etb_to=etb_to,
             completed_from=completed_from,
             completed_to=completed_to,
+            created_from=created_from,
+            created_to=created_to,
             billing_completed=billing_completed,
             offset=pagination.offset,
             limit=pagination.limit,
