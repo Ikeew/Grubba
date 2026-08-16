@@ -24,6 +24,9 @@ import ImportDetail from '@/pages/imports/ImportDetail'
 import BillingList from '@/pages/billing/BillingList'
 import CompletedList from '@/pages/completed/CompletedList'
 
+import UserList from '@/pages/users/UserList'
+import UserForm from '@/pages/users/UserForm'
+
 export const router = createBrowserRouter([
   {
     element: <AuthLayout />,
@@ -54,6 +57,8 @@ export const router = createBrowserRouter([
           { path: '/imports/:id/edit', element: <ImportForm /> },
           { path: '/billing', element: <BillingList /> },
           { path: '/completed', element: <CompletedList /> },
+          { path: '/users', element: <UserList /> },
+          { path: '/users/new', element: <UserForm /> },
         ],
       },
     ],
