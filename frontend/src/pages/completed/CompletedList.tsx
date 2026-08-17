@@ -49,6 +49,8 @@ export default function CompletedList() {
     search: search || undefined,
     completed_from: completedFrom || undefined,
     completed_to: completedTo || undefined,
+    created_from: createdFrom || undefined,
+    created_to: createdTo || undefined,
   })
 
   const { data: importData, isLoading: importLoading } = useImportList({
@@ -60,6 +62,8 @@ export default function CompletedList() {
     search: search || undefined,
     completed_from: completedFrom || undefined,
     completed_to: completedTo || undefined,
+    created_from: createdFrom || undefined,
+    created_to: createdTo || undefined,
   })
 
   function setCollaborator(value: string) {
@@ -164,14 +168,22 @@ export default function CompletedList() {
           <input
             type="date"
             value={createdFrom}
-            onChange={(e) => { filterStore.completedCreatedFrom = e.target.value; setCreatedFrom(e.target.value) }}
+            onChange={(e) => {
+              filterStore.completedCreatedFrom = e.target.value
+              setCreatedFrom(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
           <span className="text-xs text-slate-500">até</span>
           <input
             type="date"
             value={createdTo}
-            onChange={(e) => { filterStore.completedCreatedTo = e.target.value; setCreatedTo(e.target.value) }}
+            onChange={(e) => {
+              filterStore.completedCreatedTo = e.target.value
+              setCreatedTo(e.target.value)
+              setExportPage(1); setImportPage(1)
+            }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
         </div>
