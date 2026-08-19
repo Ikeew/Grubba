@@ -294,12 +294,12 @@ export default function BillingList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DI/DUIMP</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">AWB/BL</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Número LPCO</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Importador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
                 </thead>
@@ -316,12 +316,12 @@ export default function BillingList() {
                         {record.modality ? MODALITY_LABELS[record.modality] : '—'}
                       </td>
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
-                      <td className="px-3 py-2 text-slate-500">{record.cargo_type ?? '—'}</td>
-                      <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.di_duimp_dta ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
-                      <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.awb_bl ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.lpco_number ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.importer ?? '—'}</td>
                       <td className="px-3 py-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleImportBilling.mutate(record.id) }}
