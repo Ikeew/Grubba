@@ -29,7 +29,7 @@ class ExportRecordService:
         self._history = HistoryService(history_repo)
 
     def _check_edit_access(self, record: ExportRecord, current_user: User) -> None:
-        if record.status == ExportStatus.completed and current_user.role != UserRole.admin:
+        if record.status == ExportStatus.completed and current_user.role not in (UserRole.admin, UserRole.manager):
             raise ForbiddenError("Fichas concluídas só podem ser editadas por administradores")
 
     def create(self, payload: ExportRecordCreate, current_user: User) -> ExportRecord:

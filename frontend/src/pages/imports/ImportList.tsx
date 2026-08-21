@@ -184,7 +184,7 @@ export default function ImportList() {
   }
 
   function canEdit(record: ImportRecord) {
-    return user?.role === 'admin' || record.status !== 'completed'
+    return user?.role === 'admin' || user?.role === 'manager' || record.status !== 'completed'
   }
 
   function handleStatusButtonClick(recordId: string, e: React.MouseEvent<HTMLButtonElement>) {
@@ -331,6 +331,7 @@ export default function ImportList() {
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-8"></th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Importador</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
@@ -360,6 +361,7 @@ export default function ImportList() {
                   </td>
                   <td className="px-2 py-2 text-xs text-slate-700 font-medium">{record.reference ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-700">{record.client.name}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{record.importer ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">
                     {record.modality ? MODALITY_LABELS[record.modality] : '—'}
                   </td>

@@ -40,6 +40,7 @@ export interface ExportRecord {
   date: string | null
   status: ExportStatus
   cargo_type: string | null
+  exporter: string | null
   lpco: string | null
   vessel: string | null
   booking: string | null
@@ -75,6 +76,7 @@ export interface ExportRecordPayload {
   date?: string
   status?: ExportStatus
   cargo_type?: string
+  exporter?: string
   lpco?: string
   vessel?: string
   booking?: string

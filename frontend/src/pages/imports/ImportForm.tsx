@@ -32,6 +32,7 @@ export default function ImportForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const isAdmin = user?.role === 'admin'
+  const canEditCompleted = isAdmin || user?.role === 'manager'
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: record, isLoading: loadingRecord } = useImport(id ?? '')
@@ -107,7 +108,7 @@ export default function ImportForm() {
     }
   }, [record, reset])
 
-  const isCompletedLocked = isEditing && record?.status === 'completed' && !isAdmin
+  const isCompletedLocked = isEditing && record?.status === 'completed' && !canEditCompleted
 
   async function onSubmit(values: ImportFormValues) {
     setSubmitError(null)

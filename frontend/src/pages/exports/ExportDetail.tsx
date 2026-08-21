@@ -74,6 +74,9 @@ export default function ExportDetail() {
         {record.cargo_type && (
           <span className="text-sm text-slate-500">Tipo: <strong className="text-slate-800">{record.cargo_type}</strong></span>
         )}
+        {record.exporter && (
+          <span className="text-sm text-slate-500">Exportador: <strong className="text-slate-800">{record.exporter}</strong></span>
+        )}
         {record.collaborator && (
           <span className="text-sm text-slate-500">Colaborador: <strong className="text-slate-800">{record.collaborator.full_name}</strong></span>
         )}

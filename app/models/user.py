@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 class UserRole(str, enum.Enum):
     admin = "admin"
+    manager = "manager"
     collaborator = "collaborator"
 
 

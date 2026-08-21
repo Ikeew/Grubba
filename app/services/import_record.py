@@ -29,7 +29,7 @@ class ImportRecordService:
         self._history = HistoryService(history_repo)
 
     def _check_edit_access(self, record: ImportRecord, current_user: User) -> None:
-        if record.status == ImportStatus.completed and current_user.role != UserRole.admin:
+        if record.status == ImportStatus.completed and current_user.role not in (UserRole.admin, UserRole.manager):
             raise ForbiddenError("Fichas concluídas só podem ser editadas por administradores")
 
     def create(self, payload: ImportRecordCreate, current_user: User) -> ImportRecord:

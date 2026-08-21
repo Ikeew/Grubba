@@ -93,6 +93,7 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     # --- Identification ---
     cargo_type: Mapped[str | None] = mapped_column(String(10), nullable=True)          # FCL ou LCL
+    exporter: Mapped[str | None] = mapped_column(String(255), nullable=True)           # exportador
 
     # --- Shipping / logistics ---
     lpco: Mapped[str | None] = mapped_column(String(100), nullable=True)

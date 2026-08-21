@@ -6,3 +6,9 @@ export interface UserCreatePayload {
   password: string
   role: UserRole
 }
+
+export interface UserUpdatePayload {
+  full_name?: string
+  role?: UserRole
+  is_active?: boolean
+}

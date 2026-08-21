@@ -32,6 +32,7 @@ export default function ExportForm() {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const isAdmin = user?.role === 'admin'
+  const canEditCompleted = isAdmin || user?.role === 'manager'
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: record, isLoading: loadingRecord } = useExport(id ?? '')
@@ -75,6 +76,7 @@ export default function ExportForm() {
         date: record.date ?? '',
         status: record.status,
         cargo_type: (record.cargo_type as 'FCL' | 'LCL' | '') ?? '',
+        exporter: record.exporter ?? '',
         lpco: record.lpco ?? '',
         vessel: record.vessel ?? '',
         booking: record.booking ?? '',
@@ -116,7 +118,7 @@ export default function ExportForm() {
     }
   }
 
-  const isCompletedLocked = isEditing && record?.status === 'completed' && !isAdmin
+  const isCompletedLocked = isEditing && record?.status === 'completed' && !canEditCompleted
 
   const selectedServices = watch('services') ?? []
 
@@ -160,6 +162,7 @@ export default function ExportForm() {
             <Input label="Referência *" error={errors.reference?.message} {...register('reference')} />
             <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status *" options={STATUS_OPTIONS} error={errors.status?.message} {...register('status')} />
+            <Input label="Exportador" {...register('exporter')} />
             <div>
               <p className="text-sm font-medium text-slate-700 mb-2">Tipo de carga</p>
               <div className="flex gap-4">

@@ -15,6 +15,7 @@ class ExportRecordCreate(BaseModel):
     status: ExportStatus = ExportStatus.in_progress
 
     cargo_type: str | None = None
+    exporter: str | None = None
 
     lpco: str | None = None
     vessel: str | None = None
@@ -52,6 +53,7 @@ class ExportRecordUpdate(BaseModel):
     status: ExportStatus | None = None
 
     cargo_type: str | None = None
+    exporter: str | None = None
 
     lpco: str | None = None
     vessel: str | None = None
@@ -92,6 +94,7 @@ class ExportRecordResponse(BaseModel):
     status: ExportStatus
 
     cargo_type: str | None
+    exporter: str | None
 
     lpco: str | None
     vessel: str | None

@@ -33,6 +33,7 @@ export function formatFieldName(field: string): string {
     map_type: 'Tipo de Mapa',
     selected_unit: 'Unidade Selecionada',
     // Exportação
+    exporter: 'Exportador',
     lpco: 'LPCO',
     booking: 'Booking',
     services: 'Serviços',

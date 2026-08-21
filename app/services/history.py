@@ -5,7 +5,7 @@ from app.repositories.update_history import UpdateHistoryRepository
 
 
 FIELDS_TO_TRACK_EXPORT = {
-    "reference", "date", "status", "lpco", "vessel", "booking", "port_id",
+    "reference", "date", "status", "exporter", "lpco", "vessel", "booking", "port_id",
     "due_25br", "eta", "ddl_carga", "shipping_company", "etb", "et5",
     "services", "map_type", "selected_unit", "new_seal", "inspection_date",
     "comex_released_date", "collaborator_id", "finalized_at", "observations",

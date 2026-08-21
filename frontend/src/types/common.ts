@@ -50,4 +50,4 @@ export type ImportStatus =
   | 'dsa_registrada'
 
 export type MapType = 'vegetal' | 'animal'
-export type UserRole = 'admin' | 'collaborator'
+export type UserRole = 'admin' | 'manager' | 'collaborator'
