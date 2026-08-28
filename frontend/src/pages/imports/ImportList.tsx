@@ -335,6 +335,7 @@ export default function ImportList() {
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DI/DUIMP</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETB</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
@@ -367,6 +368,7 @@ export default function ImportList() {
                   </td>
                   <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.date)}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.vessel ?? '—'}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{record.di_duimp_dta ?? '—'}</td>
 
                   {/* Inline ETB editing */}
                   <td
