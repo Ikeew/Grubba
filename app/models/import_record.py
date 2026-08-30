@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.export_record import MapType
+from app.models.export_record import FlagColor, MapType
 
 if TYPE_CHECKING:
     from app.models.client import Client
@@ -50,7 +50,18 @@ import_record_flags = Table(
     Base.metadata,
     Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("import_record_id", UUID(as_uuid=True), ForeignKey("import_records.id", ondelete="CASCADE"), primary_key=True),
+    Column("color", String(10), nullable=False, server_default=FlagColor.red.value),
 )
+
+
+class ImportRecordFlag(Base):
+    """Association object over ``import_record_flags`` (read-only helper).
+
+    Writes go through Core statements in the repository; this mapping only
+    exposes the stored ``color`` per user alongside the record.
+    """
+
+    __table__ = import_record_flags
 
 
 class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -123,9 +134,8 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="import_records", foreign_keys=[collaborator_id]
     )
     port: Mapped["Port | None"] = relationship()
-    flagged_by: Mapped[list["User"]] = relationship(
-        secondary=import_record_flags,
-        backref="flagged_imports",
+    flags: Mapped[list["ImportRecordFlag"]] = relationship(
+        cascade="all, delete-orphan",
     )
     files: Mapped[list["ImportFile"]] = relationship(
         back_populates="import_record", cascade="all, delete-orphan"

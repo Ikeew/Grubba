@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from app.models.export_record import MapType
 from app.models.import_record import ImportStatus, Modality
 from app.schemas.client import ClientSummary
-from app.schemas.export_record import PortSummary
+from app.schemas.export_record import FlagInfo, PortSummary
 from app.schemas.user import UserSummary
 
 
@@ -146,7 +146,7 @@ class ImportRecordResponse(BaseModel):
 
     client: ClientSummary
     collaborator: UserSummary | None
-    flagged_by_ids: list[uuid.UUID] = Field(default_factory=list)
+    flags: list[FlagInfo] = Field(default_factory=list)
 
     created_at: datetime
     updated_at: datetime
@@ -154,6 +154,8 @@ class ImportRecordResponse(BaseModel):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         instance = super().model_validate(obj, **kwargs)
-        if hasattr(obj, "flagged_by"):
-            instance.flagged_by_ids = [u.id for u in obj.flagged_by]
+        if hasattr(obj, "flags"):
+            instance.flags = [
+                FlagInfo(user_id=f.user_id, color=f.color) for f in obj.flags
+            ]
         return instance

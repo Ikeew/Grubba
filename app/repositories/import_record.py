@@ -35,7 +35,7 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
                 joinedload(ImportRecord.client),
                 joinedload(ImportRecord.collaborator),
                 joinedload(ImportRecord.port),
-                joinedload(ImportRecord.flagged_by),
+                joinedload(ImportRecord.flags),
             )
         )
         return self.db.scalar(stmt)
@@ -66,7 +66,7 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
             joinedload(ImportRecord.client),
             joinedload(ImportRecord.collaborator),
             joinedload(ImportRecord.port),
-            joinedload(ImportRecord.flagged_by),
+            joinedload(ImportRecord.flags),
         )
         stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, etb_from, etb_to, completed_from, completed_to, created_from, created_to, billing_completed)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
@@ -153,12 +153,15 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
         return stmt
 
     def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:
-        flagged_by_me = (
-            select(import_record_flags.c.import_record_id)
-            .where(import_record_flags.c.user_id == current_user_id)
+        # Subquery: color of the current user's flag on this record (NULL if none)
+        my_flag_color = (
+            select(import_record_flags.c.color)
+            .where(
+                import_record_flags.c.user_id == current_user_id,
+                import_record_flags.c.import_record_id == ImportRecord.id,
+            )
             .scalar_subquery()
         )
-        is_flagged_by_me = ImportRecord.id.in_(flagged_by_me)
 
         if is_admin:
             flagged_by_anyone = (
@@ -168,40 +171,63 @@ class ImportRecordRepository(BaseRepository[ImportRecord]):
             is_flagged_by_anyone = ImportRecord.id.in_(flagged_by_anyone)
 
             sort_key = case(
-                (is_flagged_by_me, 0),
-                (ImportRecord.collaborator_id == current_user_id, 1),
-                (is_flagged_by_anyone, 2),
-                else_=3,
+                (my_flag_color == "red", 0),
+                (my_flag_color == "yellow", 1),
+                (ImportRecord.collaborator_id == current_user_id, 2),
+                (is_flagged_by_anyone, 3),
+                else_=4,
             )
         else:
             sort_key = case(
-                (is_flagged_by_me, 0),
-                (ImportRecord.collaborator_id == current_user_id, 1),
-                else_=2,
+                (my_flag_color == "red", 0),
+                (my_flag_color == "yellow", 1),
+                (ImportRecord.collaborator_id == current_user_id, 2),
+                else_=3,
             )
 
         return stmt.order_by(sort_key, ImportRecord.created_at.desc())
 
-    def toggle_flag(self, record_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        """Toggle flag for user. Returns True if flagged, False if unflagged."""
+    def set_flag(
+        self, record_id: uuid.UUID, user_id: uuid.UUID, color: str | None
+    ) -> str | None:
+        """Set/replace/remove the current user's flag.
+
+        Passing ``color=None`` or the color already stored removes the flag.
+        Returns the resulting color, or ``None`` if unflagged.
+        """
         existing = self.db.execute(
-            select(import_record_flags).where(
+            select(import_record_flags.c.color).where(
                 import_record_flags.c.user_id == user_id,
                 import_record_flags.c.import_record_id == record_id,
             )
         ).first()
-        if existing:
+        current = existing[0] if existing else None
+
+        if color is None or color == current:
+            if current is not None:
+                self.db.execute(
+                    import_record_flags.delete().where(
+                        import_record_flags.c.user_id == user_id,
+                        import_record_flags.c.import_record_id == record_id,
+                    )
+                )
+                self.db.flush()
+            return None
+
+        if current is None:
             self.db.execute(
-                import_record_flags.delete().where(
+                import_record_flags.insert().values(
+                    user_id=user_id, import_record_id=record_id, color=color
+                )
+            )
+        else:
+            self.db.execute(
+                import_record_flags.update()
+                .where(
                     import_record_flags.c.user_id == user_id,
                     import_record_flags.c.import_record_id == record_id,
                 )
+                .values(color=color)
             )
-            self.db.flush()
-            return False
-        else:
-            self.db.execute(
-                import_record_flags.insert().values(user_id=user_id, import_record_id=record_id)
-            )
-            self.db.flush()
-            return True
+        self.db.flush()
+        return color

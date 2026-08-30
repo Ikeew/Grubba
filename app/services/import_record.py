@@ -148,11 +148,13 @@ class ImportRecordService:
         self._records.update(record, {"billing_completed": new_value})
         return new_value
 
-    def toggle_flag(self, record_id: UUID, current_user: User) -> bool:
+    def set_flag(
+        self, record_id: UUID, current_user: User, color: str | None
+    ) -> str | None:
         record = self._records.get_with_relations(record_id)
         if not record:
             raise NotFoundError("Import record")
-        return self._records.toggle_flag(record_id, current_user.id)
+        return self._records.set_flag(record_id, current_user.id, color)
 
     def delete(self, record_id: UUID, current_user: User) -> None:
         record = self.get_or_404(record_id, current_user, check_edit=True)

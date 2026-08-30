@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { exportService } from '@/services/export.service'
 import type { ExportRecordPayload } from '@/types/export'
-import type { ExportStatus } from '@/types/common'
+import type { ExportStatus, FlagColor } from '@/types/common'
 
 export const EXPORT_KEYS = {
   all: ['exports'] as const,
@@ -68,10 +68,11 @@ export function useDeleteExport() {
   })
 }
 
-export function useToggleExportFlag() {
+export function useSetExportFlag() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: string) => exportService.toggleFlag(id),
+    mutationFn: ({ id, color }: { id: string; color: FlagColor | null }) =>
+      exportService.setFlag(id, color),
     onSuccess: () => qc.invalidateQueries({ queryKey: EXPORT_KEYS.all }),
   })
 }

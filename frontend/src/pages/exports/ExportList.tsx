@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useExportList, useDeleteExport, useToggleExportFlag, useUpdateExportField } from '@/hooks/useExports'
+import { useExportList, useDeleteExport, useSetExportFlag, useUpdateExportField } from '@/hooks/useExports'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Pagination } from '@/components/shared/Pagination'
@@ -17,7 +17,7 @@ import { formatDate } from '@/utils/format'
 import { EXPORT_STATUS_LABELS } from '@/utils/constants'
 import { filterStore } from '@/lib/filterStore'
 import type { ExportRecord } from '@/types/export'
-import type { ExportStatus } from '@/types/common'
+import type { ExportStatus, FlagColor } from '@/types/common'
 
 // All statuses shown in filter; completed comes unchecked by default
 const FILTERABLE_STATUS_OPTIONS = Object.entries(EXPORT_STATUS_LABELS)
@@ -81,6 +81,11 @@ export default function ExportList() {
   const [editingDateId, setEditingDateId] = useState<string | null>(null)
   const statusDropdownRef = useRef<HTMLDivElement>(null)
 
+  // Flag color mini-menu state
+  const [flagMenuId, setFlagMenuId] = useState<string | null>(null)
+  const [flagMenuPos, setFlagMenuPos] = useState<{ top: number; left: number } | null>(null)
+  const flagMenuRef = useRef<HTMLDivElement>(null)
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const vesselDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -108,6 +113,18 @@ export default function ExportList() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [editingStatusId])
 
+  // Close flag mini-menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (flagMenuRef.current && !flagMenuRef.current.contains(e.target as Node)) {
+        setFlagMenuId(null)
+        setFlagMenuPos(null)
+      }
+    }
+    if (flagMenuId) document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [flagMenuId])
+
   const { data: users } = useUserList()
   const collaboratorOptions = [
     { value: '', label: 'Todos os colaboradores' },
@@ -128,7 +145,7 @@ export default function ExportList() {
   })
 
   const deleteExport = useDeleteExport()
-  const toggleFlag = useToggleExportFlag()
+  const setFlag = useSetExportFlag()
   const updateField = useUpdateExportField()
 
   const isDefaultState =
@@ -178,8 +195,26 @@ export default function ExportList() {
     setToDelete(null)
   }
 
-  function isFlagged(record: ExportRecord) {
-    return user ? record.flagged_by_ids.includes(user.id) : false
+  function myFlagColor(record: ExportRecord): FlagColor | null {
+    if (!user) return null
+    return record.flags.find((f) => f.user_id === user.id)?.color ?? null
+  }
+
+  function handleFlagButtonClick(recordId: string, e: React.MouseEvent<HTMLButtonElement>) {
+    if (flagMenuId === recordId) {
+      setFlagMenuId(null)
+      setFlagMenuPos(null)
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect()
+      setFlagMenuPos({ top: rect.bottom + 4, left: rect.left })
+      setFlagMenuId(recordId)
+    }
+  }
+
+  function handleFlagSelect(recordId: string, color: FlagColor | null) {
+    setFlag.mutate({ id: recordId, color })
+    setFlagMenuId(null)
+    setFlagMenuPos(null)
   }
 
   function canEdit(record: ExportRecord) {
@@ -212,6 +247,8 @@ export default function ExportList() {
   }
 
   const editingRecord = data?.items.find((r) => r.id === editingStatusId) ?? null
+  const flagMenuRecord = data?.items.find((r) => r.id === flagMenuId) ?? null
+  const flagMenuColor = flagMenuRecord ? myFlagColor(flagMenuRecord) : null
 
   return (
     <div>
@@ -333,20 +370,38 @@ export default function ExportList() {
               </tr>
             </thead>
             <tbody>
-              {data.items.map((record) => (
+              {data.items.map((record) => {
+                const flagColor = myFlagColor(record)
+                const rowFlagClass =
+                  flagColor === 'red'
+                    ? 'bg-red-50 hover:bg-red-100'
+                    : flagColor === 'yellow'
+                      ? 'bg-yellow-50 hover:bg-yellow-100'
+                      : ''
+                return (
                 <tr
                   key={record.id}
-                  className={`table-row cursor-pointer ${isFlagged(record) ? 'bg-red-50 hover:bg-red-100' : ''}`}
+                  className={`table-row cursor-pointer ${rowFlagClass}`}
                   onDoubleClick={() => navigate(`/exports/${record.id}`)}
                 >
                   <td className="px-2 py-2 text-xs text-slate-700">
                     <button
                       type="button"
-                      title={isFlagged(record) ? 'Remover bandeira' : 'Marcar como importante'}
-                      onClick={() => toggleFlag.mutate(record.id)}
+                      title={flagColor ? 'Alterar bandeira' : 'Marcar com bandeira'}
+                      onClick={(e) => handleFlagButtonClick(record.id, e)}
                       className="text-base leading-none focus:outline-none"
                     >
-                      {isFlagged(record) ? '🚩' : <span className="text-slate-300 hover:text-red-400">⚑</span>}
+                      <span
+                        className={
+                          flagColor === 'red'
+                            ? 'text-red-500'
+                            : flagColor === 'yellow'
+                              ? 'text-yellow-500'
+                              : 'text-slate-300 hover:text-red-400'
+                        }
+                      >
+                        ⚑
+                      </span>
                     </button>
                   </td>
                   <td className="px-2 py-2 text-xs text-slate-700 font-medium">{record.reference ?? '—'}</td>
@@ -409,7 +464,8 @@ export default function ExportList() {
                     )}
                   </td>
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         )}
@@ -437,6 +493,43 @@ export default function ExportList() {
               {opt.label}
             </button>
           ))}
+        </div>,
+        document.body
+      )}
+
+      {/* Flag color mini-menu rendered via portal */}
+      {flagMenuId && flagMenuPos && ReactDOM.createPortal(
+        <div
+          ref={flagMenuRef}
+          style={{ position: 'fixed', top: flagMenuPos.top, left: flagMenuPos.left, zIndex: 9999 }}
+          className="bg-white border border-slate-200 rounded-lg shadow-lg py-1 min-w-44"
+        >
+          <button
+            className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors ${
+              flagMenuColor === 'red' ? 'font-semibold text-brand-700 bg-brand-50' : 'text-slate-700'
+            }`}
+            onClick={() => handleFlagSelect(flagMenuId, 'red')}
+          >
+            <span className="text-red-500 text-base leading-none">⚑</span>
+            Bandeira vermelha
+          </button>
+          <button
+            className={`flex w-full items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-50 transition-colors ${
+              flagMenuColor === 'yellow' ? 'font-semibold text-brand-700 bg-brand-50' : 'text-slate-700'
+            }`}
+            onClick={() => handleFlagSelect(flagMenuId, 'yellow')}
+          >
+            <span className="text-yellow-500 text-base leading-none">⚑</span>
+            Bandeira amarela
+          </button>
+          {flagMenuColor && (
+            <button
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-50 transition-colors border-t border-slate-100"
+              onClick={() => handleFlagSelect(flagMenuId, null)}
+            >
+              Remover bandeira
+            </button>
+          )}
         </div>,
         document.body
       )}

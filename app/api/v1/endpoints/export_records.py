@@ -11,7 +11,12 @@ from app.repositories.client import ClientRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
 from app.schemas.common import PaginatedResponse
-from app.schemas.export_record import ExportRecordCreate, ExportRecordResponse, ExportRecordUpdate
+from app.schemas.export_record import (
+    ExportRecordCreate,
+    ExportRecordResponse,
+    ExportRecordUpdate,
+    FlagRequest,
+)
 from app.schemas.update_history import UpdateHistoryResponse
 from app.services.export_record import ExportRecordService
 from app.services.history import HistoryService
@@ -117,10 +122,18 @@ def toggle_export_billing(record_id: UUID, db: DbSession, current_user: CurrentU
     return {"billing_completed": completed}
 
 
-@router.post("/{record_id}/flag", summary="Toggle flag on export record")
-def toggle_export_flag(record_id: UUID, db: DbSession, current_user: CurrentUser) -> dict:
-    flagged = _service(db).toggle_flag(record_id, current_user)
-    return {"flagged": flagged}
+@router.post("/{record_id}/flag", summary="Set/replace/remove flag on export record")
+def set_export_flag(
+    record_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    payload: FlagRequest | None = None,
+) -> dict:
+    color_enum = payload.color if payload else None
+    color = _service(db).set_flag(
+        record_id, current_user, color_enum.value if color_enum else None
+    )
+    return {"flag_color": color}
 
 
 @router.delete("/{record_id}", status_code=204, summary="Delete export record")

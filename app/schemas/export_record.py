@@ -3,9 +3,22 @@ from datetime import date as Date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.export_record import ExportService, ExportStatus, MapType
+from app.models.export_record import ExportService, ExportStatus, FlagColor, MapType
 from app.schemas.client import ClientSummary
 from app.schemas.user import UserSummary
+
+
+class FlagInfo(BaseModel):
+    model_config = {"from_attributes": True}
+
+    user_id: uuid.UUID
+    color: FlagColor
+
+
+class FlagRequest(BaseModel):
+    """Body for the flag endpoint. ``color=None`` removes the flag."""
+
+    color: FlagColor | None = None
 
 
 class ExportRecordCreate(BaseModel):
@@ -123,7 +136,7 @@ class ExportRecordResponse(BaseModel):
 
     client: ClientSummary
     collaborator: UserSummary | None
-    flagged_by_ids: list[uuid.UUID] = Field(default_factory=list)
+    flags: list[FlagInfo] = Field(default_factory=list)
 
     created_at: datetime
     updated_at: datetime
@@ -131,6 +144,8 @@ class ExportRecordResponse(BaseModel):
     @classmethod
     def model_validate(cls, obj, **kwargs):
         instance = super().model_validate(obj, **kwargs)
-        if hasattr(obj, "flagged_by"):
-            instance.flagged_by_ids = [u.id for u in obj.flagged_by]
+        if hasattr(obj, "flags"):
+            instance.flags = [
+                FlagInfo(user_id=f.user_id, color=f.color) for f in obj.flags
+            ]
         return instance

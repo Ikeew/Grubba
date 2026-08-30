@@ -51,3 +51,10 @@ export type ImportStatus =
 
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'manager' | 'collaborator'
+
+export type FlagColor = 'red' | 'yellow'
+
+export interface RecordFlag {
+  user_id: string
+  color: FlagColor
+}

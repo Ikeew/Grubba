@@ -1,6 +1,6 @@
 import { api } from '@/lib/axios'
 import type { ExportRecord, ExportRecordPayload } from '@/types/export'
-import type { ExportStatus, PaginatedResponse } from '@/types/common'
+import type { ExportStatus, FlagColor, PaginatedResponse } from '@/types/common'
 
 interface ListParams {
   page?: number
@@ -46,8 +46,11 @@ export const exportService = {
     await api.delete(`/export-records/${id}`)
   },
 
-  async toggleFlag(id: string): Promise<{ flagged: boolean }> {
-    const { data } = await api.post<{ flagged: boolean }>(`/export-records/${id}/flag`)
+  async setFlag(id: string, color: FlagColor | null): Promise<{ flag_color: FlagColor | null }> {
+    const { data } = await api.post<{ flag_color: FlagColor | null }>(
+      `/export-records/${id}/flag`,
+      { color },
+    )
     return data
   },
 

@@ -35,7 +35,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
                 joinedload(ExportRecord.client),
                 joinedload(ExportRecord.collaborator),
                 joinedload(ExportRecord.port),
-                joinedload(ExportRecord.flagged_by),
+                joinedload(ExportRecord.flags),
             )
         )
         return self.db.scalar(stmt)
@@ -66,7 +66,7 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             joinedload(ExportRecord.client),
             joinedload(ExportRecord.collaborator),
             joinedload(ExportRecord.port),
-            joinedload(ExportRecord.flagged_by),
+            joinedload(ExportRecord.flags),
         )
         stmt = self._apply_filters(stmt, client_id, status, collaborator_id, search, vessel, date_from, date_to, ets_from, ets_to, completed_from, completed_to, created_from, created_to, billing_completed)
         stmt = self._apply_ordering(stmt, current_user_id, is_admin)
@@ -155,18 +155,21 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
     def _apply_ordering(self, stmt: Any, current_user_id: uuid.UUID, is_admin: bool) -> Any:
         """
         Ordering rules:
-        1. Flagged by current user (highest priority)
-        2. Own records (for collaborators) / own un-flagged records
-        3. Flagged by others (admin only)
-        4. Rest
+        1. Flagged red by current user (highest priority)
+        2. Flagged yellow by current user
+        3. Own records (for collaborators) / own un-flagged records
+        4. Flagged by others (admin only)
+        5. Rest
         """
-        # Subquery: is flagged by current user?
-        flagged_by_me = (
-            select(export_record_flags.c.export_record_id)
-            .where(export_record_flags.c.user_id == current_user_id)
+        # Subquery: color of the current user's flag on this record (NULL if none)
+        my_flag_color = (
+            select(export_record_flags.c.color)
+            .where(
+                export_record_flags.c.user_id == current_user_id,
+                export_record_flags.c.export_record_id == ExportRecord.id,
+            )
             .scalar_subquery()
         )
-        is_flagged_by_me = ExportRecord.id.in_(flagged_by_me)
 
         if is_admin:
             # Subquery: is flagged by anyone?
@@ -177,40 +180,63 @@ class ExportRecordRepository(BaseRepository[ExportRecord]):
             is_flagged_by_anyone = ExportRecord.id.in_(flagged_by_anyone)
 
             sort_key = case(
-                (is_flagged_by_me, 0),
-                (ExportRecord.collaborator_id == current_user_id, 1),
-                (is_flagged_by_anyone, 2),
-                else_=3,
+                (my_flag_color == "red", 0),
+                (my_flag_color == "yellow", 1),
+                (ExportRecord.collaborator_id == current_user_id, 2),
+                (is_flagged_by_anyone, 3),
+                else_=4,
             )
         else:
             sort_key = case(
-                (is_flagged_by_me, 0),
-                (ExportRecord.collaborator_id == current_user_id, 1),
-                else_=2,
+                (my_flag_color == "red", 0),
+                (my_flag_color == "yellow", 1),
+                (ExportRecord.collaborator_id == current_user_id, 2),
+                else_=3,
             )
 
         return stmt.order_by(sort_key, ExportRecord.created_at.desc())
 
-    def toggle_flag(self, record_id: uuid.UUID, user_id: uuid.UUID) -> bool:
-        """Toggle flag for user. Returns True if flagged, False if unflagged."""
+    def set_flag(
+        self, record_id: uuid.UUID, user_id: uuid.UUID, color: str | None
+    ) -> str | None:
+        """Set/replace/remove the current user's flag.
+
+        Passing ``color=None`` or the color already stored removes the flag.
+        Returns the resulting color, or ``None`` if unflagged.
+        """
         existing = self.db.execute(
-            select(export_record_flags).where(
+            select(export_record_flags.c.color).where(
                 export_record_flags.c.user_id == user_id,
                 export_record_flags.c.export_record_id == record_id,
             )
         ).first()
-        if existing:
+        current = existing[0] if existing else None
+
+        if color is None or color == current:
+            if current is not None:
+                self.db.execute(
+                    export_record_flags.delete().where(
+                        export_record_flags.c.user_id == user_id,
+                        export_record_flags.c.export_record_id == record_id,
+                    )
+                )
+                self.db.flush()
+            return None
+
+        if current is None:
             self.db.execute(
-                export_record_flags.delete().where(
+                export_record_flags.insert().values(
+                    user_id=user_id, export_record_id=record_id, color=color
+                )
+            )
+        else:
+            self.db.execute(
+                export_record_flags.update()
+                .where(
                     export_record_flags.c.user_id == user_id,
                     export_record_flags.c.export_record_id == record_id,
                 )
+                .values(color=color)
             )
-            self.db.flush()
-            return False
-        else:
-            self.db.execute(
-                export_record_flags.insert().values(user_id=user_id, export_record_id=record_id)
-            )
-            self.db.flush()
-            return True
+        self.db.flush()
+        return color

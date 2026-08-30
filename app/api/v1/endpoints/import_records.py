@@ -10,6 +10,7 @@ from app.repositories.client import ClientRepository
 from app.repositories.import_record import ImportRecordRepository
 from app.repositories.update_history import UpdateHistoryRepository
 from app.schemas.common import PaginatedResponse
+from app.schemas.export_record import FlagRequest
 from app.schemas.import_record import ImportRecordCreate, ImportRecordResponse, ImportRecordUpdate
 from app.schemas.update_history import UpdateHistoryResponse
 from app.services.history import HistoryService
@@ -116,10 +117,18 @@ def toggle_import_billing(record_id: UUID, db: DbSession, current_user: CurrentU
     return {"billing_completed": completed}
 
 
-@router.post("/{record_id}/flag", summary="Toggle flag on import record")
-def toggle_import_flag(record_id: UUID, db: DbSession, current_user: CurrentUser) -> dict:
-    flagged = _service(db).toggle_flag(record_id, current_user)
-    return {"flagged": flagged}
+@router.post("/{record_id}/flag", summary="Set/replace/remove flag on import record")
+def set_import_flag(
+    record_id: UUID,
+    db: DbSession,
+    current_user: CurrentUser,
+    payload: FlagRequest | None = None,
+) -> dict:
+    color_enum = payload.color if payload else None
+    color = _service(db).set_flag(
+        record_id, current_user, color_enum.value if color_enum else None
+    )
+    return {"flag_color": color}
 
 
 @router.delete("/{record_id}", status_code=204, summary="Delete import record")

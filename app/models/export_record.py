@@ -61,13 +61,30 @@ class RecordStatus(str, enum.Enum):
     cancelled = "cancelled"
 
 
+# Flag colors (per-user record flag)
+class FlagColor(str, enum.Enum):
+    red = "red"
+    yellow = "yellow"
+
+
 # Junction table for export record flags (per-user)
 export_record_flags = Table(
     "export_record_flags",
     Base.metadata,
     Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("export_record_id", UUID(as_uuid=True), ForeignKey("export_records.id", ondelete="CASCADE"), primary_key=True),
+    Column("color", String(10), nullable=False, server_default=FlagColor.red.value),
 )
+
+
+class ExportRecordFlag(Base):
+    """Association object over ``export_record_flags`` (read-only helper).
+
+    Writes go through Core statements in the repository; this mapping only
+    exposes the stored ``color`` per user alongside the record.
+    """
+
+    __table__ = export_record_flags
 
 
 class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
@@ -131,9 +148,8 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="export_records", foreign_keys=[collaborator_id]
     )
     port: Mapped["Port | None"] = relationship()
-    flagged_by: Mapped[list["User"]] = relationship(
-        secondary=export_record_flags,
-        backref="flagged_exports",
+    flags: Mapped[list["ExportRecordFlag"]] = relationship(
+        cascade="all, delete-orphan",
     )
     files: Mapped[list["ExportFile"]] = relationship(
         back_populates="export_record", cascade="all, delete-orphan"

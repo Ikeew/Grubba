@@ -1,4 +1,4 @@
-import type { ClientSummary, ExportStatus, MapType, PortSummary } from './common'
+import type { ClientSummary, ExportStatus, MapType, PortSummary, RecordFlag } from './common'
 
 export type ExportService =
   | 'vistoria_receita_federal'
@@ -54,7 +54,7 @@ export interface ExportRecord {
   ets: string | null
   et5: string | null
   services: ExportService[]
-  flagged_by_ids: string[]
+  flags: RecordFlag[]
   map_type: MapType | null
   selected_unit: string | null
   new_seal: string | null
