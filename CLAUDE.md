@@ -143,6 +143,7 @@ app/
 │   ├── clients.py
 │   ├── export_records.py
 │   ├── import_records.py
+│   ├── deconsolidation_records.py, deconsolidation_files.py
 │   ├── export_files.py, files.py
 │   ├── notes.py
 │   ├── ports.py
@@ -173,6 +174,7 @@ frontend/src/
 │   ├── clients/
 │   ├── exports/                    # ExportList, ExportForm, ExportDetail
 │   ├── imports/                    # ImportList, ImportForm, ImportDetail
+│   ├── deconsolidations/           # DeconsolidationList, Form, Detail
 ├── components/
 │   ├── form/
 │   ├── layout/
@@ -236,6 +238,28 @@ frontend/src/
 ### ImportRecord (ficha de importação)
 
 Estrutura análoga ao ExportRecord com campos específicos de importação. `import_record_flags` é a junction table correspondente.
+
+### DeconsolidationRecord (ficha de desconsolidação)
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `client_id` | UUID FK | |
+| `collaborator_id` | UUID FK nullable | responsável |
+| `reference` | String(100) | indexed |
+| `date` | Date nullable | preenchida automaticamente com a data de hoje no form |
+| `status` | DeconsolidationStatus enum | ver seção Enums |
+| `modality` | DeconsolidationModality enum nullable | `importacao` \| `exportacao` |
+| `consignee` | String(255) | consignatário |
+| `ce_mercante` | String(100) | |
+| `master_bl`, `house_bl` | String(100) | AWB/BL Master e House |
+| `agency` | String(255) | agência representante |
+| `shipping_company` | String(150) | armador |
+| `observations` | Text | |
+| `completed_at`, `billing_completed` | DateTime / Boolean | fluxo de faturamento igual a export/import |
+
+`deconsolidation_record_flags` — junction table de flagging por usuário. `DeconsolidationFile` guarda anexos
+(`uploads/deconsolidations/<record_id>/`). Notas e histórico usam as tabelas compartilhadas `notes` /
+`update_history` via `deconsolidation_record_id`.
 
 ### UpdateHistory (histórico de alterações)
 
@@ -301,11 +325,22 @@ Cadastro de portos. Referenciado por fichas de export/import.
 
 `vistoria_receita_federal`, `coleta_e_entrega_de_lacre`, `vistoria_mapa_coleta`, `vistoria_anuentes`, `comex`, `liberacao_retirada_de_bl_e_docs`, `fornecimento_de_navio_oleo`, `mapa_sistema`, `lpco_x_vistoria_x_cf_csi`, `registro_despacho`, `outros`
 
+### DeconsolidationStatus
+
+| Valor |
+|---|
+| `aguardando_chegada_documento` |
+| `agendamento_apresentacao` |
+| `liberacao_realizada` |
+| `completed` |
+| `cancelled` |
+
 ### Outros
 
 - **MapType**: `vegetal` | `animal`
 - **Modality** (importação): `maritimo` | `aereo`
-- **RecordType** (UpdateHistory): `export` | `import`
+- **DeconsolidationModality**: `importacao` | `exportacao`
+- **RecordType** (UpdateHistory): `export` | `import` | `deconsolidation`
 
 ---
 

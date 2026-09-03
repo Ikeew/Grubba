@@ -30,3 +30,12 @@ class NoteRepository(BaseRepository[Note]):
             .order_by(Note.created_at.asc())
         )
         return list(self.db.scalars(stmt).unique().all())
+
+    def list_by_deconsolidation_record(self, record_id: uuid.UUID) -> list[Note]:
+        stmt = (
+            select(Note)
+            .where(Note.deconsolidation_record_id == record_id)
+            .options(joinedload(Note.author))
+            .order_by(Note.created_at.asc())
+        )
+        return list(self.db.scalars(stmt).unique().all())

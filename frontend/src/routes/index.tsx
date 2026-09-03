@@ -21,6 +21,10 @@ import ImportList from '@/pages/imports/ImportList'
 import ImportForm from '@/pages/imports/ImportForm'
 import ImportDetail from '@/pages/imports/ImportDetail'
 
+import DeconsolidationList from '@/pages/deconsolidations/DeconsolidationList'
+import DeconsolidationForm from '@/pages/deconsolidations/DeconsolidationForm'
+import DeconsolidationDetail from '@/pages/deconsolidations/DeconsolidationDetail'
+
 import BillingList from '@/pages/billing/BillingList'
 import CompletedList from '@/pages/completed/CompletedList'
 
@@ -55,6 +59,10 @@ export const router = createBrowserRouter([
           { path: '/imports/new', element: <ImportForm /> },
           { path: '/imports/:id', element: <ImportDetail /> },
           { path: '/imports/:id/edit', element: <ImportForm /> },
+          { path: '/deconsolidations', element: <DeconsolidationList /> },
+          { path: '/deconsolidations/new', element: <DeconsolidationForm /> },
+          { path: '/deconsolidations/:id', element: <DeconsolidationDetail /> },
+          { path: '/deconsolidations/:id/edit', element: <DeconsolidationForm /> },
           { path: '/billing', element: <BillingList /> },
           { path: '/completed', element: <CompletedList /> },
           { path: '/users', element: <UserList /> },

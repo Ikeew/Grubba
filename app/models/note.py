@@ -9,6 +9,7 @@ from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.deconsolidation_record import DeconsolidationRecord
     from app.models.export_record import ExportRecord
     from app.models.import_record import ImportRecord
     from app.models.user import User
@@ -16,8 +17,9 @@ if TYPE_CHECKING:
 
 class Note(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """
-    Observation / comment attached to either an ExportRecord or an ImportRecord.
-    One of export_record_id or import_record_id must be set (enforced at service layer).
+    Observation / comment attached to an ExportRecord, an ImportRecord or a
+    DeconsolidationRecord. Exactly one of the record FKs must be set
+    (enforced at service layer).
     """
 
     __tablename__ = "notes"
@@ -27,6 +29,9 @@ class Note(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     import_record_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("import_records.id"), nullable=True, index=True
+    )
+    deconsolidation_record_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deconsolidation_records.id"), nullable=True, index=True
     )
     author_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
@@ -40,6 +45,9 @@ class Note(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     import_record: Mapped["ImportRecord | None"] = relationship(
         back_populates="notes", foreign_keys=[import_record_id]
+    )
+    deconsolidation_record: Mapped["DeconsolidationRecord | None"] = relationship(
+        back_populates="notes", foreign_keys=[deconsolidation_record_id]
     )
     author: Mapped["User | None"] = relationship(back_populates="notes")
 

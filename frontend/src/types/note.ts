@@ -5,6 +5,7 @@ export interface Note {
   content: string
   export_record_id: string | null
   import_record_id: string | null
+  deconsolidation_record_id: string | null
   author: UserSummary | null
   created_at: string
   updated_at: string
@@ -14,4 +15,5 @@ export interface NotePayload {
   content: string
   export_record_id?: string
   import_record_id?: string
+  deconsolidation_record_id?: string
 }

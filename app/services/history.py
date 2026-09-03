@@ -21,6 +21,13 @@ FIELDS_TO_TRACK_IMPORT = {
 }
 
 
+FIELDS_TO_TRACK_DECONSOLIDATION = {
+    "reference", "date", "status", "modality", "consignee", "ce_mercante",
+    "master_bl", "house_bl", "agency", "shipping_company", "collaborator_id",
+    "observations",
+}
+
+
 class HistoryService:
     def __init__(self, history_repo: UpdateHistoryRepository) -> None:
         self._history = history_repo
@@ -47,6 +54,33 @@ class HistoryService:
             changed_by_id=created_by_id,
             tracked_fields=FIELDS_TO_TRACK_IMPORT,
             id_kwarg="import_record_id",
+        )
+
+    def record_deconsolidation_creation(
+        self, record_id: UUID, record: object, created_by_id: UUID | None
+    ) -> None:
+        new_data = {f: getattr(record, f, None) for f in FIELDS_TO_TRACK_DECONSOLIDATION}
+        self._record_changes(
+            record_type=RecordType.deconsolidation,
+            record_id=record_id,
+            old_data={},
+            new_data=new_data,
+            changed_by_id=created_by_id,
+            tracked_fields=FIELDS_TO_TRACK_DECONSOLIDATION,
+            id_kwarg="deconsolidation_record_id",
+        )
+
+    def record_deconsolidation_changes(
+        self, record_id: UUID, old_data: dict, new_data: dict, changed_by_id: UUID | None
+    ) -> None:
+        self._record_changes(
+            record_type=RecordType.deconsolidation,
+            record_id=record_id,
+            old_data=old_data,
+            new_data=new_data,
+            changed_by_id=changed_by_id,
+            tracked_fields=FIELDS_TO_TRACK_DECONSOLIDATION,
+            id_kwarg="deconsolidation_record_id",
         )
 
     def record_export_changes(
@@ -80,6 +114,9 @@ class HistoryService:
 
     def get_import_history(self, record_id: UUID) -> list[UpdateHistory]:
         return self._history.list_by_import_record(record_id)
+
+    def get_deconsolidation_history(self, record_id: UUID) -> list[UpdateHistory]:
+        return self._history.list_by_deconsolidation_record(record_id)
 
     def _record_changes(
         self,

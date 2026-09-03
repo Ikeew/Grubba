@@ -10,11 +10,24 @@ class NoteCreate(BaseModel):
     content: str
     export_record_id: uuid.UUID | None = None
     import_record_id: uuid.UUID | None = None
+    deconsolidation_record_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def validate_exactly_one_record(self) -> "NoteCreate":
-        if bool(self.export_record_id) == bool(self.import_record_id):
-            raise ValueError("Exactly one of export_record_id or import_record_id must be set")
+        provided = sum(
+            1
+            for value in (
+                self.export_record_id,
+                self.import_record_id,
+                self.deconsolidation_record_id,
+            )
+            if value
+        )
+        if provided != 1:
+            raise ValueError(
+                "Exactly one of export_record_id, import_record_id or "
+                "deconsolidation_record_id must be set"
+            )
         return self
 
 
@@ -29,6 +42,7 @@ class NoteResponse(BaseModel):
     content: str
     export_record_id: uuid.UUID | None
     import_record_id: uuid.UUID | None
+    deconsolidation_record_id: uuid.UUID | None
     author: UserSummary | None
     created_at: datetime
     updated_at: datetime

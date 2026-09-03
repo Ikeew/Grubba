@@ -30,3 +30,12 @@ class UpdateHistoryRepository(BaseRepository[UpdateHistory]):
             .order_by(UpdateHistory.created_at.desc())
         )
         return list(self.db.scalars(stmt).unique().all())
+
+    def list_by_deconsolidation_record(self, record_id: uuid.UUID) -> list[UpdateHistory]:
+        stmt = (
+            select(UpdateHistory)
+            .where(UpdateHistory.deconsolidation_record_id == record_id)
+            .options(joinedload(UpdateHistory.changed_by))
+            .order_by(UpdateHistory.created_at.desc())
+        )
+        return list(self.db.scalars(stmt).unique().all())

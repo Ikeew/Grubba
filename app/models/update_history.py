@@ -10,6 +10,7 @@ from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.deconsolidation_record import DeconsolidationRecord
     from app.models.export_record import ExportRecord
     from app.models.import_record import ImportRecord
     from app.models.user import User
@@ -18,11 +19,12 @@ if TYPE_CHECKING:
 class RecordType(str, enum.Enum):
     export = "export"
     import_ = "import"
+    deconsolidation = "deconsolidation"
 
 
 class UpdateHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """
-    Immutable log of field-level changes on export and import records.
+    Immutable log of field-level changes on export, import and deconsolidation records.
     Each row represents one changed field in one update operation.
     """
 
@@ -33,6 +35,9 @@ class UpdateHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     import_record_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("import_records.id"), nullable=True, index=True
+    )
+    deconsolidation_record_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("deconsolidation_records.id"), nullable=True, index=True
     )
     changed_by_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
@@ -52,6 +57,9 @@ class UpdateHistory(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     import_record: Mapped["ImportRecord | None"] = relationship(
         back_populates="history", foreign_keys=[import_record_id]
+    )
+    deconsolidation_record: Mapped["DeconsolidationRecord | None"] = relationship(
+        back_populates="history", foreign_keys=[deconsolidation_record_id]
     )
     changed_by: Mapped["User | None"] = relationship(back_populates="history_entries")
 

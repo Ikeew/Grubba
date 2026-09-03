@@ -20,6 +20,13 @@ export const filterStore = {
   importEtbFrom: '',
   importEtbTo: '',
 
+  // Deconsolidation filters
+  deconsolidationCollaboratorId: '',
+  deconsolidationStatuses: null as string[] | null,
+  deconsolidationSearch: '',
+  deconsolidationDateFrom: '',
+  deconsolidationDateTo: '',
+
   // Completed filters
   completedTab: 'exports' as string,
   completedClientSearch: '',

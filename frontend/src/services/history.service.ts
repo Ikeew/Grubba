@@ -11,4 +11,9 @@ export const historyService = {
     const { data } = await api.get<HistoryEntry[]>(`/import-records/${importRecordId}/history`)
     return data
   },
+
+  async listByDeconsolidation(recordId: string): Promise<HistoryEntry[]> {
+    const { data } = await api.get<HistoryEntry[]>(`/deconsolidation-records/${recordId}/history`)
+    return data
+  },
 }

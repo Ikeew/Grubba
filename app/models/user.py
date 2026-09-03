@@ -9,6 +9,7 @@ from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.deconsolidation_record import DeconsolidationRecord
     from app.models.export_record import ExportRecord
     from app.models.import_record import ImportRecord
     from app.models.note import Note
@@ -39,6 +40,9 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     import_records: Mapped[list["ImportRecord"]] = relationship(
         back_populates="collaborator", foreign_keys="ImportRecord.collaborator_id"
+    )
+    deconsolidation_records: Mapped[list["DeconsolidationRecord"]] = relationship(
+        back_populates="collaborator", foreign_keys="DeconsolidationRecord.collaborator_id"
     )
     notes: Mapped[list["Note"]] = relationship(back_populates="author")
     history_entries: Mapped[list["UpdateHistory"]] = relationship(back_populates="changed_by")

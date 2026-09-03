@@ -56,6 +56,15 @@ const NAV_ITEMS: NavItem[] = [
     ),
   },
   {
+    to: '/deconsolidations',
+    label: 'Desconsolidação',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.75h16.5m-16.5 0A1.5 1.5 0 0 1 2.25 8.25v-1.5a1.5 1.5 0 0 1 1.5-1.5h16.5a1.5 1.5 0 0 1 1.5 1.5v1.5a1.5 1.5 0 0 1-1.5 1.5m-16.5 0v7.5a1.5 1.5 0 0 0 1.5 1.5h4.5m10.5-9v3m0 0-2.25-2.25M20.25 12.75 22.5 10.5m-9 6.75h-4.5m0 0 2.25 2.25M9 19.5l2.25-2.25" />
+      </svg>
+    ),
+  },
+  {
     to: '/billing',
     label: 'Faturamento',
     adminOnly: true,

@@ -7,6 +7,7 @@ from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.deconsolidation_record import DeconsolidationRecord
     from app.models.export_record import ExportRecord
     from app.models.import_record import ImportRecord
 
@@ -25,6 +26,9 @@ class Client(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # Relationships
     export_records: Mapped[list["ExportRecord"]] = relationship(back_populates="client")
     import_records: Mapped[list["ImportRecord"]] = relationship(back_populates="client")
+    deconsolidation_records: Mapped[list["DeconsolidationRecord"]] = relationship(
+        back_populates="client"
+    )
 
     def __repr__(self) -> str:
         return f"<Client id={self.id} name={self.name}>"

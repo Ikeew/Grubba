@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.dependencies.auth import CurrentUser
 from app.dependencies.db import DbSession
+from app.repositories.deconsolidation_record import DeconsolidationRecordRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.import_record import ImportRecordRepository
 from app.repositories.note import NoteRepository
@@ -14,7 +15,12 @@ router = APIRouter(tags=["notes"])
 
 
 def _note_service(db: DbSession) -> NoteService:
-    return NoteService(NoteRepository(db), ExportRecordRepository(db), ImportRecordRepository(db))
+    return NoteService(
+        NoteRepository(db),
+        ExportRecordRepository(db),
+        ImportRecordRepository(db),
+        DeconsolidationRecordRepository(db),
+    )
 
 
 @router.post("/notes", response_model=NoteResponse, status_code=201, summary="Create a note")
@@ -46,6 +52,18 @@ def list_import_notes(
     record_id: UUID, db: DbSession, _: CurrentUser
 ) -> list[NoteResponse]:
     notes = _note_service(db).list_by_import_record(record_id)
+    return [NoteResponse.model_validate(n) for n in notes]
+
+
+@router.get(
+    "/deconsolidation-records/{record_id}/notes",
+    response_model=list[NoteResponse],
+    summary="List notes for a deconsolidation record",
+)
+def list_deconsolidation_notes(
+    record_id: UUID, db: DbSession, _: CurrentUser
+) -> list[NoteResponse]:
+    notes = _note_service(db).list_by_deconsolidation_record(record_id)
     return [NoteResponse.model_validate(n) for n in notes]
 
 

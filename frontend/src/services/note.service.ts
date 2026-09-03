@@ -12,6 +12,11 @@ export const noteService = {
     return data
   },
 
+  async listByDeconsolidation(recordId: string): Promise<Note[]> {
+    const { data } = await api.get<Note[]>(`/deconsolidation-records/${recordId}/notes`)
+    return data
+  },
+
   async create(payload: NotePayload): Promise<Note> {
     const { data } = await api.post<Note>('/notes', payload)
     return data

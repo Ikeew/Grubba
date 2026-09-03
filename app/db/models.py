@@ -11,5 +11,10 @@ from app.models.export_record import ExportRecord, ExportRecordFlag  # noqa: F40
 from app.models.export_file import ExportFile  # noqa: F401, E402
 from app.models.import_record import ImportRecord, ImportRecordFlag  # noqa: F401, E402
 from app.models.import_file import ImportFile  # noqa: F401, E402
+from app.models.deconsolidation_record import (  # noqa: F401, E402
+    DeconsolidationRecord,
+    DeconsolidationRecordFlag,
+)
+from app.models.deconsolidation_file import DeconsolidationFile  # noqa: F401, E402
 from app.models.note import Note  # noqa: F401, E402
 from app.models.update_history import UpdateHistory  # noqa: F401, E402

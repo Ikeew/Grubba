@@ -49,6 +49,13 @@ export type ImportStatus =
   | 'aguardando_programacao'
   | 'dsa_registrada'
 
+export type DeconsolidationStatus =
+  | 'aguardando_chegada_documento'
+  | 'agendamento_apresentacao'
+  | 'liberacao_realizada'
+  | 'completed'
+  | 'cancelled'
+
 export type MapType = 'vegetal' | 'animal'
 export type UserRole = 'admin' | 'manager' | 'collaborator'
 

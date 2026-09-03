@@ -4,6 +4,7 @@ from app.core.exceptions import ForbiddenError, NotFoundError
 from app.models.note import Note
 from app.models.user import User, UserRole
 from app.repositories.note import NoteRepository
+from app.repositories.deconsolidation_record import DeconsolidationRecordRepository
 from app.repositories.export_record import ExportRecordRepository
 from app.repositories.import_record import ImportRecordRepository
 from app.schemas.note import NoteCreate, NoteUpdate
@@ -15,15 +16,20 @@ class NoteService:
         note_repo: NoteRepository,
         export_repo: ExportRecordRepository,
         import_repo: ImportRecordRepository,
+        deconsolidation_repo: DeconsolidationRecordRepository | None = None,
     ) -> None:
         self._notes = note_repo
         self._exports = export_repo
         self._imports = import_repo
+        self._deconsolidations = deconsolidation_repo
 
     def create(self, payload: NoteCreate, current_user: User) -> Note:
         if payload.export_record_id:
             if not self._exports.get_by_id(payload.export_record_id):
                 raise NotFoundError("Export record")
+        elif payload.deconsolidation_record_id:
+            if not self._deconsolidation_repo().get_by_id(payload.deconsolidation_record_id):
+                raise NotFoundError("Deconsolidation record")
         else:
             if not self._imports.get_by_id(payload.import_record_id):  # type: ignore[arg-type]
                 raise NotFoundError("Import record")
@@ -32,9 +38,20 @@ class NoteService:
             content=payload.content,
             export_record_id=payload.export_record_id,
             import_record_id=payload.import_record_id,
+            deconsolidation_record_id=payload.deconsolidation_record_id,
             author_id=current_user.id,
         )
         return self._notes.create(note)
+
+    def _deconsolidation_repo(self) -> DeconsolidationRecordRepository:
+        if self._deconsolidations is None:
+            raise NotFoundError("Deconsolidation record")
+        return self._deconsolidations
+
+    def list_by_deconsolidation_record(self, record_id: UUID) -> list[Note]:
+        if not self._deconsolidation_repo().get_by_id(record_id):
+            raise NotFoundError("Deconsolidation record")
+        return self._notes.list_by_deconsolidation_record(record_id)
 
     def list_by_export_record(self, export_record_id: UUID) -> list[Note]:
         if not self._exports.get_by_id(export_record_id):

@@ -16,3 +16,11 @@ export function useImportHistory(importRecordId: string) {
     enabled: !!importRecordId,
   })
 }
+
+export function useDeconsolidationHistory(recordId: string) {
+  return useQuery({
+    queryKey: ['history', 'deconsolidation', recordId],
+    queryFn: () => historyService.listByDeconsolidation(recordId),
+    enabled: !!recordId,
+  })
+}

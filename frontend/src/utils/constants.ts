@@ -1,4 +1,4 @@
-import type { ExportStatus, ImportStatus } from '@/types/common'
+import type { DeconsolidationStatus, ExportStatus, ImportStatus } from '@/types/common'
 
 export const EXPORT_STATUS_LABELS: Record<ExportStatus, string> = {
   in_progress: 'Em Andamento',
@@ -66,6 +66,27 @@ export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
   aguardando_plmi_tela_verde: 'bg-green-100 text-green-700',
   aguardando_programacao: 'bg-violet-100 text-violet-700',
   dsa_registrada: 'bg-rose-100 text-rose-700',
+}
+
+export const DECONSOLIDATION_STATUS_LABELS: Record<DeconsolidationStatus, string> = {
+  aguardando_chegada_documento: 'Aguardando Chegada de Documento',
+  agendamento_apresentacao: 'Agendamento de Apresentação',
+  liberacao_realizada: 'Liberação Realizada',
+  completed: 'Concluído',
+  cancelled: 'Cancelado',
+}
+
+export const DECONSOLIDATION_STATUS_COLORS: Record<DeconsolidationStatus, string> = {
+  aguardando_chegada_documento: 'bg-amber-100 text-amber-700',
+  agendamento_apresentacao: 'bg-blue-100 text-blue-700',
+  liberacao_realizada: 'bg-teal-100 text-teal-700',
+  completed: 'bg-green-100 text-green-700',
+  cancelled: 'bg-red-100 text-red-700',
+}
+
+export const DECONSOLIDATION_MODALITY_LABELS = {
+  importacao: 'Importação',
+  exportacao: 'Exportação',
 }
 
 export const MAP_TYPE_LABELS = {
