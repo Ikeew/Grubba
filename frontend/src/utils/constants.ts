@@ -71,6 +71,7 @@ export const IMPORT_STATUS_COLORS: Record<ImportStatus, string> = {
 export const DECONSOLIDATION_STATUS_LABELS: Record<DeconsolidationStatus, string> = {
   aguardando_chegada_documento: 'Aguardando Chegada de Documento',
   agendamento_apresentacao: 'Agendamento de Apresentação',
+  aguardando_liberacao: 'Aguardando Liberação',
   liberacao_realizada: 'Liberação Realizada',
   completed: 'Concluído',
   cancelled: 'Cancelado',
@@ -79,6 +80,7 @@ export const DECONSOLIDATION_STATUS_LABELS: Record<DeconsolidationStatus, string
 export const DECONSOLIDATION_STATUS_COLORS: Record<DeconsolidationStatus, string> = {
   aguardando_chegada_documento: 'bg-amber-100 text-amber-700',
   agendamento_apresentacao: 'bg-blue-100 text-blue-700',
+  aguardando_liberacao: 'bg-purple-100 text-purple-700',
   liberacao_realizada: 'bg-teal-100 text-teal-700',
   completed: 'bg-green-100 text-green-700',
   cancelled: 'bg-red-100 text-red-700',

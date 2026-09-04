@@ -52,6 +52,7 @@ export type ImportStatus =
 export type DeconsolidationStatus =
   | 'aguardando_chegada_documento'
   | 'agendamento_apresentacao'
+  | 'aguardando_liberacao'
   | 'liberacao_realizada'
   | 'completed'
   | 'cancelled'

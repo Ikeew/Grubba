@@ -331,6 +331,7 @@ Cadastro de portos. Referenciado por fichas de export/import.
 |---|
 | `aguardando_chegada_documento` |
 | `agendamento_apresentacao` |
+| `aguardando_liberacao` |
 | `liberacao_realizada` |
 | `completed` |
 | `cancelled` |

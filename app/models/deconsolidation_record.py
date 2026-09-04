@@ -27,6 +27,7 @@ class DeconsolidationModality(str, enum.Enum):
 class DeconsolidationStatus(str, enum.Enum):
     aguardando_chegada_documento = "aguardando_chegada_documento"
     agendamento_apresentacao = "agendamento_apresentacao"
+    aguardando_liberacao = "aguardando_liberacao"
     liberacao_realizada = "liberacao_realizada"
     completed = "completed"
     cancelled = "cancelled"

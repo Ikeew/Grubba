@@ -6,6 +6,7 @@ import type { DeconsolidationStatus } from '@/types/common'
 const DECONSOLIDATION_STATUSES = [
   'aguardando_chegada_documento',
   'agendamento_apresentacao',
+  'aguardando_liberacao',
   'liberacao_realizada',
   'completed',
   'cancelled',
