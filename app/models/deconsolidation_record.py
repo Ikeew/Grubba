@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, String, Table, Text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -22,6 +22,11 @@ if TYPE_CHECKING:
 class DeconsolidationModality(str, enum.Enum):
     importacao = "importacao"
     exportacao = "exportacao"
+
+
+class DeconsolidationService(str, enum.Enum):
+    retirada = "retirada"
+    liberacao = "liberacao"
 
 
 class DeconsolidationStatus(str, enum.Enum):
@@ -77,6 +82,7 @@ class DeconsolidationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(DeconsolidationModality, name="deconsolidation_modality"), nullable=True
     )
     consignee: Mapped[str | None] = mapped_column(String(255), nullable=True)  # consignatário
+    services: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
 
     # --- Documentação ---
     ce_mercante: Mapped[str | None] = mapped_column(String(100), nullable=True)

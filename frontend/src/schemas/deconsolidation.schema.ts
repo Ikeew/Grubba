@@ -19,6 +19,7 @@ export const deconsolidationSchema = z.object({
   status: z.enum(DECONSOLIDATION_STATUSES).default('aguardando_chegada_documento'),
   modality: z.union([z.enum(['importacao', 'exportacao']), z.literal('')]).optional(),
   consignee: z.string().optional(),
+  services: z.array(z.string()).default([]),
   ce_mercante: z.string().optional(),
   master_bl: z.string().optional(),
   house_bl: z.string().optional(),

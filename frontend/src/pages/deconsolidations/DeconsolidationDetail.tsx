@@ -21,6 +21,7 @@ import {
   formatFieldValue,
 } from '@/utils/format'
 import { DECONSOLIDATION_MODALITY_LABELS } from '@/utils/constants'
+import { DECONSOLIDATION_SERVICE_LABELS, type DeconsolidationService } from '@/types/deconsolidation'
 
 function DetailRow({ label, value }: { label: string; value?: string | null | boolean }) {
   const display = typeof value === 'boolean' ? (value ? 'Sim' : 'Não') : value
@@ -112,6 +113,19 @@ export default function DeconsolidationDetail() {
             <DetailRow label="Concluído em" value={formatDateTime(record.completed_at)} />
             <DetailRow label="Faturado" value={record.billing_completed} />
           </dl>
+
+          <div className="mt-4">
+            <p className="text-xs font-medium text-slate-500 mb-2">Serviços</p>
+            {record.services?.length ? (
+              <div className="flex flex-wrap gap-1.5">
+                {record.services.map((s) => (
+                  <span key={s} className="print-service-tag text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
+                    {DECONSOLIDATION_SERVICE_LABELS[s as DeconsolidationService] ?? s}
+                  </span>
+                ))}
+              </div>
+            ) : <span className="text-sm text-slate-400">Nenhum serviço</span>}
+          </div>
         </div>
       </div>
 

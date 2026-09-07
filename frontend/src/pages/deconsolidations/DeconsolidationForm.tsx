@@ -21,7 +21,11 @@ import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { ClientCombobox } from '@/components/ui/ClientCombobox'
-import type { DeconsolidationRecordPayload } from '@/types/deconsolidation'
+import {
+  DECONSOLIDATION_SERVICE_LABELS,
+  type DeconsolidationRecordPayload,
+  type DeconsolidationService,
+} from '@/types/deconsolidation'
 import {
   DECONSOLIDATION_MODALITY_LABELS,
   DECONSOLIDATION_STATUS_LABELS,
@@ -32,6 +36,10 @@ const STATUS_OPTIONS = Object.entries(DECONSOLIDATION_STATUS_LABELS).map(([v, l]
   value: v,
   label: l,
 }))
+const ALL_SERVICES = Object.entries(DECONSOLIDATION_SERVICE_LABELS) as [
+  DeconsolidationService,
+  string,
+][]
 const MODALITY_OPTIONS = [
   { value: '', label: 'Selecionar...' },
   ...Object.entries(DECONSOLIDATION_MODALITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
@@ -66,6 +74,7 @@ export default function DeconsolidationForm() {
     reset,
     control,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<DeconsolidationFormValues>({
     resolver: zodResolver(deconsolidationSchema),
@@ -87,6 +96,7 @@ export default function DeconsolidationForm() {
         status: record.status,
         modality: record.modality ?? '',
         consignee: record.consignee ?? '',
+        services: record.services ?? [],
         ce_mercante: record.ce_mercante ?? '',
         master_bl: record.master_bl ?? '',
         house_bl: record.house_bl ?? '',
@@ -97,6 +107,15 @@ export default function DeconsolidationForm() {
       })
     }
   }, [record, reset])
+
+  const selectedServices = (watch('services') ?? []) as DeconsolidationService[]
+
+  function toggleService(service: DeconsolidationService) {
+    const updated = selectedServices.includes(service)
+      ? selectedServices.filter((s) => s !== service)
+      : [...selectedServices, service]
+    setValue('services', updated)
+  }
 
   const isCompletedLocked = isEditing && record?.status === 'completed' && !canEditCompleted
 
@@ -170,6 +189,30 @@ export default function DeconsolidationForm() {
             <Input label="CE Mercante" {...register('ce_mercante')} />
             <Input label="AWB / BL Master" {...register('master_bl')} />
             <Input label="AWB / BL House" {...register('house_bl')} />
+          </div>
+        </div>
+
+        {/* Serviços */}
+        <div className="form-section">
+          <p className="form-section-title">Serviços solicitados</p>
+          <div className="grid grid-cols-2 gap-3">
+            {ALL_SERVICES.map(([value, label]) => (
+              <label key={value} className="flex items-center gap-2 cursor-pointer">
+                <Controller
+                  control={control}
+                  name="services"
+                  render={() => (
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      checked={selectedServices.includes(value)}
+                      onChange={() => toggleService(value)}
+                    />
+                  )}
+                />
+                <span className="text-sm text-slate-700">{label}</span>
+              </label>
+            ))}
           </div>
         </div>
 

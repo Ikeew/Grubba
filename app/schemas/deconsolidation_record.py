@@ -1,9 +1,13 @@
 import uuid
 from datetime import date as Date, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
-from app.models.deconsolidation_record import DeconsolidationModality, DeconsolidationStatus
+from app.models.deconsolidation_record import (
+    DeconsolidationModality,
+    DeconsolidationService,
+    DeconsolidationStatus,
+)
 from app.schemas.client import ClientSummary
 from app.schemas.export_record import FlagInfo
 from app.schemas.user import UserSummary
@@ -27,6 +31,13 @@ class DeconsolidationRecordCreate(BaseModel):
     collaborator_id: uuid.UUID | None = None
     observations: str | None = None
 
+    services: list[DeconsolidationService] = Field(default_factory=list)
+
+    @field_validator("services", mode="before")
+    @classmethod
+    def coerce_services(cls, value: list) -> list:
+        return [DeconsolidationService(v) if isinstance(v, str) else v for v in value]
+
 
 class DeconsolidationRecordUpdate(BaseModel):
     client_id: uuid.UUID | None = None
@@ -46,6 +57,8 @@ class DeconsolidationRecordUpdate(BaseModel):
     collaborator_id: uuid.UUID | None = None
     observations: str | None = None
 
+    services: list[DeconsolidationService] | None = None
+
 
 class DeconsolidationRecordResponse(BaseModel):
     model_config = {"from_attributes": True}
@@ -56,6 +69,7 @@ class DeconsolidationRecordResponse(BaseModel):
     status: DeconsolidationStatus
     modality: DeconsolidationModality | None
     consignee: str | None
+    services: list[str]
 
     ce_mercante: str | None
     master_bl: str | None

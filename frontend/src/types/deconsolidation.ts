@@ -3,6 +3,13 @@ import type { UserSummary } from './export'
 
 export type DeconsolidationModality = 'importacao' | 'exportacao'
 
+export type DeconsolidationService = 'retirada' | 'liberacao'
+
+export const DECONSOLIDATION_SERVICE_LABELS: Record<DeconsolidationService, string> = {
+  retirada: 'Retirada',
+  liberacao: 'Liberação',
+}
+
 export interface DeconsolidationRecord {
   id: string
   reference: string | null
@@ -10,6 +17,7 @@ export interface DeconsolidationRecord {
   status: DeconsolidationStatus
   modality: DeconsolidationModality | null
   consignee: string | null
+  services: DeconsolidationService[]
   ce_mercante: string | null
   master_bl: string | null
   house_bl: string | null
@@ -32,6 +40,7 @@ export interface DeconsolidationRecordPayload {
   status?: DeconsolidationStatus
   modality?: DeconsolidationModality
   consignee?: string
+  services?: DeconsolidationService[]
   ce_mercante?: string
   master_bl?: string
   house_bl?: string

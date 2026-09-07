@@ -24,7 +24,7 @@ FIELDS_TO_TRACK_IMPORT = {
 FIELDS_TO_TRACK_DECONSOLIDATION = {
     "reference", "date", "status", "modality", "consignee", "ce_mercante",
     "master_bl", "house_bl", "agency", "shipping_company", "collaborator_id",
-    "observations",
+    "observations", "services",
 }
 
 

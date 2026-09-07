@@ -250,6 +250,7 @@ Estrutura análoga ao ExportRecord com campos específicos de importação. `imp
 | `status` | DeconsolidationStatus enum | ver seção Enums |
 | `modality` | DeconsolidationModality enum nullable | `importacao` \| `exportacao` |
 | `consignee` | String(255) | consignatário |
+| `services` | ARRAY(String) | **PostgreSQL ARRAY** — valores de `DeconsolidationService` |
 | `ce_mercante` | String(100) | |
 | `master_bl`, `house_bl` | String(100) | AWB/BL Master e House |
 | `agency` | String(255) | agência representante |
@@ -335,6 +336,10 @@ Cadastro de portos. Referenciado por fichas de export/import.
 | `liberacao_realizada` |
 | `completed` |
 | `cancelled` |
+
+### DeconsolidationService (array em DeconsolidationRecord.services)
+
+`retirada`, `liberacao`
 
 ### Outros
 

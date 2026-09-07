@@ -82,6 +82,11 @@ const EXPORT_SERVICE_LABELS: Record<string, string> = {
   outros: 'Outros',
 }
 
+const DECONSOLIDATION_SERVICE_LABELS: Record<string, string> = {
+  retirada: 'Retirada',
+  liberacao: 'Liberação',
+}
+
 export function formatFieldValue(fieldName: string, value: string | null | undefined): string {
   if (value === null || value === undefined || value === 'None') return '—'
 
@@ -136,7 +141,13 @@ export function formatFieldValue(fieldName: string, value: string | null | undef
       const parsed: unknown = JSON.parse(value.replace(/'/g, '"'))
       if (Array.isArray(parsed)) {
         if (parsed.length === 0) return '—'
-        return parsed.map((s) => EXPORT_SERVICE_LABELS[s as string] ?? s).join(', ')
+        return parsed
+          .map((s) =>
+            EXPORT_SERVICE_LABELS[s as string] ??
+            DECONSOLIDATION_SERVICE_LABELS[s as string] ??
+            s,
+          )
+          .join(', ')
       }
     } catch {
       // não era JSON, cai no fallback

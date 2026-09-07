@@ -51,6 +51,7 @@ class DeconsolidationRecordService:
                 raise ConflictError("Já existe uma ficha com esta referência")
 
         data = payload.model_dump()
+        data["services"] = [s.value for s in (data.get("services") or [])]
         if current_user.role != UserRole.admin or not data.get("collaborator_id"):
             data["collaborator_id"] = current_user.id
         record = DeconsolidationRecord(**data)
@@ -124,6 +125,8 @@ class DeconsolidationRecordService:
         old_data = {col: getattr(record, col) for col in payload.model_fields}
 
         update_data = payload.model_dump(exclude_none=True)
+        if "services" in update_data:
+            update_data["services"] = [s.value for s in update_data["services"]]
         if "reference" in update_data and update_data["reference"]:
             normalized = _normalize_ref(update_data["reference"])
             if self._records.find_by_normalized_reference(normalized, exclude_id=record_id):
