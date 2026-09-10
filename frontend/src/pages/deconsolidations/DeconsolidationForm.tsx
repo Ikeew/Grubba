@@ -8,7 +8,6 @@ import {
   useCreateDeconsolidation,
   useUpdateDeconsolidation,
 } from '@/hooks/useDeconsolidations'
-import { useClientList } from '@/hooks/useClients'
 import { useUserList } from '@/hooks/useUsers'
 import {
   deconsolidationSchema,
@@ -57,12 +56,10 @@ export default function DeconsolidationForm() {
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: record, isLoading: loadingRecord } = useDeconsolidation(id ?? '')
-  const { data: clients } = useClientList({ page_size: 100 })
   const { data: users } = useUserList(isAdmin)
   const createRecord = useCreateDeconsolidation()
   const updateRecord = useUpdateDeconsolidation(id ?? '')
 
-  const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
   const userOptions = [
     { value: '', label: 'Selecionar responsável...' },
     ...(users?.items ?? []).map((u) => ({ value: u.id, label: u.full_name })),
@@ -164,7 +161,6 @@ export default function DeconsolidationForm() {
                   label="Cliente *"
                   value={field.value}
                   onChange={field.onChange}
-                  clients={clientOptions}
                   error={errors.client_id?.message}
                 />
               )}
