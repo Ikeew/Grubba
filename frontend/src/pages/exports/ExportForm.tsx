@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useExport, useCreateExport, useUpdateExport } from '@/hooks/useExports'
-import { useClientList } from '@/hooks/useClients'
 import { useUserList } from '@/hooks/useUsers'
 import { usePortList } from '@/hooks/usePorts'
 import { exportSchema, type ExportFormValues } from '@/schemas/export.schema'
@@ -36,13 +35,11 @@ export default function ExportForm() {
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: record, isLoading: loadingRecord } = useExport(id ?? '')
-  const { data: clients } = useClientList({ page_size: 100 })
   const { data: users } = useUserList(isAdmin)
   const { data: ports } = usePortList()
   const createExport = useCreateExport()
   const updateExport = useUpdateExport(id ?? '')
 
-  const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
   const portOptions = (ports ?? []).map((p) => ({ value: p.id, label: p.name }))
   const userOptions = [
     { value: '', label: 'Selecionar responsável...' },
@@ -154,7 +151,6 @@ export default function ExportForm() {
                   label="Cliente *"
                   value={field.value}
                   onChange={field.onChange}
-                  clients={clientOptions}
                   error={errors.client_id?.message}
                 />
               )}
