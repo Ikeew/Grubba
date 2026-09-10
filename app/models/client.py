@@ -1,34 +1,58 @@
-from typing import TYPE_CHECKING
+from sqlalchemy import func, or_, select
+from sqlalchemy.orm import Session
 
-from sqlalchemy import Boolean, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from app.db.base import Base
-from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-
-if TYPE_CHECKING:
-    from app.models.deconsolidation_record import DeconsolidationRecord
-    from app.models.export_record import ExportRecord
-    from app.models.import_record import ImportRecord
+from app.models.client import Client
+from app.repositories.base import BaseRepository
 
 
-class Client(UUIDPrimaryKeyMixin, TimestampMixin, Base):
-    __tablename__ = "clients"
+class ClientRepository(BaseRepository[Client]):
+    model = Client
 
-    name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    cnpj: Mapped[str | None] = mapped_column(String(18), nullable=True, unique=True)
-    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    address: Mapped[str | None] = mapped_column(Text, nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    def __init__(self, db: Session) -> None:
+        super().__init__(db)
 
-    # Relationships
-    export_records: Mapped[list["ExportRecord"]] = relationship(back_populates="client")
-    import_records: Mapped[list["ImportRecord"]] = relationship(back_populates="client")
-    deconsolidation_records: Mapped[list["DeconsolidationRecord"]] = relationship(
-        back_populates="client"
-    )
+    def get_by_cnpj(self, cnpj: str) -> Client | None:
+        stmt = select(Client).where(Client.cnpj == cnpj)
+        return self.db.scalar(stmt)
 
-    def __repr__(self) -> str:
-        return f"<Client id={self.id} name={self.name}>"
+    @staticmethod
+    def _search_filter(query: str):
+        pattern = f"%{query}%"
+        return or_(
+            Client.name.ilike(pattern),
+            Client.cnpj.ilike(pattern),
+            Client.email.ilike(pattern),
+        )
+
+    def search(self, query: str, *, offset: int = 0, limit: int = 20) -> list[Client]:
+        stmt = (
+            select(Client)
+            .where(Client.is_active.is_(True), self._search_filter(query))
+            # ORDER BY é obrigatório para OFFSET/LIMIT serem determinísticos no PostgreSQL
+            .order_by(Client.name, Client.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def count_search(self, query: str) -> int:
+        stmt = (
+            select(func.count())
+            .select_from(Client)
+            .where(Client.is_active.is_(True), self._search_filter(query))
+        )
+        return self.db.scalar(stmt) or 0
+
+    def list_active(self, *, offset: int = 0, limit: int = 20) -> list[Client]:
+        stmt = (
+            select(Client)
+            .where(Client.is_active.is_(True))
+            .order_by(Client.name, Client.id)
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all())
+
+    def count_active(self) -> int:
+        stmt = select(func.count()).select_from(Client).where(Client.is_active.is_(True))
+        return self.db.scalar(stmt) or 0
