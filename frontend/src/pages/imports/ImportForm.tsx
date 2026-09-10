@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useImport, useCreateImport, useUpdateImport } from '@/hooks/useImports'
-import { useClientList } from '@/hooks/useClients'
 import { useUserList } from '@/hooks/useUsers'
 import { usePortList } from '@/hooks/usePorts'
 import { importSchema, type ImportFormValues } from '@/schemas/import.schema'
@@ -36,13 +35,11 @@ export default function ImportForm() {
   const today = new Date().toISOString().slice(0, 10)
 
   const { data: record, isLoading: loadingRecord } = useImport(id ?? '')
-  const { data: clients } = useClientList({ page_size: 100 })
   const { data: users } = useUserList(isAdmin)
   const { data: ports } = usePortList()
   const createImport = useCreateImport()
   const updateImport = useUpdateImport(id ?? '')
 
-  const clientOptions = (clients?.items ?? []).map((c) => ({ value: c.id, label: c.name }))
   const portOptions = (ports ?? []).map((p) => ({ value: p.id, label: p.name }))
   const userOptions = [
     { value: '', label: 'Selecionar responsável...' },
@@ -152,7 +149,6 @@ export default function ImportForm() {
                   label="Cliente *"
                   value={field.value}
                   onChange={field.onChange}
-                  clients={clientOptions}
                   error={errors.client_id?.message}
                 />
               )}
