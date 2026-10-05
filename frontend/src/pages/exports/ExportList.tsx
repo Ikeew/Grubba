@@ -360,6 +360,7 @@ export default function ExportList() {
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Exportador</th>
+                <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">LPCO</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
                 <th className="px-2 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
@@ -407,6 +408,7 @@ export default function ExportList() {
                   <td className="px-2 py-2 text-xs text-slate-700 font-medium">{record.reference ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-700">{record.client.name}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.exporter ?? '—'}</td>
+                  <td className="px-2 py-2 text-xs text-slate-500">{record.lpco ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{formatDate(record.date)}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.vessel ?? '—'}</td>
                   <td className="px-2 py-2 text-xs text-slate-500">{record.port?.name ?? '—'}</td>
