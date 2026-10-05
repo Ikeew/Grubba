@@ -2,19 +2,27 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useExportList } from '@/hooks/useExports'
 import { useImportList } from '@/hooks/useImports'
+import { useDeconsolidationList } from '@/hooks/useDeconsolidations'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Select } from '@/components/ui/Select'
 import { Spinner } from '@/components/ui/Spinner'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { Pagination } from '@/components/ui/Pagination'
-import { formatDate } from '@/utils/format'
-import { MODALITY_LABELS } from '@/utils/constants'
+import { formatDate, formatDateTime } from '@/utils/format'
+import { MODALITY_LABELS, DECONSOLIDATION_MODALITY_LABELS } from '@/utils/constants'
 import { filterStore } from '@/lib/filterStore'
 import type { ExportRecord } from '@/types/export'
 import type { ImportRecord } from '@/types/import'
+import type { DeconsolidationRecord } from '@/types/deconsolidation'
 
-type Tab = 'exports' | 'imports'
+type Tab = 'exports' | 'imports' | 'deconsolidations'
+
+const TAB_LABELS: Record<Tab, string> = {
+  exports: 'Exportação',
+  imports: 'Importação',
+  deconsolidations: 'Desconsolidação',
+}
 
 const PAGE_SIZE = 50
 
@@ -31,6 +39,7 @@ export default function CompletedList() {
 
   const [exportPage, setExportPage] = useState(1)
   const [importPage, setImportPage] = useState(1)
+  const [deconsolidationPage, setDeconsolidationPage] = useState(1)
 
   const hasFilters = search || collaboratorId || completedFrom || completedTo || createdFrom || createdTo
 
@@ -66,11 +75,25 @@ export default function CompletedList() {
     created_to: createdTo || undefined,
   })
 
+  const { data: deconsolidationData, isLoading: deconsolidationLoading } = useDeconsolidationList({
+    status: ['completed'],
+    billing_completed: true,
+    page: deconsolidationPage,
+    page_size: PAGE_SIZE,
+    collaborator_id: collaboratorId || undefined,
+    search: search || undefined,
+    completed_from: completedFrom || undefined,
+    completed_to: completedTo || undefined,
+    created_from: createdFrom || undefined,
+    created_to: createdTo || undefined,
+  })
+
   function setCollaborator(value: string) {
     filterStore.completedCollaboratorId = value
     setCollaboratorId(value)
     setExportPage(1)
     setImportPage(1)
+    setDeconsolidationPage(1)
   }
 
   function handleSearch(value: string) {
@@ -78,6 +101,7 @@ export default function CompletedList() {
     setSearch(value)
     setExportPage(1)
     setImportPage(1)
+    setDeconsolidationPage(1)
   }
 
   function clearFilters() {
@@ -97,6 +121,7 @@ export default function CompletedList() {
 
   const exports = exportData?.items ?? []
   const imports = importData?.items ?? []
+  const deconsolidations = deconsolidationData?.items ?? []
 
   return (
     <div>
@@ -104,7 +129,7 @@ export default function CompletedList() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200">
-        {(['exports', 'imports'] as Tab[]).map((t) => (
+        {(['exports', 'imports', 'deconsolidations'] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => { filterStore.completedTab = t; setTab(t) }}
@@ -114,11 +139,15 @@ export default function CompletedList() {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            {t === 'exports' ? 'Exportação' : 'Importação'}
+            {TAB_LABELS[t]}
             <span className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
               tab === t ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'
             }`}>
-              {t === 'exports' ? (exportData?.total ?? 0) : (importData?.total ?? 0)}
+              {t === 'exports'
+                ? (exportData?.total ?? 0)
+                : t === 'imports'
+                  ? (importData?.total ?? 0)
+                  : (deconsolidationData?.total ?? 0)}
             </span>
           </button>
         ))}
@@ -147,7 +176,7 @@ export default function CompletedList() {
             onChange={(e) => {
               filterStore.completedCompletedFrom = e.target.value
               setCompletedFrom(e.target.value)
-              setExportPage(1); setImportPage(1)
+              setExportPage(1); setImportPage(1); setDeconsolidationPage(1)
             }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
@@ -158,7 +187,7 @@ export default function CompletedList() {
             onChange={(e) => {
               filterStore.completedCompletedTo = e.target.value
               setCompletedTo(e.target.value)
-              setExportPage(1); setImportPage(1)
+              setExportPage(1); setImportPage(1); setDeconsolidationPage(1)
             }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
@@ -171,7 +200,7 @@ export default function CompletedList() {
             onChange={(e) => {
               filterStore.completedCreatedFrom = e.target.value
               setCreatedFrom(e.target.value)
-              setExportPage(1); setImportPage(1)
+              setExportPage(1); setImportPage(1); setDeconsolidationPage(1)
             }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
@@ -182,7 +211,7 @@ export default function CompletedList() {
             onChange={(e) => {
               filterStore.completedCreatedTo = e.target.value
               setCreatedTo(e.target.value)
-              setExportPage(1); setImportPage(1)
+              setExportPage(1); setImportPage(1); setDeconsolidationPage(1)
             }}
             className="border border-slate-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
           />
@@ -305,6 +334,67 @@ export default function CompletedList() {
                 total={importData?.total ?? 0}
                 pageSize={PAGE_SIZE}
                 onPage={setImportPage}
+              />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Deconsolidations tab */}
+      {tab === 'deconsolidations' && (
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          {deconsolidationLoading ? (
+            <div className="flex justify-center py-12"><Spinner /></div>
+          ) : !deconsolidations.length ? (
+            <EmptyState title="Nenhuma desconsolidação faturada." />
+          ) : (
+            <>
+              <table className="w-full text-xs">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Consignatário</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Master</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">House</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Armador</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Agência</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Concluído em</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deconsolidations.map((record: DeconsolidationRecord) => (
+                    <tr
+                      key={record.id}
+                      onDoubleClick={() => navigate(`/deconsolidations/${record.id}`)}
+                      className="border-b border-slate-100 cursor-pointer bg-green-50 hover:bg-green-100 transition-colors"
+                    >
+                      <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.consignee ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {record.modality ? DECONSOLIDATION_MODALITY_LABELS[record.modality] : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.master_bl ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.house_bl ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.shipping_company ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.agency ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
+                      <td className="px-3 py-2 text-slate-500">{formatDateTime(record.completed_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Pagination
+                page={deconsolidationPage}
+                pages={deconsolidationData?.pages ?? 1}
+                total={deconsolidationData?.total ?? 0}
+                pageSize={PAGE_SIZE}
+                onPage={setDeconsolidationPage}
               />
             </>
           )}
