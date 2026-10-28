@@ -26,6 +26,8 @@ import DeconsolidationForm from '@/pages/deconsolidations/DeconsolidationForm'
 import DeconsolidationDetail from '@/pages/deconsolidations/DeconsolidationDetail'
 
 import BillingList from '@/pages/billing/BillingList'
+import ReceiptBuilder from '@/pages/billing/ReceiptBuilder'
+import ReceiptList from '@/pages/billing/ReceiptList'
 import CompletedList from '@/pages/completed/CompletedList'
 
 import UserList from '@/pages/users/UserList'
@@ -64,6 +66,8 @@ export const router = createBrowserRouter([
           { path: '/deconsolidations/:id', element: <DeconsolidationDetail /> },
           { path: '/deconsolidations/:id/edit', element: <DeconsolidationForm /> },
           { path: '/billing', element: <BillingList /> },
+          { path: '/billing/receipts', element: <ReceiptList /> },
+          { path: '/billing/receipts/new', element: <ReceiptBuilder /> },
           { path: '/completed', element: <CompletedList /> },
           { path: '/users', element: <UserList /> },
           { path: '/users/new', element: <UserForm /> },

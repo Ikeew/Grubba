@@ -19,8 +19,57 @@ import { filterStore } from '@/lib/filterStore'
 import type { ExportRecord } from '@/types/export'
 import type { ImportRecord } from '@/types/import'
 import type { DeconsolidationRecord } from '@/types/deconsolidation'
+import type { ReceiptRecordType } from '@/types/receipt'
+import { useDownloadReceiptPdf } from '@/hooks/useReceipts'
+import { canManageBilling } from '@/utils/permissions'
 
 type Tab = 'exports' | 'imports' | 'deconsolidations'
+
+/** "Gerar recibo" ou, se a ficha já tem recibo, selo + download. Só admin/manager. */
+function ReceiptActions({
+  record,
+  recordType,
+}: {
+  record: ExportRecord | ImportRecord | DeconsolidationRecord
+  recordType: ReceiptRecordType
+}) {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+  const downloadPdf = useDownloadReceiptPdf()
+  if (!canManageBilling(user)) return null
+
+  const stop = (e: React.MouseEvent) => e.stopPropagation()
+
+  if (record.receipt) {
+    const { id, number } = record.receipt
+    return (
+      <span className="inline-flex items-center gap-1.5 ml-1.5" onDoubleClick={stop}>
+        <span className="px-2 py-1 rounded text-xs font-medium bg-green-50 text-green-700" title="Recibo gerado">
+          Recibo {number}
+        </span>
+        <button
+          onClick={(e) => { stop(e); downloadPdf.mutate({ id, number }) }}
+          className="px-2.5 py-1 rounded text-xs font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-brand-100 hover:text-brand-700"
+        >
+          Baixar
+        </button>
+      </span>
+    )
+  }
+
+  return (
+    <button
+      onClick={(e) => {
+        stop(e)
+        navigate(`/billing/receipts/new?client=${record.client.id}&type=${recordType}&record=${record.id}`)
+      }}
+      onDoubleClick={stop}
+      className="ml-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-brand-100 hover:text-brand-700"
+    >
+      Gerar recibo
+    </button>
+  )
+}
 
 const TAB_LABELS: Record<Tab, string> = {
   exports: 'Exportação',
@@ -163,7 +212,10 @@ export default function BillingList() {
 
   return (
     <div>
-      <PageHeader title="Faturamento" />
+      <PageHeader
+        title="Faturamento"
+        action={canManageBilling(user) ? { label: 'Recibos emitidos', onClick: () => navigate('/billing/receipts') } : undefined}
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 border-b border-slate-200">
@@ -302,6 +354,7 @@ export default function BillingList() {
                         >
                           Marcar faturado
                         </button>
+                        <ReceiptActions record={record} recordType="export" />
                       </td>
                     </tr>
                   ))}
@@ -371,6 +424,7 @@ export default function BillingList() {
                         >
                           Marcar faturado
                         </button>
+                        <ReceiptActions record={record} recordType="import" />
                       </td>
                     </tr>
                   ))}
@@ -438,6 +492,7 @@ export default function BillingList() {
                         >
                           Marcar faturado
                         </button>
+                        <ReceiptActions record={record} recordType="deconsolidation" />
                       </td>
                     </tr>
                   ))}

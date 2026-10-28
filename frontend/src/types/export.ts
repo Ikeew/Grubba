@@ -1,4 +1,4 @@
-import type { ClientSummary, ExportStatus, MapType, PortSummary, RecordFlag } from './common'
+import type { ClientSummary, ExportStatus, MapType, PortSummary, ReceiptSummary, RecordFlag } from './common'
 
 export type ExportService =
   | 'vistoria_receita_federal'
@@ -64,6 +64,7 @@ export interface ExportRecord {
   completed_at: string | null
   observations: string | null
   billing_completed: boolean
+  receipt: ReceiptSummary | null
   client: ClientSummary
   collaborator: UserSummary | null
   created_at: string

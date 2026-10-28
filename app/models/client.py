@@ -1,6 +1,7 @@
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, String, Text
+from sqlalchemy import Boolean, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -22,6 +23,11 @@ class Client(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    # Valores padrão de serviço — pré-preenchem o recibo (editáveis só por admin/manager)
+    valor_padrao_importacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_exportacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_desconsolidacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     # Relationships
     export_records: Mapped[list["ExportRecord"]] = relationship(back_populates="client")

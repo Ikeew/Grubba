@@ -1,3 +1,5 @@
+import uuid
+
 from jose import JWTError
 
 from app.core.exceptions import UnauthorizedError
@@ -31,11 +33,11 @@ class AuthService:
 
     def refresh_access_token(self, refresh_token: str) -> AccessTokenResponse:
         try:
-            user_id = decode_refresh_token(refresh_token)
-        except JWTError:
+            user_id = uuid.UUID(decode_refresh_token(refresh_token))
+        except (JWTError, ValueError, TypeError):
             raise UnauthorizedError("Invalid or expired refresh token")
 
-        user = self._users.get_by_id(user_id)  # type: ignore[arg-type]
+        user = self._users.get_by_id(user_id)
         if not user or not user.is_active:
             raise UnauthorizedError("User not found or disabled")
 
@@ -43,11 +45,12 @@ class AuthService:
 
     def get_current_user_from_token(self, token: str) -> User:
         try:
-            user_id = decode_access_token(token)
-        except JWTError:
+            # sub é string no JWT; a coluna é UUID (o SQLite dos testes não aceita str)
+            user_id = uuid.UUID(decode_access_token(token))
+        except (JWTError, ValueError, TypeError):
             raise UnauthorizedError("Invalid or expired access token")
 
-        user = self._users.get_by_id(user_id)  # type: ignore[arg-type]
+        user = self._users.get_by_id(user_id)
         if not user:
             raise UnauthorizedError("User not found")
         if not user.is_active:

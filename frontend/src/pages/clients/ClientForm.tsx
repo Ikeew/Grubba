@@ -9,11 +9,23 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
+import { useAuth } from '@/contexts/AuthContext'
+import { canManageBilling } from '@/utils/permissions'
+import { toApiMoney } from '@/utils/format'
+import type { ClientCreatePayload } from '@/types/client'
+
+const DEFAULT_VALUE_FIELDS = [
+  { name: 'valor_padrao_importacao', label: 'Importação' },
+  { name: 'valor_padrao_exportacao', label: 'Exportação' },
+  { name: 'valor_padrao_desconsolidacao', label: 'Desconsolidação' },
+] as const
 
 export default function ClientForm() {
   const navigate = useNavigate()
   const { id } = useParams()
   const isEditing = !!id
+  const { user } = useAuth()
+  const canEditValues = canManageBilling(user)
 
   const { data: client, isLoading } = useClient(id ?? '')
   const createClient = useCreateClient()
@@ -35,15 +47,26 @@ export default function ClientForm() {
         phone: client.phone ?? undefined,
         address: client.address ?? undefined,
         notes: client.notes ?? undefined,
+        valor_padrao_importacao: client.valor_padrao_importacao ?? '',
+        valor_padrao_exportacao: client.valor_padrao_exportacao ?? '',
+        valor_padrao_desconsolidacao: client.valor_padrao_desconsolidacao ?? '',
       })
     }
   }, [client, reset])
 
   async function onSubmit(values: ClientFormValues) {
+    const { valor_padrao_importacao, valor_padrao_exportacao, valor_padrao_desconsolidacao, ...rest } = values
+    const payload: ClientCreatePayload = { ...rest }
+    // Colaborador não envia os valores padrão (o backend recusaria)
+    if (canEditValues) {
+      payload.valor_padrao_importacao = toApiMoney(valor_padrao_importacao)
+      payload.valor_padrao_exportacao = toApiMoney(valor_padrao_exportacao)
+      payload.valor_padrao_desconsolidacao = toApiMoney(valor_padrao_desconsolidacao)
+    }
     if (isEditing) {
-      await updateClient.mutateAsync(values)
+      await updateClient.mutateAsync(payload)
     } else {
-      await createClient.mutateAsync(values)
+      await createClient.mutateAsync(payload)
     }
     navigate('/clients')
   }
@@ -79,6 +102,29 @@ export default function ClientForm() {
           <Textarea label="Endereço" rows={2} {...register('address')} />
           <Textarea label="Observações internas" rows={3} {...register('notes')} />
         </div>
+
+        {canEditValues && (
+          <div className="form-section">
+            <p className="form-section-title">Valores padrão de serviço</p>
+            <p className="text-xs text-slate-500">
+              Pré-preenchem o valor de cada ficha ao gerar um recibo. Deixe em branco para informar na hora.
+            </p>
+            <div className="grid grid-cols-3 gap-4">
+              {DEFAULT_VALUE_FIELDS.map((f) => (
+                <Input
+                  key={f.name}
+                  label={`${f.label} (R$)`}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  error={errors[f.name]?.message}
+                  {...register(f.name)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={() => navigate('/clients')}>

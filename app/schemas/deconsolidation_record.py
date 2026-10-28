@@ -9,6 +9,7 @@ from app.models.deconsolidation_record import (
     DeconsolidationStatus,
 )
 from app.schemas.client import ClientSummary
+from app.schemas.receipt import ReceiptSummary
 from app.schemas.export_record import FlagInfo
 from app.schemas.user import UserSummary
 
@@ -81,6 +82,7 @@ class DeconsolidationRecordResponse(BaseModel):
     observations: str | None
     completed_at: datetime | None
     billing_completed: bool
+    receipt: ReceiptSummary | None = None
 
     client: ClientSummary
     collaborator: UserSummary | None

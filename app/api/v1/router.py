@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     import_records,
     notes,
     ports,
+    receipts,
     users,
 )
 
@@ -27,3 +28,4 @@ api_router.include_router(deconsolidation_records.router)
 api_router.include_router(deconsolidation_files.router)
 api_router.include_router(files.router)
 api_router.include_router(notes.router)
+api_router.include_router(receipts.router)

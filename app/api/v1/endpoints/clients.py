@@ -22,9 +22,9 @@ def _client_service(db: DbSession) -> ClientService:
 
 @router.post("", response_model=ClientResponse, status_code=201, summary="Create client")
 def create_client(
-    payload: ClientCreate, db: DbSession, _: CurrentUser
+    payload: ClientCreate, db: DbSession, current_user: CurrentUser
 ) -> ClientResponse:
-    client = _client_service(db).create(payload)
+    client = _client_service(db).create(payload, current_user)
     return ClientResponse.model_validate(client)
 
 
@@ -46,9 +46,9 @@ def get_client(client_id: UUID, db: DbSession, _: CurrentUser) -> ClientResponse
 
 @router.patch("/{client_id}", response_model=ClientResponse, summary="Update client")
 def update_client(
-    client_id: UUID, payload: ClientUpdate, db: DbSession, _: CurrentUser
+    client_id: UUID, payload: ClientUpdate, db: DbSession, current_user: CurrentUser
 ) -> ClientResponse:
-    client = _client_service(db).update(client_id, payload)
+    client = _client_service(db).update(client_id, payload, current_user)
     return ClientResponse.model_validate(client)
 
 

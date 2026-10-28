@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Column, Date, DateTime, Enum, ForeignKey, String, Table, Text
+from sqlalchemy import JSON, Boolean, Column, Date, DateTime, Enum, ForeignKey, String, Table, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -12,6 +12,7 @@ from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.export_record import FlagColor
 
 if TYPE_CHECKING:
+    from app.models.receipt import Receipt
     from app.models.client import Client
     from app.models.deconsolidation_file import DeconsolidationFile
     from app.models.note import Note
@@ -82,7 +83,9 @@ class DeconsolidationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         Enum(DeconsolidationModality, name="deconsolidation_modality"), nullable=True
     )
     consignee: Mapped[str | None] = mapped_column(String(255), nullable=True)  # consignatário
-    services: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    services: Mapped[list[str]] = mapped_column(
+        ARRAY(String).with_variant(JSON(), "sqlite"), nullable=False, default=list
+    )
 
     # --- Documentação ---
     ce_mercante: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -99,9 +102,14 @@ class DeconsolidationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     # --- Finalização / faturamento ---
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     billing_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Recibo ativo que inclui esta ficha (NULL = sem recibo; volta a NULL se o recibo for cancelado)
+    receipt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # --- Relationships ---
     client: Mapped["Client"] = relationship(back_populates="deconsolidation_records")
+    receipt: Mapped["Receipt | None"] = relationship(foreign_keys=[receipt_id])
     collaborator: Mapped["User | None"] = relationship(
         back_populates="deconsolidation_records", foreign_keys=[collaborator_id]
     )

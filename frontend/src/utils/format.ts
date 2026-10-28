@@ -168,3 +168,21 @@ export function formatFieldValue(fieldName: string, value: string | null | undef
 
   return value
 }
+
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+
+/** '1234.5' | 1234.5 -> 'R$ 1.234,50' (vazio/inválido -> '—') */
+export function formatBRL(value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '') return '—'
+  const n = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(n) ? BRL.format(n) : '—'
+}
+
+/** Texto digitado ('150,5' / '150.50') -> string decimal para a API ('150.50'); vazio -> null */
+export function toApiMoney(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null
+  const trimmed = String(value).trim()
+  if (!trimmed) return null
+  const n = Number(trimmed.replace(',', '.'))
+  return Number.isFinite(n) ? n.toFixed(2) : null
+}

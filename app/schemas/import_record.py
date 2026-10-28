@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from app.models.export_record import MapType
 from app.models.import_record import ImportStatus, Modality
 from app.schemas.client import ClientSummary
+from app.schemas.receipt import ReceiptSummary
 from app.schemas.export_record import FlagInfo, PortSummary
 from app.schemas.user import UserSummary
 
@@ -143,6 +144,7 @@ class ImportRecordResponse(BaseModel):
     completed_at: datetime | None
     observations: str | None
     billing_completed: bool
+    receipt: ReceiptSummary | None = None
 
     client: ClientSummary
     collaborator: UserSummary | None

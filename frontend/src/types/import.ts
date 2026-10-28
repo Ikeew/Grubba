@@ -1,4 +1,4 @@
-import type { ClientSummary, ImportStatus, MapType, PortSummary, RecordFlag } from './common'
+import type { ClientSummary, ImportStatus, MapType, PortSummary, ReceiptSummary, RecordFlag } from './common'
 import type { UserSummary } from './export'
 
 export type Modality = 'maritimo' | 'aereo'
@@ -41,6 +41,7 @@ export interface ImportRecord {
   completed_at: string | null
   observations: string | null
   billing_completed: boolean
+  receipt: ReceiptSummary | null
   flags: RecordFlag[]
   client: ClientSummary
   collaborator: UserSummary | null

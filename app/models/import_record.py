@@ -12,6 +12,7 @@ from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.export_record import FlagColor, MapType
 
 if TYPE_CHECKING:
+    from app.models.receipt import Receipt
     from app.models.client import Client
     from app.models.user import User
     from app.models.import_file import ImportFile
@@ -127,9 +128,14 @@ class ImportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     # --- Billing ---
     billing_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Recibo ativo que inclui esta ficha (NULL = sem recibo; volta a NULL se o recibo for cancelado)
+    receipt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # --- Relationships ---
     client: Mapped["Client"] = relationship(back_populates="import_records")
+    receipt: Mapped["Receipt | None"] = relationship(foreign_keys=[receipt_id])
     collaborator: Mapped["User | None"] = relationship(
         back_populates="import_records", foreign_keys=[collaborator_id]
     )

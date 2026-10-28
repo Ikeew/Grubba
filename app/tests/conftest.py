@@ -22,9 +22,14 @@ def setup_db():
 
 
 def override_get_db():
+    # Espelha app.db.session.get_db: commit ao fim do request, rollback em erro
     db = TestingSession()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 

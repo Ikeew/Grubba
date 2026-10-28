@@ -12,6 +12,11 @@ export interface ClientSummary {
   cnpj: string | null
 }
 
+export interface ReceiptSummary {
+  id: string
+  number: string
+}
+
 export interface PortSummary {
   id: string
   name: string

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.models.export_record import ExportService, ExportStatus, FlagColor, MapType
 from app.schemas.client import ClientSummary
+from app.schemas.receipt import ReceiptSummary
 from app.schemas.user import UserSummary
 
 
@@ -133,6 +134,7 @@ class ExportRecordResponse(BaseModel):
     completed_at: datetime | None
     observations: str | None
     billing_completed: bool
+    receipt: ReceiptSummary | None = None
 
     client: ClientSummary
     collaborator: UserSummary | None

@@ -32,6 +32,13 @@ class ConflictError(AppError):
         super().__init__(message, status.HTTP_409_CONFLICT)
 
 
+class BusinessRuleError(AppError):
+    """Payload válido no formato, mas que viola uma regra de negócio (422)."""
+
+    def __init__(self, message: str):
+        super().__init__(message, status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
 class FileTooLargeError(AppError):
     def __init__(self, max_mb: int):
         super().__init__(f"File exceeds maximum size of {max_mb} MB", status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)

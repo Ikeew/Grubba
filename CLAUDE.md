@@ -218,6 +218,7 @@ frontend/src/
 | `email`, `phone` | String | nullable |
 | `address`, `notes` | Text | nullable |
 | `is_active` | Boolean | soft delete — hard delete quebraria FKs das fichas |
+| `valor_padrao_importacao` / `_exportacao` / `_desconsolidacao` | Numeric(12,2) nullable | pré-preenchem o recibo; só admin/manager gravam |
 
 ### ExportRecord (ficha de exportação)
 
@@ -261,6 +262,16 @@ Estrutura análoga ao ExportRecord com campos específicos de importação. `imp
 `deconsolidation_record_flags` — junction table de flagging por usuário. `DeconsolidationFile` guarda anexos
 (`uploads/deconsolidations/<record_id>/`). Notas e histórico usam as tabelas compartilhadas `notes` /
 `update_history` via `deconsolidation_record_id`.
+
+### Receipt / ReceiptItem / ReceiptExtraCost (recibos do Faturamento)
+
+- Só admin/manager (`BillingUser`). Endpoints em `/api/v1/receipts` (available-records, CRUD, `/{id}/pdf`).
+- Número `GT{MM}{seq:03d}-{AA}` — MM/AA da emissão, `sequence` global contínua (nunca zera).
+- Fichas elegíveis = as do Faturamento (`completed`, `billing_completed = false`) com `receipt_id IS NULL`.
+  Ao gerar, cada ficha recebe `receipt_id`; cancelar (soft delete `is_cancelled`) zera de volta. "Marcar faturado" é independente.
+- Tudo que é impresso é **snapshot** (JSON `client_snapshot` / `ReceiptItem.snapshot`); o PDF nunca lê a ficha/cliente atuais.
+- Total sempre recalculado no service. Catálogo de campos selecionáveis: `app/services/receipt_fields.py`.
+- PDF via reportlab (`app/services/receipt_pdf.py`), logo versionada em `app/assets/logo-grubba.jpg`.
 
 ### UpdateHistory (histórico de alterações)
 

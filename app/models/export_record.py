@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, String, Table, Text, Column
+from sqlalchemy import JSON, Boolean, Date, DateTime, Enum, ForeignKey, String, Table, Text, Column
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,7 @@ from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
 
 if TYPE_CHECKING:
+    from app.models.receipt import Receipt
     from app.models.client import Client
     from app.models.user import User
     from app.models.note import Note
@@ -125,7 +126,9 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     et5: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     # --- Services (multi-select stored as PostgreSQL ARRAY of strings) ---
-    services: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False, default=list)
+    services: Mapped[list[str]] = mapped_column(
+        ARRAY(String).with_variant(JSON(), "sqlite"), nullable=False, default=list
+    )
 
     # --- Inspection / release ---
     map_type: Mapped[MapType | None] = mapped_column(Enum(MapType, name="map_type"), nullable=True)
@@ -141,9 +144,14 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     # --- Billing ---
     billing_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # Recibo ativo que inclui esta ficha (NULL = sem recibo; volta a NULL se o recibo for cancelado)
+    receipt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("receipts.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # --- Relationships ---
     client: Mapped["Client"] = relationship(back_populates="export_records")
+    receipt: Mapped["Receipt | None"] = relationship(foreign_keys=[receipt_id])
     collaborator: Mapped["User | None"] = relationship(
         back_populates="export_records", foreign_keys=[collaborator_id]
     )

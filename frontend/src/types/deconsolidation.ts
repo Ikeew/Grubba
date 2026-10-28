@@ -1,4 +1,4 @@
-import type { ClientSummary, DeconsolidationStatus, RecordFlag } from './common'
+import type { ClientSummary, DeconsolidationStatus, ReceiptSummary, RecordFlag } from './common'
 import type { UserSummary } from './export'
 
 export type DeconsolidationModality = 'importacao' | 'exportacao'
@@ -26,6 +26,7 @@ export interface DeconsolidationRecord {
   observations: string | null
   completed_at: string | null
   billing_completed: boolean
+  receipt: ReceiptSummary | null
   flags: RecordFlag[]
   client: ClientSummary
   collaborator: UserSummary | null

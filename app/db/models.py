@@ -18,3 +18,4 @@ from app.models.deconsolidation_record import (  # noqa: F401, E402
 from app.models.deconsolidation_file import DeconsolidationFile  # noqa: F401, E402
 from app.models.note import Note  # noqa: F401, E402
 from app.models.update_history import UpdateHistory  # noqa: F401, E402
+from app.models.receipt import Receipt, ReceiptExtraCost, ReceiptItem  # noqa: F401, E402
