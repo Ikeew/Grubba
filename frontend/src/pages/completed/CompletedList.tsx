@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useExportList } from '@/hooks/useExports'
-import { useImportList } from '@/hooks/useImports'
-import { useDeconsolidationList } from '@/hooks/useDeconsolidations'
+import { useExportList, useToggleExportBilling } from '@/hooks/useExports'
+import { useImportList, useToggleImportBilling } from '@/hooks/useImports'
+import { useDeconsolidationList, useToggleDeconsolidationBilling } from '@/hooks/useDeconsolidations'
 import { useUserList } from '@/hooks/useUsers'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Select } from '@/components/ui/Select'
@@ -25,6 +25,19 @@ const TAB_LABELS: Record<Tab, string> = {
 }
 
 const PAGE_SIZE = 50
+
+function BackToBillingButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      onDoubleClick={(e) => e.stopPropagation()}
+      disabled={disabled}
+      className="px-2.5 py-1 rounded text-xs font-medium transition-colors bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-700 disabled:opacity-50"
+    >
+      Voltar ao faturamento
+    </button>
+  )
+}
 
 export default function CompletedList() {
   const navigate = useNavigate()
@@ -87,6 +100,10 @@ export default function CompletedList() {
     created_from: createdFrom || undefined,
     created_to: createdTo || undefined,
   })
+
+  const toggleExportBilling = useToggleExportBilling()
+  const toggleImportBilling = useToggleImportBilling()
+  const toggleDeconsolidationBilling = useToggleDeconsolidationBilling()
 
   function setCollaborator(value: string) {
     filterStore.completedCollaboratorId = value
@@ -247,6 +264,7 @@ export default function CompletedList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -265,6 +283,12 @@ export default function CompletedList() {
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
+                      <td className="px-3 py-2">
+                        <BackToBillingButton
+                          onClick={() => toggleExportBilling.mutate(record.id)}
+                          disabled={toggleExportBilling.isPending}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -303,6 +327,7 @@ export default function CompletedList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Vistoria</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -324,6 +349,12 @@ export default function CompletedList() {
                       <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.inspection_date)}</td>
+                      <td className="px-3 py-2">
+                        <BackToBillingButton
+                          onClick={() => toggleImportBilling.mutate(record.id)}
+                          disabled={toggleImportBilling.isPending}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -363,6 +394,7 @@ export default function CompletedList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Agência</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Concluído em</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -385,6 +417,12 @@ export default function CompletedList() {
                       <td className="px-3 py-2 text-slate-500">{record.agency ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{formatDateTime(record.completed_at)}</td>
+                      <td className="px-3 py-2">
+                        <BackToBillingButton
+                          onClick={() => toggleDeconsolidationBilling.mutate(record.id)}
+                          disabled={toggleDeconsolidationBilling.isPending}
+                        />
+                      </td>
                     </tr>
                   ))}
                 </tbody>
