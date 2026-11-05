@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, EmailStr, Field
 
-# Campos de valor padrão de serviço — só admin/manager podem gravar
+# Campos de valor padrão de serviço — só admin pode gravar
 DEFAULT_VALUE_FIELDS = (
     "valor_padrao_importacao",
     "valor_padrao_exportacao",

@@ -25,7 +25,7 @@ import { canManageBilling } from '@/utils/permissions'
 
 type Tab = 'exports' | 'imports' | 'deconsolidations'
 
-/** "Gerar recibo" ou, se a ficha já tem recibo, selo + download. Só admin/manager. */
+/** "Gerar recibo" ou, se a ficha já tem recibo, selo + download. Só admin. */
 function ReceiptActions({
   record,
   recordType,

@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { PrivateRoute } from './PrivateRoute'
+import { BillingRoute } from './BillingRoute'
 
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
@@ -65,9 +66,14 @@ export const router = createBrowserRouter([
           { path: '/deconsolidations/new', element: <DeconsolidationForm /> },
           { path: '/deconsolidations/:id', element: <DeconsolidationDetail /> },
           { path: '/deconsolidations/:id/edit', element: <DeconsolidationForm /> },
-          { path: '/billing', element: <BillingList /> },
-          { path: '/billing/receipts', element: <ReceiptList /> },
-          { path: '/billing/receipts/new', element: <ReceiptBuilder /> },
+          {
+            element: <BillingRoute />,
+            children: [
+              { path: '/billing', element: <BillingList /> },
+              { path: '/billing/receipts', element: <ReceiptList /> },
+              { path: '/billing/receipts/new', element: <ReceiptBuilder /> },
+            ],
+          },
           { path: '/completed', element: <CompletedList /> },
           { path: '/users', element: <UserList /> },
           { path: '/users/new', element: <UserForm /> },

@@ -9,8 +9,8 @@ from app.utils.pagination import PaginationParams, paginate
 
 
 def _check_default_values_access(fields: set[str], current_user: User) -> None:
-    if fields & set(DEFAULT_VALUE_FIELDS) and current_user.role not in (UserRole.admin, UserRole.manager):
-        raise ForbiddenError("Somente administradores e gerentes podem definir valores padrão")
+    if fields & set(DEFAULT_VALUE_FIELDS) and current_user.role != UserRole.admin:
+        raise ForbiddenError("Somente administradores podem definir valores padrão")
 
 
 class ClientService:

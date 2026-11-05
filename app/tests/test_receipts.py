@@ -148,13 +148,14 @@ def test_client_default_values_admin_can_set_and_clear(client, auth_headers):
     assert resp.json()["valor_padrao_importacao"] is None
 
 
-def test_client_default_values_forbidden_for_collaborator(client):
-    headers = _token(client, UserRole.collaborator)
+@pytest.mark.parametrize("role", [UserRole.collaborator, UserRole.manager])
+def test_client_default_values_forbidden_for_non_admin(client, role):
+    headers = _token(client, role)
     resp = client.post(
         "/api/v1/clients", headers=headers, json={"name": "X", "valor_padrao_exportacao": "10"}
     )
     assert resp.status_code == 403
-    # sem os campos de valor, colaborador continua cadastrando normalmente
+    # sem os campos de valor, o cadastro continua normal
     assert client.post("/api/v1/clients", headers=headers, json={"name": "X"}).status_code == 201
 
 
@@ -360,11 +361,47 @@ def test_pdf(client, auth_headers):
     assert resp.content.startswith(b"%PDF")
 
 
-def test_manager_allowed_collaborator_forbidden(client):
+def test_receipts_admin_only(client, auth_headers):
     c = _make_client()
     manager = _token(client, UserRole.manager)
     collaborator = _token(client, UserRole.collaborator)
     params = {"client_id": str(c.id)}
-    assert client.get(f"{URL}/available-records", headers=manager, params=params).status_code == 200
-    assert client.get(f"{URL}/available-records", headers=collaborator, params=params).status_code == 403
-    assert client.get(URL, headers=collaborator).status_code == 403
+    assert client.get(f"{URL}/available-records", headers=auth_headers, params=params).status_code == 200
+    for headers in (manager, collaborator):
+        assert client.get(f"{URL}/available-records", headers=headers, params=params).status_code == 403
+        assert client.get(URL, headers=headers).status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("make_record", "path"),
+    [
+        (_make_export, "export-records"),
+        (_make_import, "import-records"),
+        (_make_deconsolidation, "deconsolidation-records"),
+    ],
+)
+def test_toggle_billing_admin_only(client, auth_headers, make_record, path):
+    record = make_record(_make_client().id)
+    url = f"/api/v1/{path}/{record.id}/billing"
+    for role in (UserRole.manager, UserRole.collaborator):
+        assert client.post(url, headers=_token(client, role)).status_code == 403
+    resp = client.post(url, headers=auth_headers)
+    assert resp.status_code == 200
+    assert resp.json() == {"billing_completed": True}
+
+
+def test_ports_manager_can_manage_collaborator_forbidden(client):
+    manager = _token(client, UserRole.manager)
+    collaborator = _token(client, UserRole.collaborator)
+    ports = "/api/v1/ports"
+
+    resp = client.post(ports, headers=manager, json={"name": "Itajaí"})
+    assert resp.status_code == 201
+    port_url = f"{ports}/{resp.json()['id']}"
+
+    assert client.post(ports, headers=collaborator, json={"name": "Santos"}).status_code == 403
+    assert client.patch(port_url, headers=collaborator, json={"name": "Santos"}).status_code == 403
+    assert client.delete(port_url, headers=collaborator).status_code == 403
+
+    assert client.patch(port_url, headers=manager, json={"name": "Navegantes"}).status_code == 200
+    assert client.delete(port_url, headers=manager).status_code == 204

@@ -24,7 +24,7 @@ class Client(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # Valores padrão de serviço — pré-preenchem o recibo (editáveis só por admin/manager)
+    # Valores padrão de serviço — pré-preenchem o recibo (editáveis só por admin)
     valor_padrao_importacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     valor_padrao_exportacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     valor_padrao_desconsolidacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)

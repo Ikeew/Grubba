@@ -28,6 +28,12 @@ def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> U
 
 
 def require_billing_access(current_user: Annotated[User, Depends(get_current_user)]) -> User:
+    if current_user.role != UserRole.admin:
+        raise ForbiddenError("Acesso restrito a administradores")
+    return current_user
+
+
+def require_port_management(current_user: Annotated[User, Depends(get_current_user)]) -> User:
     if current_user.role not in (UserRole.admin, UserRole.manager):
         raise ForbiddenError("Acesso restrito a administradores e gerentes")
     return current_user
@@ -36,3 +42,4 @@ def require_billing_access(current_user: Annotated[User, Depends(get_current_use
 CurrentUser = Annotated[User, Depends(get_current_user)]
 AdminUser = Annotated[User, Depends(require_admin)]
 BillingUser = Annotated[User, Depends(require_billing_access)]
+PortManagerUser = Annotated[User, Depends(require_port_management)]

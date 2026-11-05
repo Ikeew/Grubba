@@ -218,7 +218,7 @@ frontend/src/
 | `email`, `phone` | String | nullable |
 | `address`, `notes` | Text | nullable |
 | `is_active` | Boolean | soft delete — hard delete quebraria FKs das fichas |
-| `valor_padrao_importacao` / `_exportacao` / `_desconsolidacao` | Numeric(12,2) nullable | pré-preenchem o recibo; só admin/manager gravam |
+| `valor_padrao_importacao` / `_exportacao` / `_desconsolidacao` | Numeric(12,2) nullable | pré-preenchem o recibo; só admin grava |
 
 ### ExportRecord (ficha de exportação)
 
@@ -265,7 +265,7 @@ Estrutura análoga ao ExportRecord com campos específicos de importação. `imp
 
 ### Receipt / ReceiptItem / ReceiptExtraCost (recibos do Faturamento)
 
-- Só admin/manager (`BillingUser`). Endpoints em `/api/v1/receipts` (available-records, CRUD, `/{id}/pdf`).
+- Só admin (`BillingUser`). Endpoints em `/api/v1/receipts` (available-records, CRUD, `/{id}/pdf`).
 - Número `GT{MM}{seq:03d}-{AA}` — MM/AA da emissão, `sequence` global contínua (nunca zera).
 - Fichas elegíveis = as do Faturamento (`completed`, `billing_completed = false`) com `receipt_id IS NULL`.
   Ao gerar, cada ficha recebe `receipt_id`; cancelar (soft delete `is_cancelled`) zera de volta. "Marcar faturado" é independente.

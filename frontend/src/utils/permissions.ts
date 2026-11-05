@@ -1,6 +1,6 @@
 import type { User } from '@/types/auth'
 
-/** Recibos e valores padrão de serviço: somente admin e manager. */
+/** Faturamento, recibos e valores padrão de serviço: somente admin. */
 export function canManageBilling(user: Pick<User, 'role'> | null | undefined): boolean {
-  return user?.role === 'admin' || user?.role === 'manager'
+  return user?.role === 'admin'
 }

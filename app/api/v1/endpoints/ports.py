@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
-from app.dependencies.auth import AdminUser, CurrentUser
+from app.dependencies.auth import CurrentUser, PortManagerUser
 from app.dependencies.db import DbSession
 from app.repositories.port import PortRepository
 from app.schemas.port import PortCreate, PortResponse, PortUpdate
@@ -21,18 +21,18 @@ def list_ports(db: DbSession, _: CurrentUser) -> list[PortResponse]:
     return [PortResponse.model_validate(p) for p in ports]
 
 
-@router.post("", response_model=PortResponse, status_code=201, summary="Create port (admin only)")
-def create_port(payload: PortCreate, db: DbSession, _: AdminUser) -> PortResponse:
+@router.post("", response_model=PortResponse, status_code=201, summary="Create port (admin/manager)")
+def create_port(payload: PortCreate, db: DbSession, _: PortManagerUser) -> PortResponse:
     port = _service(db).create(payload)
     return PortResponse.model_validate(port)
 
 
-@router.patch("/{port_id}", response_model=PortResponse, summary="Update port (admin only)")
-def update_port(port_id: UUID, payload: PortUpdate, db: DbSession, _: AdminUser) -> PortResponse:
+@router.patch("/{port_id}", response_model=PortResponse, summary="Update port (admin/manager)")
+def update_port(port_id: UUID, payload: PortUpdate, db: DbSession, _: PortManagerUser) -> PortResponse:
     port = _service(db).update(port_id, payload)
     return PortResponse.model_validate(port)
 
 
-@router.delete("/{port_id}", status_code=204, summary="Delete port (admin only)")
-def delete_port(port_id: UUID, db: DbSession, _: AdminUser) -> None:
+@router.delete("/{port_id}", status_code=204, summary="Delete port (admin/manager)")
+def delete_port(port_id: UUID, db: DbSession, _: PortManagerUser) -> None:
     _service(db).delete(port_id)

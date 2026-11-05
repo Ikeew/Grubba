@@ -28,7 +28,7 @@ export interface ClientCreatePayload {
   phone?: string
   address?: string
   notes?: string
-  // Só admin/manager podem enviar; null limpa o valor
+  // Só admin pode enviar; null limpa o valor
   valor_padrao_importacao?: string | null
   valor_padrao_exportacao?: string | null
   valor_padrao_desconsolidacao?: string | null

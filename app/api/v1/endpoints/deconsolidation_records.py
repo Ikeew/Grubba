@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
-from app.dependencies.auth import CurrentUser
+from app.dependencies.auth import BillingUser, CurrentUser
 from app.dependencies.db import DbSession
 from app.models.deconsolidation_record import DeconsolidationStatus
 from app.repositories.client import ClientRepository
@@ -145,7 +145,7 @@ def update_deconsolidation_record(
 
 @router.post("/{record_id}/billing", summary="Toggle billing_completed on deconsolidation record")
 def toggle_deconsolidation_billing(
-    record_id: UUID, db: DbSession, current_user: CurrentUser
+    record_id: UUID, db: DbSession, current_user: BillingUser
 ) -> dict:
     completed = _service(db).toggle_billing(record_id, current_user)
     return {"billing_completed": completed}
