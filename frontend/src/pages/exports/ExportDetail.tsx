@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
 import { Textarea } from '@/components/ui/Textarea'
 import { formatDate, formatDateTime, formatFileSize, formatFieldName, formatFieldValue } from '@/utils/format'
-import { MAP_TYPE_LABELS } from '@/utils/constants'
+import { MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 import { EXPORT_SERVICE_LABELS, type ExportService } from '@/types/export'
 
 function DetailRow({ label, value }: { label: string; value?: string | null }) {
@@ -71,6 +71,9 @@ export default function ExportDetail() {
         <StatusBadge status={record.status} />
         <span className="text-sm text-slate-500">Cliente: <strong className="text-slate-800">{record.client.name}</strong></span>
         <span className="text-sm text-slate-500">Data: <strong className="text-slate-800">{formatDate(record.date)}</strong></span>
+        {record.modality && (
+          <span className="text-sm text-slate-500">Modalidade: <strong className="text-slate-800">{MODALITY_LABELS[record.modality]}</strong></span>
+        )}
         {record.cargo_type && (
           <span className="text-sm text-slate-500">Tipo: <strong className="text-slate-800">{record.cargo_type}</strong></span>
         )}
@@ -86,7 +89,7 @@ export default function ExportDetail() {
       <div className="print-sections-grid grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Logística */}
         <div className="form-section">
-          <p className="form-section-title">Logística marítima</p>
+          <p className="form-section-title">Logística</p>
           <dl className="print-detail-grid print-field-grid grid grid-cols-2 gap-x-6 gap-y-4">
             <DetailRow label="Navio" value={record.vessel} />
             <DetailRow label="Porto" value={record.port?.name ?? null} />

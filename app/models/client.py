@@ -25,9 +25,12 @@ class Client(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Valores padrão de serviço — pré-preenchem o recibo (editáveis só por admin)
-    valor_padrao_importacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    valor_padrao_exportacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-    valor_padrao_desconsolidacao: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_importacao_maritimo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_importacao_aereo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_exportacao_maritimo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_exportacao_aereo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_desconsolidacao_maritimo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    valor_padrao_desconsolidacao_aereo: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     # Relationships
     export_records: Mapped[list["ExportRecord"]] = relationship(back_populates="client")

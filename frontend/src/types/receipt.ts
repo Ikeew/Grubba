@@ -1,3 +1,5 @@
+import type { Modality } from './import'
+
 export type ReceiptRecordType = 'import' | 'export' | 'deconsolidation'
 
 export interface FieldOption {
@@ -21,7 +23,10 @@ export interface AvailableRecord {
   date: string | null
   completed_at: string | null
   description: string | null
-  /** Valor padrão do cliente para o tipo; null = em branco */
+  transport_modality: Modality | null
+  /** null em desconsolidação (não tem porto) ou ficha sem porto */
+  port_name: string | null
+  /** Valor padrão do cliente para tipo + modalidade; null = em branco */
   suggested_amount: string | null
 }
 
@@ -75,6 +80,7 @@ export interface Receipt {
     record_type: ReceiptRecordType
     record_id: string | null
     reference: string | null
+    transport_modality: Modality | null
     amount: string
     snapshot: SnapshotField[]
   }[]

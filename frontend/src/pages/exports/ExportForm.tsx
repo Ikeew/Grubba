@@ -16,11 +16,12 @@ import { Spinner } from '@/components/ui/Spinner'
 import { ClientCombobox } from '@/components/ui/ClientCombobox'
 import { PortCombobox } from '@/components/ui/PortCombobox'
 import { EXPORT_SERVICE_LABELS, type ExportRecordPayload, type ExportService } from '@/types/export'
-import { EXPORT_STATUS_LABELS, MAP_TYPE_LABELS } from '@/utils/constants'
+import { EXPORT_STATUS_LABELS, MAP_TYPE_LABELS, MODALITY_LABELS } from '@/utils/constants'
 import { parseApiError } from '@/utils/parseApiError'
 
 const STATUS_OPTIONS = Object.entries(EXPORT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 const MAP_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MAP_TYPE_LABELS).map(([v, l]) => ({ value: v, label: l }))]
+const MODALITY_OPTIONS = [{ value: '', label: 'Selecionar...' }, ...Object.entries(MODALITY_LABELS).map(([v, l]) => ({ value: v, label: l }))]
 const ALL_SERVICES = Object.entries(EXPORT_SERVICE_LABELS) as [ExportService, string][]
 
 export default function ExportForm() {
@@ -56,7 +57,7 @@ export default function ExportForm() {
     formState: { errors, isSubmitting },
   } = useForm<ExportFormValues>({
     resolver: zodResolver(exportSchema),
-    defaultValues: { date: today },
+    defaultValues: { date: today, modality: 'maritimo' },
   })
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function ExportForm() {
         reference: record.reference ?? '',
         date: record.date ?? '',
         status: record.status,
+        modality: record.modality ?? '',
         cargo_type: (record.cargo_type as 'FCL' | 'LCL' | '') ?? '',
         exporter: record.exporter ?? '',
         lpco: record.lpco ?? '',
@@ -158,6 +160,7 @@ export default function ExportForm() {
             <Input label="Referência *" error={errors.reference?.message} {...register('reference')} />
             <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status *" options={STATUS_OPTIONS} error={errors.status?.message} {...register('status')} />
+            <Select label="Modalidade" options={MODALITY_OPTIONS} {...register('modality')} />
             <Input label="Exportador" {...register('exporter')} />
             <div>
               <p className="text-sm font-medium text-slate-700 mb-2">Tipo de carga</p>
@@ -201,9 +204,9 @@ export default function ExportForm() {
           </div>
         </div>
 
-        {/* Logística marítima */}
+        {/* Logística */}
         <div className="form-section">
-          <p className="form-section-title">Logística marítima</p>
+          <p className="form-section-title">Logística</p>
           <div className="grid grid-cols-3 gap-4">
             <Input label="Navio" {...register('vessel')} />
             <Controller

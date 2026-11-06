@@ -34,6 +34,13 @@ class ExportService(str, enum.Enum):
     outros = "outros"
 
 
+class Modality(str, enum.Enum):
+    """Transporte da ficha (exportação, importação e desconsolidação)."""
+
+    maritimo = "maritimo"
+    aereo = "aereo"
+
+
 class MapType(str, enum.Enum):
     vegetal = "vegetal"
     animal = "animal"
@@ -110,6 +117,7 @@ class ExportRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
 
     # --- Identification ---
+    modality: Mapped[Modality | None] = mapped_column(Enum(Modality, name="modality"), nullable=True)
     cargo_type: Mapped[str | None] = mapped_column(String(10), nullable=True)          # FCL ou LCL
     exporter: Mapped[str | None] = mapped_column(String(255), nullable=True)           # exportador
 

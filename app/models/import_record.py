@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.export_record import FlagColor, MapType
+from app.models.export_record import FlagColor, MapType, Modality
 
 if TYPE_CHECKING:
     from app.models.receipt import Receipt
@@ -19,11 +19,6 @@ if TYPE_CHECKING:
     from app.models.note import Note
     from app.models.update_history import UpdateHistory
     from app.models.port import Port
-
-
-class Modality(str, enum.Enum):
-    maritimo = "maritimo"
-    aereo = "aereo"
 
 
 class ImportStatus(str, enum.Enum):

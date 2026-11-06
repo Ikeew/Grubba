@@ -1,15 +1,23 @@
 from datetime import date, datetime, timezone
 from decimal import Decimal
+from uuid import UUID
 
 import pytest
 
 from app.core.security import hash_password
 from app.models.client import Client
-from app.models.deconsolidation_record import DeconsolidationRecord, DeconsolidationStatus
+from app.models.deconsolidation_record import (
+    DeconsolidationModality,
+    DeconsolidationRecord,
+    DeconsolidationStatus,
+)
 from app.models.export_record import ExportRecord, ExportStatus
 from app.models.import_record import ImportRecord, ImportStatus, Modality
+from app.models.port import Port
+from app.models.receipt import Receipt
 from app.models.user import User, UserRole
 from app.services.receipt import format_receipt_number
+from app.services.receipt_pdf import _items_sections
 from app.tests.conftest import TestingSession
 from app.utils.extenso import money_in_words
 from app.utils.formatting import format_brl
@@ -58,6 +66,7 @@ def _make_export(client_id, **kw) -> ExportRecord:
         reference="EXP-001",
         date=date(2026, 7, 1),
         status=ExportStatus.completed,
+        modality=Modality.maritimo,
         vessel="MSC AURORA",
         services=["comex"],
         completed_at=DONE_AT,
@@ -72,6 +81,7 @@ def _make_deconsolidation(client_id, **kw) -> DeconsolidationRecord:
         reference="DES-001",
         date=date(2026, 7, 2),
         status=DeconsolidationStatus.completed,
+        transport_modality=Modality.maritimo,
         master_bl="MBL123",
         house_bl="HBL456",
         services=["retirada"],
@@ -134,25 +144,31 @@ def test_brl_and_words():
 def test_client_default_values_admin_can_set_and_clear(client, auth_headers):
     resp = client.post(
         "/api/v1/clients", headers=auth_headers,
-        json={"name": "Cliente V", "valor_padrao_importacao": "150.00"},
+        json={
+            "name": "Cliente V",
+            "valor_padrao_importacao_maritimo": "150.00",
+            "valor_padrao_importacao_aereo": "300.00",
+        },
     )
     assert resp.status_code == 201
     data = resp.json()
-    assert Decimal(data["valor_padrao_importacao"]) == Decimal("150.00")
-    assert data["valor_padrao_exportacao"] is None
+    assert Decimal(data["valor_padrao_importacao_maritimo"]) == Decimal("150.00")
+    assert Decimal(data["valor_padrao_importacao_aereo"]) == Decimal("300.00")
+    assert data["valor_padrao_exportacao_maritimo"] is None
 
     resp = client.patch(
-        f"/api/v1/clients/{data['id']}", headers=auth_headers, json={"valor_padrao_importacao": None}
+        f"/api/v1/clients/{data['id']}", headers=auth_headers, json={"valor_padrao_importacao_aereo": None}
     )
     assert resp.status_code == 200
-    assert resp.json()["valor_padrao_importacao"] is None
+    assert resp.json()["valor_padrao_importacao_aereo"] is None
+    assert Decimal(resp.json()["valor_padrao_importacao_maritimo"]) == Decimal("150.00")
 
 
 @pytest.mark.parametrize("role", [UserRole.collaborator, UserRole.manager])
 def test_client_default_values_forbidden_for_non_admin(client, role):
     headers = _token(client, role)
     resp = client.post(
-        "/api/v1/clients", headers=headers, json={"name": "X", "valor_padrao_exportacao": "10"}
+        "/api/v1/clients", headers=headers, json={"name": "X", "valor_padrao_exportacao_aereo": "10"}
     )
     assert resp.status_code == 403
     # sem os campos de valor, o cadastro continua normal
@@ -164,7 +180,7 @@ def test_client_default_values_forbidden_for_non_admin(client, role):
 # ---------------------------------------------------------------------------
 
 def test_available_records_with_default_value(client, auth_headers):
-    c = _make_client(valor_padrao_importacao=Decimal("128.14"))
+    c = _make_client(valor_padrao_importacao_maritimo=Decimal("128.14"))
     imp = _make_import(c.id)
     _make_export(c.id)
 
@@ -178,6 +194,70 @@ def test_available_records_with_default_value(client, auth_headers):
     assert by_type["export"]["suggested_amount"] is None
     assert data["client"]["cnpj"] == "36.364.875/0001-10"
     assert {f["key"] for f in data["record_field_options"]["import"]} >= {"reference", "awb_bl", "vessel"}
+
+
+@pytest.mark.parametrize(
+    ("make_record", "modality_field", "value_prefix"),
+    [
+        (_make_import, "modality", "valor_padrao_importacao"),
+        (_make_export, "modality", "valor_padrao_exportacao"),
+        (_make_deconsolidation, "transport_modality", "valor_padrao_desconsolidacao"),
+    ],
+)
+def test_suggested_amount_depends_on_modality(client, auth_headers, make_record, modality_field, value_prefix):
+    c = _make_client(**{f"{value_prefix}_maritimo": Decimal("100"), f"{value_prefix}_aereo": Decimal("250")})
+    sea = make_record(c.id, reference="MAR", **{modality_field: Modality.maritimo})
+    air = make_record(c.id, reference="AER", **{modality_field: Modality.aereo})
+    none = make_record(c.id, reference="SEM", **{modality_field: None})
+
+    resp = client.get(f"{URL}/available-records", headers=auth_headers, params={"client_id": str(c.id)})
+    records = {r["id"]: r for r in resp.json()["records"]}
+
+    assert records[str(sea.id)]["transport_modality"] == "maritimo"
+    assert Decimal(records[str(sea.id)]["suggested_amount"]) == Decimal("100.00")
+    assert records[str(air.id)]["transport_modality"] == "aereo"
+    assert Decimal(records[str(air.id)]["suggested_amount"]) == Decimal("250.00")
+    assert records[str(none.id)]["transport_modality"] is None
+    assert records[str(none.id)]["suggested_amount"] is None
+
+
+def test_deconsolidation_operation_modality_is_not_transport(client, auth_headers):
+    c = _make_client()
+    _make_deconsolidation(c.id, modality=DeconsolidationModality.exportacao, transport_modality=Modality.aereo)
+
+    resp = client.get(f"{URL}/available-records", headers=auth_headers, params={"client_id": str(c.id)})
+    assert resp.json()["records"][0]["transport_modality"] == "aereo"
+
+
+def test_available_records_include_port(client, auth_headers):
+    c = _make_client()
+    port = _add(Port(name="Itajaí"))
+    _make_import(c.id, port_id=port.id)
+    _make_deconsolidation(c.id)
+
+    resp = client.get(f"{URL}/available-records", headers=auth_headers, params={"client_id": str(c.id)})
+    by_type = {r["record_type"]: r for r in resp.json()["records"]}
+    assert by_type["import"]["port_name"] == "Itajaí"
+    assert by_type["deconsolidation"]["port_name"] is None
+
+
+def test_export_and_deconsolidation_accept_transport_on_api(client, auth_headers):
+    c = _make_client()
+    # PATCH: o POST de exportação usa regexp_replace (só Postgres) na checagem de referência
+    record = _make_export(c.id)
+    exp = client.patch(f"/api/v1/export-records/{record.id}", headers=auth_headers, json={"modality": "aereo"})
+    assert exp.status_code == 200, exp.text
+    assert exp.json()["modality"] == "aereo"
+    history = client.get(f"/api/v1/export-records/{record.id}/history", headers=auth_headers).json()
+    assert any(h["field_name"] == "modality" and h["new_value"] == "aereo" for h in history)
+
+    des = client.post(
+        "/api/v1/deconsolidation-records", headers=auth_headers,
+        json={"client_id": str(c.id), "modality": "importacao", "transport_modality": "aereo"},
+    )
+    assert des.status_code == 201, des.text
+    assert des.json()["modality"] == "importacao"
+    assert des.json()["transport_modality"] == "aereo"
 
 
 def test_available_records_only_billing_pending(client, auth_headers):
@@ -198,7 +278,7 @@ def test_available_records_only_billing_pending(client, auth_headers):
 # ---------------------------------------------------------------------------
 
 def test_create_receipt_multiple_records_and_total(client, auth_headers):
-    c = _make_client(valor_padrao_importacao=Decimal("100"))
+    c = _make_client(valor_padrao_importacao_maritimo=Decimal("100"))
     imp = _make_import(c.id)
     exp = _make_export(c.id)
     des = _make_deconsolidation(c.id)
@@ -239,7 +319,7 @@ def test_create_receipt_multiple_records_and_total(client, auth_headers):
 
 
 def test_override_amount_does_not_change_client_default(client, auth_headers):
-    c = _make_client(valor_padrao_importacao=Decimal("100"))
+    c = _make_client(valor_padrao_importacao_maritimo=Decimal("100"))
     imp = _make_import(c.id)
 
     resp = client.post(URL, headers=auth_headers, json=_payload(c.id, [_item("import", imp, "250.00")]))
@@ -247,7 +327,7 @@ def test_override_amount_does_not_change_client_default(client, auth_headers):
     assert Decimal(resp.json()["items"][0]["amount"]) == Decimal("250.00")
 
     client_data = client.get(f"/api/v1/clients/{c.id}", headers=auth_headers).json()
-    assert Decimal(client_data["valor_padrao_importacao"]) == Decimal("100.00")
+    assert Decimal(client_data["valor_padrao_importacao_maritimo"]) == Decimal("100.00")
 
 
 def test_missing_amount_is_rejected(client, auth_headers):
@@ -359,6 +439,57 @@ def test_pdf(client, auth_headers):
     assert resp.status_code == 200
     assert resp.headers["content-type"] == "application/pdf"
     assert resp.content.startswith(b"%PDF")
+
+
+def test_item_keeps_modality_snapshot(client, auth_headers):
+    c = _make_client()
+    sea = _make_import(c.id, reference="MAR")
+    air = _make_import(c.id, reference="AER", modality=Modality.aereo)
+    data = client.post(
+        URL, headers=auth_headers,
+        json=_payload(c.id, [_item("import", sea, "10"), _item("import", air, "20")]),
+    ).json()
+
+    db = TestingSession()
+    db.get(ImportRecord, air.id).modality = Modality.maritimo
+    db.commit()
+    db.close()
+
+    again = client.get(f"{URL}/{data['id']}", headers=auth_headers).json()
+    assert {i["reference"]: i["transport_modality"] for i in again["items"]} == {"MAR": "maritimo", "AER": "aereo"}
+
+
+def _pdf_flow_text(receipt) -> list[str]:
+    return [f.getPlainText() for f in _items_sections(receipt) if hasattr(f, "getPlainText")]
+
+
+def test_pdf_sections_split_by_modality(client, auth_headers):
+    pytest.importorskip("reportlab")
+    c = _make_client()
+    sea = _make_import(c.id, reference="MAR")
+    air = _make_import(c.id, reference="AER", modality=Modality.aereo)
+    none = _make_import(c.id, reference="SEM", modality=None)
+    exp = _make_export(c.id, modality=Modality.aereo)
+    data = client.post(
+        URL, headers=auth_headers,
+        json=_payload(c.id, [
+            _item("import", air, "20"), _item("import", sea, "10"),
+            _item("import", none, "5"), _item("export", exp, "7"),
+        ]),
+    ).json()
+
+    db = TestingSession()
+    receipt = db.get(Receipt, UUID(data["id"]))
+    titles = _pdf_flow_text(receipt)
+    db.close()
+
+    assert [t for t in titles if "ficha" in t] == [
+        "Importação · Marítimo · 1 ficha",
+        "Importação · Aéreo · 1 ficha",
+        "Importação · 1 ficha",
+        "Exportação · Aéreo · 1 ficha",
+    ]
+    assert Decimal(data["total"]) == Decimal("42.00")
 
 
 def test_receipts_admin_only(client, auth_headers):

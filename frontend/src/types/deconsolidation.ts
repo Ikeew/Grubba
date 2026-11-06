@@ -1,5 +1,6 @@
 import type { ClientSummary, DeconsolidationStatus, ReceiptSummary, RecordFlag } from './common'
 import type { UserSummary } from './export'
+import type { Modality } from './import'
 
 export type DeconsolidationModality = 'importacao' | 'exportacao'
 
@@ -16,6 +17,7 @@ export interface DeconsolidationRecord {
   date: string | null
   status: DeconsolidationStatus
   modality: DeconsolidationModality | null
+  transport_modality: Modality | null
   consignee: string | null
   services: DeconsolidationService[]
   ce_mercante: string | null
@@ -40,6 +42,7 @@ export interface DeconsolidationRecordPayload {
   date?: string
   status?: DeconsolidationStatus
   modality?: DeconsolidationModality
+  transport_modality?: Modality
   consignee?: string
   services?: DeconsolidationService[]
   ce_mercante?: string

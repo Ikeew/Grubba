@@ -218,7 +218,7 @@ frontend/src/
 | `email`, `phone` | String | nullable |
 | `address`, `notes` | Text | nullable |
 | `is_active` | Boolean | soft delete — hard delete quebraria FKs das fichas |
-| `valor_padrao_importacao` / `_exportacao` / `_desconsolidacao` | Numeric(12,2) nullable | pré-preenchem o recibo; só admin grava |
+| `valor_padrao_{importacao,exportacao,desconsolidacao}_{maritimo,aereo}` | Numeric(12,2) nullable | 6 valores; pré-preenchem o recibo conforme tipo + transporte da ficha; só admin grava |
 
 ### ExportRecord (ficha de exportação)
 
@@ -230,6 +230,7 @@ frontend/src/
 | `reference` | String(100) | indexed |
 | `date` | Date | nullable |
 | `status` | ExportStatus enum | ver seção Enums |
+| `modality` | Modality enum nullable | `maritimo` \| `aereo` |
 | `cargo_type` | String(10) | FCL ou LCL |
 | `lpco`, `vessel`, `booking` | String | logística |
 | `services` | ARRAY(String) | **PostgreSQL ARRAY**, não JSON — buscar com `ANY()` |
@@ -249,7 +250,8 @@ Estrutura análoga ao ExportRecord com campos específicos de importação. `imp
 | `reference` | String(100) | indexed |
 | `date` | Date nullable | preenchida automaticamente com a data de hoje no form |
 | `status` | DeconsolidationStatus enum | ver seção Enums |
-| `modality` | DeconsolidationModality enum nullable | `importacao` \| `exportacao` |
+| `modality` | DeconsolidationModality enum nullable | operação: `importacao` \| `exportacao` |
+| `transport_modality` | Modality enum nullable | transporte: `maritimo` \| `aereo` |
 | `consignee` | String(255) | consignatário |
 | `services` | ARRAY(String) | **PostgreSQL ARRAY** — valores de `DeconsolidationService` |
 | `ce_mercante` | String(100) | |
@@ -269,7 +271,8 @@ Estrutura análoga ao ExportRecord com campos específicos de importação. `imp
 - Número `GT{MM}{seq:03d}-{AA}` — MM/AA da emissão, `sequence` global contínua (nunca zera).
 - Fichas elegíveis = as do Faturamento (`completed`, `billing_completed = false`) com `receipt_id IS NULL`.
   Ao gerar, cada ficha recebe `receipt_id`; cancelar (soft delete `is_cancelled`) zera de volta. "Marcar faturado" é independente.
-- Tudo que é impresso é **snapshot** (JSON `client_snapshot` / `ReceiptItem.snapshot`); o PDF nunca lê a ficha/cliente atuais.
+- Tudo que é impresso é **snapshot** (JSON `client_snapshot` / `ReceiptItem.snapshot` / `ReceiptItem.transport_modality`); o PDF nunca lê a ficha/cliente atuais.
+- O PDF sai com o título FATURA e agrupa as fichas por tipo + transporte; item com `transport_modality` NULL (sem modalidade ou recibo antigo) fica na seção só com o tipo.
 - Total sempre recalculado no service. Catálogo de campos selecionáveis: `app/services/receipt_fields.py`.
 - PDF via reportlab (`app/services/receipt_pdf.py`), logo versionada em `app/assets/logo-grubba.jpg`.
 
@@ -355,7 +358,7 @@ Cadastro de portos. Referenciado por fichas de export/import.
 ### Outros
 
 - **MapType**: `vegetal` | `animal`
-- **Modality** (importação): `maritimo` | `aereo`
+- **Modality** (transporte de importação, exportação e desconsolidação): `maritimo` | `aereo`
 - **DeconsolidationModality**: `importacao` | `exportacao`
 - **RecordType** (UpdateHistory): `export` | `import` | `deconsolidation`
 

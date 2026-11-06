@@ -8,9 +8,12 @@ export interface Client {
   notes: string | null
   is_active: boolean
   // Decimais chegam como string ("150.00")
-  valor_padrao_importacao: string | null
-  valor_padrao_exportacao: string | null
-  valor_padrao_desconsolidacao: string | null
+  valor_padrao_importacao_maritimo: string | null
+  valor_padrao_importacao_aereo: string | null
+  valor_padrao_exportacao_maritimo: string | null
+  valor_padrao_exportacao_aereo: string | null
+  valor_padrao_desconsolidacao_maritimo: string | null
+  valor_padrao_desconsolidacao_aereo: string | null
   created_at: string
   updated_at: string
 }
@@ -29,9 +32,12 @@ export interface ClientCreatePayload {
   address?: string
   notes?: string
   // Só admin pode enviar; null limpa o valor
-  valor_padrao_importacao?: string | null
-  valor_padrao_exportacao?: string | null
-  valor_padrao_desconsolidacao?: string | null
+  valor_padrao_importacao_maritimo?: string | null
+  valor_padrao_importacao_aereo?: string | null
+  valor_padrao_exportacao_maritimo?: string | null
+  valor_padrao_exportacao_aereo?: string | null
+  valor_padrao_desconsolidacao_maritimo?: string | null
+  valor_padrao_desconsolidacao_aereo?: string | null
 }
 
 export interface ClientUpdatePayload extends Partial<ClientCreatePayload> {

@@ -122,6 +122,8 @@ class ReceiptItem(UUIDPrimaryKeyMixin, Base):
     )
 
     reference: Mapped[str | None] = mapped_column(String(100), nullable=True)  # snapshot p/ listagem
+    # Snapshot do transporte (maritimo | aereo); NULL em ficha sem modalidade e em recibos antigos
+    transport_modality: Mapped[str | None] = mapped_column(String(20), nullable=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     snapshot: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

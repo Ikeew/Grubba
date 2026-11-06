@@ -20,7 +20,7 @@ import {
   formatFieldName,
   formatFieldValue,
 } from '@/utils/format'
-import { DECONSOLIDATION_MODALITY_LABELS } from '@/utils/constants'
+import { DECONSOLIDATION_MODALITY_LABELS, MODALITY_LABELS } from '@/utils/constants'
 import { DECONSOLIDATION_SERVICE_LABELS, type DeconsolidationService } from '@/types/deconsolidation'
 
 function DetailRow({ label, value }: { label: string; value?: string | null | boolean }) {
@@ -84,6 +84,11 @@ export default function DeconsolidationDetail() {
         {record.modality && (
           <span className="text-sm text-slate-500">
             Modalidade: <strong className="text-slate-800">{DECONSOLIDATION_MODALITY_LABELS[record.modality]}</strong>
+          </span>
+        )}
+        {record.transport_modality && (
+          <span className="text-sm text-slate-500">
+            Transporte: <strong className="text-slate-800">{MODALITY_LABELS[record.transport_modality]}</strong>
           </span>
         )}
         <span className="text-sm text-slate-500">Data: <strong className="text-slate-800">{formatDate(record.date) || '—'}</strong></span>

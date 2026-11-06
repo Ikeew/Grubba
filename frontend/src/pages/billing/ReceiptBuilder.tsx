@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAvailableRecords, useCreateReceipt } from '@/hooks/useReceipts'
 import { receiptService } from '@/services/receipt.service'
@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { formatBRL, formatDate, toApiMoney } from '@/utils/format'
 import { parseApiError } from '@/utils/parseApiError'
 import { canManageBilling } from '@/utils/permissions'
+import { MODALITY_LABELS } from '@/utils/constants'
+import type { Modality } from '@/types/import'
 import type { AvailableRecord, ReceiptRecordType } from '@/types/receipt'
 
 const TYPE_LABELS: Record<ReceiptRecordType, string> = {
@@ -19,8 +21,15 @@ const TYPE_LABELS: Record<ReceiptRecordType, string> = {
   deconsolidation: 'Desconsolidação',
 }
 const TYPES: ReceiptRecordType[] = ['import', 'export', 'deconsolidation']
+const MODALITIES: (Modality | null)[] = ['maritimo', 'aereo', null]
+const NO_MODALITY_LABEL = 'Sem modalidade'
+const NO_PORT = '__none__'
+const HEADER_CELL = 'px-2 py-1.5 text-left font-semibold text-slate-500 uppercase tracking-wider'
 
 type TypeFilter = 'all' | ReceiptRecordType
+type ModalityFilter = 'all' | Modality | 'none'
+
+const modalityLabel = (modality: Modality | null) => (modality ? MODALITY_LABELS[modality] : NO_MODALITY_LABEL)
 
 interface ExtraCost {
   key: number
@@ -55,6 +64,8 @@ export default function ReceiptBuilder() {
   // Fichas selecionadas: chave "tipo:id" -> valor digitado ('' = em branco)
   const [selected, setSelected] = useState<Record<string, string>>({})
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
+  const [modalityFilter, setModalityFilter] = useState<ModalityFilter>('all')
+  const [portFilter, setPortFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [issueDate, setIssueDate] = useState(todayIso())
   const [cnpj, setCnpj] = useState('')
@@ -89,10 +100,39 @@ export default function ReceiptBuilder() {
     const term = search.trim().toLowerCase()
     return (data?.records ?? []).filter((r) => {
       if (typeFilter !== 'all' && r.record_type !== typeFilter) return false
+      if (modalityFilter !== 'all' && (r.transport_modality ?? 'none') !== modalityFilter) return false
+      if (portFilter !== 'all' && (r.port_name ?? NO_PORT) !== portFilter) return false
       if (!term) return true
-      return [r.reference, r.description].some((v) => v?.toLowerCase().includes(term))
+      return [r.reference, r.description, r.port_name].some((v) => v?.toLowerCase().includes(term))
     })
-  }, [data, typeFilter, search])
+  }, [data, typeFilter, modalityFilter, portFilter, search])
+
+  // Seções da lista: "Importação · Marítimo", "Importação · Aéreo", ...
+  const recordGroups = useMemo(
+    () =>
+      TYPES.flatMap((type) =>
+        MODALITIES.map((modality) => ({
+          type,
+          modality,
+          records: visibleRecords.filter((r) => r.record_type === type && r.transport_modality === modality),
+        })),
+      ).filter((group) => group.records.length > 0),
+    [visibleRecords],
+  )
+
+  const portNames = useMemo(
+    () => [...new Set((data?.records ?? []).flatMap((r) => (r.port_name ? [r.port_name] : [])))].sort(),
+    [data],
+  )
+  const hasRecordWithoutPort = data?.records.some((r) => !r.port_name) ?? false
+  const hasRecordWithoutModality = data?.records.some((r) => !r.transport_modality) ?? false
+
+  // Após um refetch, a opção escolhida pode sumir da lista: volta para "todos" em vez de prender o filtro
+  useEffect(() => {
+    if (modalityFilter === 'none' && !hasRecordWithoutModality) setModalityFilter('all')
+    const portExists = portFilter === 'all' || (portFilter === NO_PORT ? hasRecordWithoutPort : portNames.includes(portFilter))
+    if (!portExists) setPortFilter('all')
+  }, [modalityFilter, portFilter, hasRecordWithoutModality, hasRecordWithoutPort, portNames])
 
   const countByType = useMemo(() => {
     const counts: Record<ReceiptRecordType, number> = { import: 0, export: 0, deconsolidation: 0 }
@@ -104,6 +144,10 @@ export default function ReceiptBuilder() {
     .map((k) => recordsByKey.get(k))
     .filter((r): r is AvailableRecord => !!r)
   const selectedTypes = TYPES.filter((t) => selectedRecords.some((r) => r.record_type === t))
+
+  const visibleSelectedCount = visibleRecords.filter((r) => recordKey(r.record_type, r.id) in selected).length
+  const allVisibleSelected = visibleRecords.length > 0 && visibleSelectedCount === visibleRecords.length
+  const hiddenSelectedCount = selectedRecords.length - visibleSelectedCount
 
   const subtotal = Object.values(selected).reduce((acc, v) => acc + amountOf(v), 0)
   const extrasTotal = extras.reduce((acc, e) => acc + amountOf(e.amount), 0)
@@ -118,6 +162,19 @@ export default function ReceiptBuilder() {
       const next = { ...prev }
       if (key in next) delete next[key]
       else next[key] = record.suggested_amount ?? ''
+      return next
+    })
+  }
+
+  /** Marca/desmarca só as fichas visíveis no filtro; valores já digitados são preservados. */
+  function toggleAllVisible() {
+    setSelected((prev) => {
+      const next = { ...prev }
+      visibleRecords.forEach((r) => {
+        const key = recordKey(r.record_type, r.id)
+        if (allVisibleSelected) delete next[key]
+        else if (!(key in next)) next[key] = r.suggested_amount ?? ''
+      })
       return next
     })
   }
@@ -207,6 +264,11 @@ export default function ReceiptBuilder() {
               <p className="form-section-title border-none pb-0">Fichas do cliente</p>
               <span className="text-xs text-slate-500">
                 {selectedRecords.length} selecionada{selectedRecords.length === 1 ? '' : 's'}
+                {hiddenSelectedCount > 0 && (
+                  <strong className="ml-1 font-medium text-amber-700">
+                    ({hiddenSelectedCount} fora do filtro atual, também entra{hiddenSelectedCount === 1 ? '' : 'm'} no recibo)
+                  </strong>
+                )}
               </span>
             </div>
 
@@ -234,69 +296,129 @@ export default function ReceiptBuilder() {
               />
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              {(['all', 'maritimo', 'aereo', ...(hasRecordWithoutModality ? ['none'] : [])] as ModalityFilter[]).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setModalityFilter(m)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                    modalityFilter === m
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {m === 'all' ? 'Marítimo e Aéreo' : modalityLabel(m === 'none' ? null : m)}
+                </button>
+              ))}
+              <select
+                aria-label="Filtrar por porto"
+                value={portFilter}
+                onChange={(e) => setPortFilter(e.target.value)}
+                className="ml-auto border border-slate-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 w-64"
+              >
+                <option value="all">Todos os portos</option>
+                {portNames.map((name) => <option key={name} value={name}>{name}</option>)}
+                {hasRecordWithoutPort && <option value={NO_PORT}>Sem porto</option>}
+              </select>
+            </div>
+
             {!visibleRecords.length ? (
               <EmptyState title="Nenhuma ficha disponível para este filtro." />
             ) : (
-              <div className="border border-slate-200 rounded-md overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="border border-slate-200 rounded-md overflow-x-auto">
+                <table className="w-full text-xs whitespace-nowrap">
                   <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th className="w-8 px-3 py-2" />
-                      <th className="px-3 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider">Tipo</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider">Data</th>
-                      <th className="px-3 py-2 text-left font-semibold text-slate-500 uppercase tracking-wider">Detalhes</th>
-                      <th className="px-3 py-2 text-right font-semibold text-slate-500 uppercase tracking-wider w-36">Valor (R$)</th>
+                      <th className={HEADER_CELL}>
+                        <label className="inline-flex items-center gap-1.5 cursor-pointer normal-case tracking-normal">
+                          <input
+                            type="checkbox"
+                            checked={allVisibleSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = visibleSelectedCount > 0 && !allVisibleSelected
+                            }}
+                            onChange={toggleAllVisible}
+                            className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                          />
+                          Selecionar todas
+                        </label>
+                      </th>
+                      <th className={HEADER_CELL}>Referência</th>
+                      <th className={HEADER_CELL}>Modalidade</th>
+                      <th className={HEADER_CELL}>Porto</th>
+                      <th className={HEADER_CELL}>Data</th>
+                      <th className={HEADER_CELL}>Detalhes</th>
+                      <th className={`${HEADER_CELL} sticky right-0 bg-slate-50 text-right w-32`}>Valor (R$)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {visibleRecords.map((r) => {
-                      const key = recordKey(r.record_type, r.id)
-                      const isSelected = key in selected
-                      const blank = isSelected && !selected[key]
-                      return (
-                        <tr
-                          key={key}
-                          onClick={() => toggleRecord(r)}
-                          className={`border-b border-slate-100 cursor-pointer transition-colors ${
-                            isSelected ? 'bg-brand-50/60' : 'hover:bg-slate-50'
-                          }`}
-                        >
-                          <td className="px-3 py-2">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleRecord(r)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                            />
-                          </td>
-                          <td className="px-3 py-2 text-slate-500">{TYPE_LABELS[r.record_type]}</td>
-                          <td className="px-3 py-2 font-medium text-slate-700">{r.reference ?? '—'}</td>
-                          <td className="px-3 py-2 text-slate-500">{formatDate(r.date)}</td>
-                          <td className="px-3 py-2 text-slate-500">{r.description ?? '—'}</td>
-                          <td className="px-3 py-1.5 text-right" onClick={(e) => e.stopPropagation()}>
-                            {isSelected ? (
-                              <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                placeholder="Informe"
-                                value={selected[key]}
-                                onChange={(e) => setSelected((prev) => ({ ...prev, [key]: e.target.value }))}
-                                className={`w-full rounded-md border px-2 py-1 text-right text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                                  blank ? 'border-amber-400 bg-amber-50' : 'border-slate-300'
-                                }`}
-                              />
-                            ) : (
-                              <span className="text-slate-400">
-                                {r.suggested_amount ? formatBRL(r.suggested_amount) : 'sem valor padrão'}
-                              </span>
-                            )}
+                    {recordGroups.map((group) => (
+                      <Fragment key={`${group.type}:${group.modality}`}>
+                        <tr className="bg-slate-100 border-b border-slate-200">
+                          <td colSpan={7} className="px-2 py-1.5 font-semibold text-slate-700">
+                            {TYPE_LABELS[group.type]} · {modalityLabel(group.modality)}
+                            <span className="ml-2 font-normal text-slate-500">
+                              {group.records.length} ficha{group.records.length === 1 ? '' : 's'}
+                            </span>
                           </td>
                         </tr>
-                      )
-                    })}
+                        {group.records.map((r) => {
+                          const key = recordKey(r.record_type, r.id)
+                          const isSelected = key in selected
+                          const blank = isSelected && !selected[key]
+                          return (
+                            <tr
+                              key={key}
+                              onClick={() => toggleRecord(r)}
+                              className={`group border-b border-slate-100 cursor-pointer transition-colors ${
+                                isSelected ? 'bg-brand-50/60' : 'hover:bg-slate-50'
+                              }`}
+                            >
+                              <td className="px-2 py-1.5">
+                                <input
+                                  type="checkbox"
+                                  aria-label={`Selecionar ficha ${r.reference ?? ''}`}
+                                  checked={isSelected}
+                                  onChange={() => toggleRecord(r)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                                />
+                              </td>
+                              <td className="px-2 py-1.5 font-medium text-slate-700">{r.reference ?? '—'}</td>
+                              <td className="px-2 py-1.5 text-slate-500">{r.transport_modality ? MODALITY_LABELS[r.transport_modality] : '—'}</td>
+                              <td className="px-2 py-1.5 text-slate-500">{r.port_name ?? '—'}</td>
+                              <td className="px-2 py-1.5 text-slate-500">{formatDate(r.date)}</td>
+                              <td className="px-2 py-1.5 text-slate-500">{r.description ?? '—'}</td>
+                              <td
+                                className={`sticky right-0 px-2 py-1 text-right transition-colors ${
+                                  isSelected ? 'bg-brand-50' : 'bg-white group-hover:bg-slate-50'
+                                }`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {isSelected ? (
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder="Informe"
+                                    value={selected[key]}
+                                    onChange={(e) => setSelected((prev) => ({ ...prev, [key]: e.target.value }))}
+                                    className={`w-28 rounded-md border px-2 py-1 text-right text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                                      blank ? 'border-amber-400 bg-amber-50' : 'border-slate-300'
+                                    }`}
+                                  />
+                                ) : (
+                                  <span className="text-slate-400">
+                                    {r.suggested_amount ? formatBRL(r.suggested_amount) : 'sem valor padrão'}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </Fragment>
+                    ))}
                   </tbody>
                 </table>
               </div>

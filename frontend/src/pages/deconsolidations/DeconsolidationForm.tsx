@@ -28,6 +28,7 @@ import {
 import {
   DECONSOLIDATION_MODALITY_LABELS,
   DECONSOLIDATION_STATUS_LABELS,
+  MODALITY_LABELS,
 } from '@/utils/constants'
 import { parseApiError } from '@/utils/parseApiError'
 
@@ -42,6 +43,11 @@ const ALL_SERVICES = Object.entries(DECONSOLIDATION_SERVICE_LABELS) as [
 const MODALITY_OPTIONS = [
   { value: '', label: 'Selecionar...' },
   ...Object.entries(DECONSOLIDATION_MODALITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
+]
+
+const TRANSPORT_OPTIONS = [
+  { value: '', label: 'Selecionar...' },
+  ...Object.entries(MODALITY_LABELS).map(([v, l]) => ({ value: v, label: l })),
 ]
 
 export default function DeconsolidationForm() {
@@ -75,7 +81,7 @@ export default function DeconsolidationForm() {
     formState: { errors, isSubmitting },
   } = useForm<DeconsolidationFormValues>({
     resolver: zodResolver(deconsolidationSchema),
-    defaultValues: { date: today },
+    defaultValues: { date: today, transport_modality: 'maritimo' },
   })
 
   useEffect(() => {
@@ -92,6 +98,7 @@ export default function DeconsolidationForm() {
         date: record.date ?? '',
         status: record.status,
         modality: record.modality ?? '',
+        transport_modality: record.transport_modality ?? '',
         consignee: record.consignee ?? '',
         services: record.services ?? [],
         ce_mercante: record.ce_mercante ?? '',
@@ -169,6 +176,7 @@ export default function DeconsolidationForm() {
             <Input label="Data" type="date" disabled {...register('date')} />
             <Select label="Status" options={STATUS_OPTIONS} {...register('status')} />
             <Select label="Modalidade" options={MODALITY_OPTIONS} {...register('modality')} />
+            <Select label="Transporte" options={TRANSPORT_OPTIONS} {...register('transport_modality')} />
             <Input label="Consignatário" {...register('consignee')} />
             {isAdmin ? (
               <Select label="Responsável" options={userOptions} {...register('collaborator_id')} />

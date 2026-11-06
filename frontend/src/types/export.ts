@@ -1,4 +1,5 @@
 import type { ClientSummary, ExportStatus, MapType, PortSummary, ReceiptSummary, RecordFlag } from './common'
+import type { Modality } from './import'
 
 export type ExportService =
   | 'vistoria_receita_federal'
@@ -39,6 +40,7 @@ export interface ExportRecord {
   reference: string | null
   date: string | null
   status: ExportStatus
+  modality: Modality | null
   cargo_type: string | null
   exporter: string | null
   lpco: string | null
@@ -76,6 +78,7 @@ export interface ExportRecordPayload {
   reference?: string
   date?: string
   status?: ExportStatus
+  modality?: Modality
   cargo_type?: string
   exporter?: string
   lpco?: string

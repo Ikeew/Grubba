@@ -12,6 +12,7 @@ export const exportSchema = z.object({
   reference: z.string().min(1, 'Referência obrigatória'),
   date: z.string().min(1, 'Data obrigatória'),
   status: z.enum(EXPORT_STATUSES).default('in_progress'),
+  modality: z.union([z.enum(['maritimo', 'aereo']), z.literal('')]).optional(),
   cargo_type: z.union([z.enum(['FCL', 'LCL']), z.literal('')]).optional(),
   exporter: z.string().optional(),
   lpco: z.string().optional(),

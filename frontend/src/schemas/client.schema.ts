@@ -13,9 +13,12 @@ export const clientSchema = z.object({
   phone: z.string().optional(),
   address: z.string().optional(),
   notes: z.string().optional(),
-  valor_padrao_importacao: money,
-  valor_padrao_exportacao: money,
-  valor_padrao_desconsolidacao: money,
+  valor_padrao_importacao_maritimo: money,
+  valor_padrao_importacao_aereo: money,
+  valor_padrao_exportacao_maritimo: money,
+  valor_padrao_exportacao_aereo: money,
+  valor_padrao_desconsolidacao_maritimo: money,
+  valor_padrao_desconsolidacao_aereo: money,
 })
 
 export type ClientFormValues = z.infer<typeof clientSchema>

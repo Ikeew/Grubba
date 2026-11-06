@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDPrimaryKeyMixin
-from app.models.export_record import FlagColor
+from app.models.export_record import FlagColor, Modality
 
 if TYPE_CHECKING:
     from app.models.receipt import Receipt
@@ -81,6 +81,10 @@ class DeconsolidationRecord(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     modality: Mapped[DeconsolidationModality | None] = mapped_column(
         Enum(DeconsolidationModality, name="deconsolidation_modality"), nullable=True
+    )
+    # "modality" acima é a operação (importação/exportação); aqui é o transporte
+    transport_modality: Mapped[Modality | None] = mapped_column(
+        Enum(Modality, name="modality"), nullable=True
     )
     consignee: Mapped[str | None] = mapped_column(String(255), nullable=True)  # consignatário
     services: Mapped[list[str]] = mapped_column(

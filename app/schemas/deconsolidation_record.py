@@ -8,6 +8,7 @@ from app.models.deconsolidation_record import (
     DeconsolidationService,
     DeconsolidationStatus,
 )
+from app.models.export_record import Modality
 from app.schemas.client import ClientSummary
 from app.schemas.receipt import ReceiptSummary
 from app.schemas.export_record import FlagInfo
@@ -20,6 +21,7 @@ class DeconsolidationRecordCreate(BaseModel):
     date: Date | None = None
     status: DeconsolidationStatus = DeconsolidationStatus.aguardando_chegada_documento
     modality: DeconsolidationModality | None = None
+    transport_modality: Modality | None = None
     consignee: str | None = None
 
     ce_mercante: str | None = None
@@ -46,6 +48,7 @@ class DeconsolidationRecordUpdate(BaseModel):
     date: Date | None = None
     status: DeconsolidationStatus | None = None
     modality: DeconsolidationModality | None = None
+    transport_modality: Modality | None = None
     consignee: str | None = None
 
     ce_mercante: str | None = None
@@ -69,6 +72,7 @@ class DeconsolidationRecordResponse(BaseModel):
     date: Date | None
     status: DeconsolidationStatus
     modality: DeconsolidationModality | None
+    transport_modality: Modality | None
     consignee: str | None
     services: list[str]
 

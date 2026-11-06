@@ -67,7 +67,7 @@ class FieldDef:
         return _format_value(raw)
 
 
-def _port_name(record: Any) -> str | None:
+def port_name(record: Any) -> str | None:
     return record.port.name if getattr(record, "port", None) else None
 
 
@@ -85,7 +85,7 @@ IMPORT_FIELDS: tuple[FieldDef, ...] = (
     FieldDef("dtc", "DTC"),
     FieldDef("shipping_company", "Armador"),
     FieldDef("vessel", "Navio"),
-    FieldDef("port", "Porto", _port_name),
+    FieldDef("port", "Porto", port_name),
     FieldDef("eta", "ETA"),
     FieldDef("etb", "ETB"),
     FieldDef("containers", "Contêineres"),
@@ -106,6 +106,7 @@ IMPORT_FIELDS: tuple[FieldDef, ...] = (
 EXPORT_FIELDS: tuple[FieldDef, ...] = (
     FieldDef("reference", "Referência"),
     FieldDef("date", "Data"),
+    FieldDef("modality", "Modalidade"),
     FieldDef("cargo_type", "Tipo de Carga"),
     FieldDef("exporter", "Exportador"),
     FieldDef("lpco", "LPCO"),
@@ -113,7 +114,7 @@ EXPORT_FIELDS: tuple[FieldDef, ...] = (
     FieldDef("booking", "Booking"),
     FieldDef("due_25br", "DUE"),
     FieldDef("shipping_company", "Armador"),
-    FieldDef("port", "Porto", _port_name),
+    FieldDef("port", "Porto", port_name),
     FieldDef("eta", "ETA"),
     FieldDef("etb", "ETB"),
     FieldDef("ets", "ETS"),
@@ -133,6 +134,7 @@ DECONSOLIDATION_FIELDS: tuple[FieldDef, ...] = (
     FieldDef("reference", "Referência"),
     FieldDef("date", "Data"),
     FieldDef("modality", "Modalidade"),
+    FieldDef("transport_modality", "Transporte"),
     FieldDef("consignee", "Consignatário"),
     FieldDef("services", "Serviços"),
     FieldDef("ce_mercante", "CE Mercante"),
@@ -160,8 +162,8 @@ RECORD_FIELDS: dict[str, tuple[FieldDef, ...]] = {
 
 # Seleção inicial sugerida na tela de montagem
 DEFAULT_RECORD_FIELDS: dict[str, list[str]] = {
-    "import": ["reference", "modality", "date", "awb_bl", "di_duimp_dta"],
-    "export": ["reference", "date", "vessel", "booking", "due_25br"],
+    "import": ["reference", "date", "port", "awb_bl", "di_duimp_dta"],
+    "export": ["reference", "date", "port", "vessel", "booking", "due_25br"],
     "deconsolidation": ["reference", "date", "master_bl", "house_bl"],
 }
 DEFAULT_CLIENT_FIELDS: list[str] = ["name", "cnpj", "email"]

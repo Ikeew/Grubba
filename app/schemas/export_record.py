@@ -3,7 +3,7 @@ from datetime import date as Date, datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.export_record import ExportService, ExportStatus, FlagColor, MapType
+from app.models.export_record import ExportService, ExportStatus, FlagColor, MapType, Modality
 from app.schemas.client import ClientSummary
 from app.schemas.receipt import ReceiptSummary
 from app.schemas.user import UserSummary
@@ -28,6 +28,7 @@ class ExportRecordCreate(BaseModel):
     date: Date
     status: ExportStatus = ExportStatus.in_progress
 
+    modality: Modality | None = None
     cargo_type: str | None = None
     exporter: str | None = None
 
@@ -66,6 +67,7 @@ class ExportRecordUpdate(BaseModel):
     date: Date | None = None
     status: ExportStatus | None = None
 
+    modality: Modality | None = None
     cargo_type: str | None = None
     exporter: str | None = None
 
@@ -114,6 +116,7 @@ class ExportRecordResponse(BaseModel):
     vessel: str | None
     booking: str | None
     port_id: uuid.UUID | None
+    modality: Modality | None
     port: PortSummary | None
     due_25br: str | None
     eta: Date | None

@@ -3,6 +3,7 @@
 Usa exclusivamente os dados gravados no recibo (snapshots), nunca a ficha/cliente atuais.
 """
 from io import BytesIO
+from itertools import product
 from pathlib import Path
 
 from reportlab.lib import colors
@@ -26,7 +27,7 @@ from app.utils.extenso import money_in_words
 from app.utils.formatting import format_brl, format_date_br
 
 LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "logo-grubba.jpg"
-COMPANY_NAME = "Grubba Logística e Terceirizações Aduaneiras"
+COMPANY_NAME = "Grubba Terceirizações Aduaneiras"
 CITY = "São Francisco do Sul"
 
 # Paleta da logo
@@ -42,6 +43,10 @@ SECTION_TITLES = {
     "export": "Exportação",
     "deconsolidation": "Desconsolidação",
 }
+
+TRANSPORT_LABELS = {"maritimo": "Marítimo", "aereo": "Aéreo"}
+# None = ficha sem modalidade ou recibo emitido antes da separação: seção só com o tipo
+TRANSPORT_ORDER = ("maritimo", "aereo", None)
 
 MONTHS = (
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -86,9 +91,9 @@ def _p(text: str, style: ParagraphStyle) -> Paragraph:
 
 def _header(receipt: Receipt) -> Table:
     logo_h = 24 * mm
-    logo = Image(str(LOGO_PATH), width=logo_h * 380 / 358, height=logo_h)
+    logo = Image(str(LOGO_PATH), width=logo_h * 380 / 338, height=logo_h)
     right = [
-        _p("RECIBO", S_TITLE),
+        _p("FATURA", S_TITLE),
         _p(f"Nº {receipt.number}", S_NUMBER),
         _p(f"Emitido em {format_date_br(receipt.issue_date)}", S_META),
     ]
@@ -162,10 +167,14 @@ def _data_table(header: list, rows: list[list], col_widths: list[float]) -> Tabl
 
 def _items_sections(receipt: Receipt) -> list:
     flow: list = []
-    for record_type, title in SECTION_TITLES.items():
-        items = [i for i in receipt.items if i.record_type == record_type]
+    for (record_type, title), transport in product(SECTION_TITLES.items(), TRANSPORT_ORDER):
+        items = [
+            i for i in receipt.items
+            if i.record_type == record_type and i.transport_modality == transport
+        ]
         if not items:
             continue
+        section = f"{title} · {TRANSPORT_LABELS[transport]}" if transport else title
 
         # Colunas = campos escolhidos (ordem do snapshot); sem campos, mostra a referência
         columns = [(f["key"], f["label"]) for f in items[0].snapshot] or [("reference", "Referência")]
@@ -191,7 +200,7 @@ def _items_sections(receipt: Receipt) -> list:
             for item, values in zip(items, table_values)
         ]
 
-        flow.append(_p(f"{title}  ·  {len(items)} {'ficha' if len(items) == 1 else 'fichas'}", S_SECTION))
+        flow.append(_p(f"{section}  ·  {len(items)} {'ficha' if len(items) == 1 else 'fichas'}", S_SECTION))
         flow.append(Spacer(1, 2 * mm))
         flow.append(_data_table(header, rows, widths + [VALUE_COL_W]))
         flow.append(Spacer(1, 5 * mm))
@@ -270,7 +279,7 @@ def _page_decorations(receipt: Receipt):
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(MUTED)
-        canvas.drawString(MARGIN, 10 * mm, f"{COMPANY_NAME}  ·  Recibo {receipt.number}")
+        canvas.drawString(MARGIN, 10 * mm, f"{COMPANY_NAME}  ·  Fatura {receipt.number}")
         canvas.drawRightString(PAGE_W - MARGIN, 10 * mm, f"Página {doc.page}")
         if receipt.is_cancelled:
             canvas.setFillColor(colors.Color(0.86, 0.15, 0.15, alpha=0.18))
@@ -292,7 +301,7 @@ def render_receipt_pdf(receipt: Receipt) -> bytes:
         rightMargin=MARGIN,
         topMargin=MARGIN,
         bottomMargin=MARGIN + 4 * mm,
-        title=f"Recibo {receipt.number}",
+        title=f"Fatura {receipt.number}",
         author=COMPANY_NAME,
     )
     story: list = [

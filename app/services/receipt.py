@@ -27,12 +27,26 @@ RECORD_TYPE_LABELS = {
     "deconsolidation": "desconsolidação",
 }
 
-# Valor padrão do cliente usado para cada tipo de ficha
-_DEFAULT_VALUE_FIELD = {
+# Prefixo do valor padrão do cliente para cada tipo de ficha (completado com a modalidade)
+_DEFAULT_VALUE_PREFIX = {
     "import": "valor_padrao_importacao",
     "export": "valor_padrao_exportacao",
     "deconsolidation": "valor_padrao_desconsolidacao",
 }
+
+
+def _transport_modality(record_type: str, record: Any) -> str | None:
+    """Marítimo/aéreo da ficha. Na desconsolidação, "modality" é a operação, não o transporte."""
+    attr = "transport_modality" if record_type == "deconsolidation" else "modality"
+    modality = getattr(record, attr)
+    return modality.value if modality else None
+
+
+def _suggested_amount(client: Client, record_type: str, modality: str | None) -> Decimal | None:
+    """Ficha sem modalidade não tem valor sugerido: o preço depende dela."""
+    if modality is None:
+        return None
+    return getattr(client, f"{_DEFAULT_VALUE_PREFIX[record_type]}_{modality}")
 
 
 def format_receipt_number(sequence: int, issue_date: date) -> str:
@@ -72,8 +86,8 @@ class ReceiptService:
 
         records: list[AvailableRecord] = []
         for record_type in RECORD_MODELS:
-            suggested = getattr(client, _DEFAULT_VALUE_FIELD[record_type])
             for record in self._receipts.list_eligible_records(record_type, client_id):
+                modality = _transport_modality(record_type, record)
                 records.append(
                     AvailableRecord(
                         record_type=record_type,
@@ -82,7 +96,9 @@ class ReceiptService:
                         date=record.date,
                         completed_at=record.completed_at,
                         description=_record_description(record_type, record),
-                        suggested_amount=suggested,
+                        transport_modality=modality,
+                        port_name=rf.port_name(record),
+                        suggested_amount=_suggested_amount(client, record_type, modality),
                     )
                 )
 
@@ -141,6 +157,7 @@ class ReceiptService:
                     export_record_id=record.id if item.record_type == "export" else None,
                     deconsolidation_record_id=record.id if item.record_type == "deconsolidation" else None,
                     reference=record.reference,
+                    transport_modality=_transport_modality(item.record_type, record),
                     amount=to_money(item.amount),
                     snapshot=rf.build_snapshot(record, rf.RECORD_FIELDS[item.record_type], selected),
                     position=position,

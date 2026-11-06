@@ -313,12 +313,14 @@ export default function BillingList() {
             <EmptyState title="Nenhuma exportação pendente de faturamento." />
           ) : (
             <>
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+              <table className="w-full text-xs whitespace-nowrap">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
@@ -339,6 +341,9 @@ export default function BillingList() {
                       <td className="px-3 py-2 font-medium text-slate-700">{record.reference ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-700">{record.client.name}</td>
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.date)}</td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {record.modality ? MODALITY_LABELS[record.modality] : '—'}
+                      </td>
                       <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
@@ -360,6 +365,7 @@ export default function BillingList() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <Pagination
                 page={exportPage}
                 pages={exportData?.pages ?? 1}
@@ -381,7 +387,8 @@ export default function BillingList() {
             <EmptyState title="Nenhuma importação pendente de faturamento." />
           ) : (
             <>
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+              <table className="w-full text-xs whitespace-nowrap">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
@@ -430,6 +437,7 @@ export default function BillingList() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <Pagination
                 page={importPage}
                 pages={importData?.pages ?? 1}
@@ -451,7 +459,8 @@ export default function BillingList() {
             <EmptyState title="Nenhuma desconsolidação pendente de faturamento." />
           ) : (
             <>
-              <table className="w-full text-xs">
+              <div className="overflow-x-auto">
+              <table className="w-full text-xs whitespace-nowrap">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Referência</th>
@@ -462,6 +471,7 @@ export default function BillingList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Armador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
+                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Transporte</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Responsável</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
@@ -483,6 +493,9 @@ export default function BillingList() {
                       <td className="px-3 py-2 text-slate-500">
                         {record.modality ? DECONSOLIDATION_MODALITY_LABELS[record.modality] : '—'}
                       </td>
+                      <td className="px-3 py-2 text-slate-500">
+                        {record.transport_modality ? MODALITY_LABELS[record.transport_modality] : '—'}
+                      </td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                       <td className="px-3 py-2">
                         <button
@@ -498,6 +511,7 @@ export default function BillingList() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <Pagination
                 page={deconsolidationPage}
                 pages={deconsolidationData?.pages ?? 1}

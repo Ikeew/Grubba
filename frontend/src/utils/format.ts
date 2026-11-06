@@ -46,6 +46,7 @@ export function formatFieldName(field: string): string {
     comex_released_date: 'Data Liberação Comex',
     // Importação
     modality: 'Modalidade',
+    transport_modality: 'Transporte',
     importer: 'Importador',
     ce_mercante: 'CE Mercante',
     awb_bl: 'AWB/BL',
@@ -131,7 +132,7 @@ export function formatFieldValue(fieldName: string, value: string | null | undef
     return value === 'vegetal' ? 'Vegetal' : value === 'animal' ? 'Animal' : value
   }
 
-  if (fieldName === 'modality') {
+  if (fieldName === 'modality' || fieldName === 'transport_modality') {
     return value === 'maritimo' ? 'Marítimo' : value === 'aereo' ? 'Aéreo' : value
   }
 

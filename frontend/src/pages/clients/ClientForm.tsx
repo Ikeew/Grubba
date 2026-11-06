@@ -15,9 +15,12 @@ import { toApiMoney } from '@/utils/format'
 import type { ClientCreatePayload } from '@/types/client'
 
 const DEFAULT_VALUE_FIELDS = [
-  { name: 'valor_padrao_importacao', label: 'Importação' },
-  { name: 'valor_padrao_exportacao', label: 'Exportação' },
-  { name: 'valor_padrao_desconsolidacao', label: 'Desconsolidação' },
+  { name: 'valor_padrao_importacao_maritimo', label: 'Importação · Marítimo' },
+  { name: 'valor_padrao_importacao_aereo', label: 'Importação · Aéreo' },
+  { name: 'valor_padrao_exportacao_maritimo', label: 'Exportação · Marítimo' },
+  { name: 'valor_padrao_exportacao_aereo', label: 'Exportação · Aéreo' },
+  { name: 'valor_padrao_desconsolidacao_maritimo', label: 'Desconsolidação · Marítimo' },
+  { name: 'valor_padrao_desconsolidacao_aereo', label: 'Desconsolidação · Aéreo' },
 ] as const
 
 export default function ClientForm() {
@@ -47,21 +50,17 @@ export default function ClientForm() {
         phone: client.phone ?? undefined,
         address: client.address ?? undefined,
         notes: client.notes ?? undefined,
-        valor_padrao_importacao: client.valor_padrao_importacao ?? '',
-        valor_padrao_exportacao: client.valor_padrao_exportacao ?? '',
-        valor_padrao_desconsolidacao: client.valor_padrao_desconsolidacao ?? '',
+        ...Object.fromEntries(DEFAULT_VALUE_FIELDS.map((f) => [f.name, client[f.name] ?? ''])),
       })
     }
   }, [client, reset])
 
   async function onSubmit(values: ClientFormValues) {
-    const { valor_padrao_importacao, valor_padrao_exportacao, valor_padrao_desconsolidacao, ...rest } = values
-    const payload: ClientCreatePayload = { ...rest }
+    const payload: ClientCreatePayload = { ...values }
+    DEFAULT_VALUE_FIELDS.forEach((f) => { delete payload[f.name] })
     // Colaborador não envia os valores padrão (o backend recusaria)
     if (canEditValues) {
-      payload.valor_padrao_importacao = toApiMoney(valor_padrao_importacao)
-      payload.valor_padrao_exportacao = toApiMoney(valor_padrao_exportacao)
-      payload.valor_padrao_desconsolidacao = toApiMoney(valor_padrao_desconsolidacao)
+      DEFAULT_VALUE_FIELDS.forEach((f) => { payload[f.name] = toApiMoney(values[f.name]) })
     }
     if (isEditing) {
       await updateClient.mutateAsync(payload)
@@ -107,9 +106,9 @@ export default function ClientForm() {
           <div className="form-section">
             <p className="form-section-title">Valores padrão de serviço</p>
             <p className="text-xs text-slate-500">
-              Pré-preenchem o valor de cada ficha ao gerar um recibo. Deixe em branco para informar na hora.
+              Pré-preenchem o valor de cada ficha ao gerar um recibo, conforme o tipo e o transporte. Deixe em branco para informar na hora.
             </p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {DEFAULT_VALUE_FIELDS.map((f) => (
                 <Input
                   key={f.name}

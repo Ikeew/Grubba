@@ -6,6 +6,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 RecordTypeLiteral = Literal["import", "export", "deconsolidation"]
+TransportModalityLiteral = Literal["maritimo", "aereo"]
 
 Money = Field(ge=0, max_digits=12, decimal_places=2)
 
@@ -37,7 +38,9 @@ class AvailableRecord(BaseModel):
     date: Date | None
     completed_at: datetime | None
     description: str | None          # resumo curto para a lista (navio / BL / consignatário)
-    suggested_amount: Decimal | None  # valor padrão do cliente para o tipo (None = em branco)
+    transport_modality: TransportModalityLiteral | None
+    port_name: str | None            # desconsolidação não tem porto
+    suggested_amount: Decimal | None  # valor padrão do cliente para tipo + modalidade (None = em branco)
 
 
 class AvailableRecordsResponse(BaseModel):
@@ -98,6 +101,7 @@ class ReceiptItemResponse(BaseModel):
     record_type: RecordTypeLiteral
     record_id: uuid.UUID | None
     reference: str | None
+    transport_modality: TransportModalityLiteral | None
     amount: Decimal
     snapshot: list[SnapshotField]
 

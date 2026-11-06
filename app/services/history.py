@@ -1,3 +1,4 @@
+from enum import Enum
 from uuid import UUID
 
 from app.models.update_history import RecordType, UpdateHistory
@@ -5,7 +6,7 @@ from app.repositories.update_history import UpdateHistoryRepository
 
 
 FIELDS_TO_TRACK_EXPORT = {
-    "reference", "date", "status", "exporter", "lpco", "vessel", "booking", "port_id",
+    "reference", "date", "status", "modality", "exporter", "lpco", "vessel", "booking", "port_id",
     "due_25br", "eta", "ddl_carga", "shipping_company", "etb", "et5",
     "services", "map_type", "selected_unit", "new_seal", "inspection_date",
     "comex_released_date", "collaborator_id", "finalized_at", "observations",
@@ -22,10 +23,17 @@ FIELDS_TO_TRACK_IMPORT = {
 
 
 FIELDS_TO_TRACK_DECONSOLIDATION = {
-    "reference", "date", "status", "modality", "consignee", "ce_mercante",
+    "reference", "date", "status", "modality", "transport_modality", "consignee", "ce_mercante",
     "master_bl", "house_bl", "agency", "shipping_company", "collaborator_id",
     "observations", "services",
 }
+
+
+def _to_text(value: object) -> str | None:
+    """Enums gravam o valor ("aereo"), não a representação do Python ("Modality.aereo")."""
+    if value is None:
+        return None
+    return str(value.value if isinstance(value, Enum) else value)
 
 
 class HistoryService:
@@ -138,7 +146,7 @@ class HistoryService:
                     **{id_kwarg: record_id},
                     changed_by_id=changed_by_id,
                     field_name=field,
-                    old_value=str(old_val) if old_val is not None else None,
-                    new_value=str(new_val) if new_val is not None else None,
+                    old_value=_to_text(old_val),
+                    new_value=_to_text(new_val),
                 )
                 self._history.create(entry)
