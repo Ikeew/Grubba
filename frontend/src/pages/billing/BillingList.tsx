@@ -321,13 +321,10 @@ export default function BillingList() {
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Data</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal.</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Navio</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Porto</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">ETS</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Colaborador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">LPCO</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">DUE</th>
-                    <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Exportador</th>
                     <th className="px-3 py-2 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Faturamento</th>
                   </tr>
                 </thead>
@@ -344,13 +341,10 @@ export default function BillingList() {
                       <td className="px-3 py-2 text-slate-500">
                         {record.modality ? MODALITY_LABELS[record.modality] : '—'}
                       </td>
-                      <td className="px-3 py-2 text-slate-500">{record.vessel ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.port?.name ?? '—'}</td>
-                      <td className="px-3 py-2 text-slate-500">{formatDate(record.ets)}</td>
                       <td className="px-3 py-2 text-slate-500">{record.collaborator?.full_name ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.lpco ?? '—'}</td>
                       <td className="px-3 py-2 text-slate-500">{record.due_25br ?? '—'}</td>
-                      <td className="px-3 py-2 text-slate-500">{record.exporter ?? '—'}</td>
                       <td className="px-3 py-2">
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleExportBilling.mutate(record.id) }}
